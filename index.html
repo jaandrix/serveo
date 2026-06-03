@@ -26,33 +26,22 @@
   #nav button .nav-label { font-size: 10px; margin-top: 2px; }
   
   .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
-  .card-header { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+  .card-header { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
   .card-body { padding: 14px 16px; }
   
   .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
   .cal-day { background: #fff; border-radius: 12px; padding: 10px 4px; border: 1px solid #e2e8f0; }
   .cal-day-num { font-size: 14px; font-weight: 600; }
   .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin: 5px auto 0; }
-  .cal-dot.rojo { background: #dc2626; box-shadow: 0 0 4px #dc2626; }
-  .cal-dot.amarillo { background: #d97706; box-shadow: 0 0 4px #d97706; }
-  .cal-dot.verde { background: #16a34a; box-shadow: 0 0 4px #16a34a; }
-  
-  .checklist-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-  .checklist-info { flex: 1; }
-  .checklist-nombre { font-weight: 600; }
-  .checklist-fecha { font-size: 11px; color: #64748b; }
-  .checklist-urgente { font-size: 11px; font-weight: 600; margin-top: 3px; }
-  .urgente-rojo { color: #dc2626; }
-  .urgente-amarillo { color: #d97706; }
-  .urgente-verde { color: #16a34a; }
-  .completado-btn { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
-  .completado { opacity: 0.5; text-decoration: line-through; }
+  .cal-dot.rojo { background: #dc2626; }
+  .cal-dot.amarillo { background: #d97706; }
+  .cal-dot.verde { background: #16a34a; }
   
   .wrap { overflow-x: auto; padding: 1rem 0; }
   table { border-collapse: collapse; font-size: 11px; min-width: 900px; width: 100%; }
   th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 4px 2px; min-width: 28px; }
   th { background: #f1f5f9; font-weight: 600; font-size: 10px; position: sticky; top: 0; }
-  th.name, td.name { text-align: left; padding-left: 8px; min-width: 160px; position: sticky; left: 0; background: #fff; z-index: 1; }
+  th.name, td.name { text-align: left; padding-left: 8px; min-width: 180px; position: sticky; left: 0; background: #fff; z-index: 1; }
   tr:nth-child(even) td { background: #f8fafc; }
   .L { color: #185FA5; font-weight: 600; }
   .D { color: #3B6D11; font-weight: 600; }
@@ -61,60 +50,76 @@
   .wkend { background: #eef2ff !important; }
   .editable-cell { cursor: pointer; transition: background 0.1s; }
   .editable-cell:active { background: #dbeafe; }
+  .baja-row { opacity: 0.6; background: #fee2e2 !important; }
   
   .worker-list { display: flex; flex-direction: column; gap: 8px; }
   .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; transition: background 0.1s; }
-  .worker-item:active { background: #f1f5f9; }
-  .worker-name { font-weight: 700; }
+  .worker-name { font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge-baja { background: #dc2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+  .badge-sustituto { background: #d97706; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
   .worker-summary { font-size: 11px; color: #64748b; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
   
+  .btn-primary { background: #0f172a; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
+  .btn-secondary { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; cursor: pointer; font-weight: 500; width: 100%; margin-bottom: 8px; }
+  
+  .aviso { background: #fef3c7; border-left: 4px solid #d97706; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 12px; }
+  .aviso-rojo { background: #fee2e2; border-left-color: #dc2626; }
+  
   .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .modal-content { background: #fff; border-radius: 20px; padding: 20px; width: 280px; text-align: center; }
-  .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 10px; }
+  .modal-content { background: #fff; border-radius: 20px; padding: 20px; width: 90%; max-width: 340px; max-height: 80vh; overflow-y: auto; }
+  .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; }
   .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
   .modal-buttons button { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
   
-  .btn-primary { background: #0f172a; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
-  .btn-secondary { background: #f1f5f9; border: none; border-radius: 12px; padding: 10px; cursor: pointer; }
-  
-  .aviso { background: #fef3c7; border-left: 4px solid #d97706; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 12px; }
-  
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
   #toast.show { opacity: 1; }
+  
+  .import-input { display: none; }
+  .month-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
+  .month-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .month-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="header"><div><h1>🧹 Gestión Cuadrantes</h1><p id="header-sub">Junio 2026</p></div></div>
+  <div id="header"><div><h1>🧹 Gestión Cuadrantes</h1><p id="header-sub"></p></div></div>
   <div id="content"></div>
   <nav id="nav">
     <button class="active" onclick="showView('home')" id="nav-home"><span class="nav-icon">🏠</span><span class="nav-label">Inicio</span></button>
     <button onclick="showView('cuadrante')" id="nav-cuadrante"><span class="nav-icon">📅</span><span class="nav-label">Cuadrante</span></button>
-    <button onclick="showView('trabajadores')" id="nav-trabajadores"><span class="nav-icon">👥</span><span class="nav-label">Trabajadores</span></button>
-    <button onclick="showView('checklist')" id="nav-checklist"><span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
+    <button onclick="showView('trabajadores')" id="nav-trabajadores"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button>
+    <button onclick="showView('seguro')" id="nav-seguro"><span class="nav-icon">🔒</span><span class="nav-label">Seguro</span></button>
   </nav>
 </div>
 <div id="toast"></div>
+<input type="file" id="import-file" class="import-input" accept=".json" onchange="handleImport(event)">
 
 <script>
-// ==================== DATOS INICIALES ====================
-const NAMES = [
-  "MARIA JOSE GARCIA LATORRE", "ANA BELEN SERRANO MOTA", "VICTORIA CHAVES ARIAS",
-  "Mª JESUS SALO LONGARES", "CONCEPCION GARCIA GUERRERO", "CONCEPCION TARBUENCA SILVESTRE",
-  "ASUNCION IBARRA ARAMBURO", "LUCIA MORENO APARICIO", "Mª JESUS BETRIAN MORA",
-  "BELINDA MARUGAN RIBAS", "MARI CARMEN CHUECA GRACIA", "Rosario Polo",
-  "Candela Ruiz / Pared", "JOSE LUIS GARCIA SANCHO", "JOE GARCIA OLIVAR",
-  "SERRANO GONZALEZ", "IVAR PEREZ", "SERRANO", "IRIN MUNUERA",
-  "LANDA LORENTE BENITO", "SUSANA NAVARRO MARQUINA", "PEÑA DURAN PEREZ",
-  "Mª JESUS BOILLOS CASADO", "VANESSA BETRIAN MORA", "Mª ISABEL IBARRA ARAMBURO",
-  "JOSE RAMON RUIZ CHAVES", "A. Contra Joyce"
-];
+// ==================== CONFIGURACIÓN HORAS ====================
+const HORAS_POR_CODIGO = {
+  "L": 0, "D": 0, "": 0,
+  "F1": 7, "N": 10, "M": 7, "T": 7,
+  "U": 0, "G": 0, "H": 0
+};
+// Para números del 2 al 9, usar el propio número como horas
+for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
 
-const DAYS = Array.from({length: 31}, (_, i) => i + 1);
+// ==================== MESES Y CUADRANTES ====================
+const MESES = [
+  { nombre: "Enero", dias: 31, codigo: 0 },
+  { nombre: "Febrero", dias: 28, codigo: 1 },
+  { nombre: "Marzo", dias: 31, codigo: 2 },
+  { nombre: "Abril", dias: 30, codigo: 3 },
+  { nombre: "Mayo", dias: 31, codigo: 4 },
+  { nombre: "Junio", dias: 30, codigo: 5 }
+];
+let mesActual = 5; // Junio (índice 5)
+let diasDelMesActual = 30;
+
 const WEEKENDS = [1, 7, 8, 14, 15, 21, 22, 28, 29];
 
-// Cuadrante original (extraído de tu archivo)
-const ORIGINAL_RAW = [
+// Plantilla de cuadrante (la misma para todos los meses por ahora)
+const PLANTILLA_CUADRANTE = [
   ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
   ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
   ["","","","","","L","L","L","","","","","","","","","","","L","L","","","","","","","","L","L","",""],
@@ -144,332 +149,476 @@ const ORIGINAL_RAW = [
   ["L","L","M","N","","L","L","L","M","N","","L","L","M","N","","L","M","N","N","","L","L","M","N","","L","L","M","N",""]
 ];
 
-// Estado
-let cuadrante = JSON.parse(JSON.stringify(ORIGINAL_RAW));
+const NOMBRES_BASE = [
+  "MARIA JOSE GARCIA LATORRE", "ANA BELEN SERRANO MOTA", "VICTORIA CHAVES ARIAS",
+  "Mª JESUS SALO LONGARES", "CONCEPCION GARCIA GUERRERO", "CONCEPCION TARBUENCA SILVESTRE",
+  "ASUNCION IBARRA ARAMBURO", "LUCIA MORENO APARICIO", "Mª JESUS BETRIAN MORA",
+  "BELINDA MARUGAN RIBAS", "MARI CARMEN CHUECA GRACIA", "Rosario Polo",
+  "Candela Ruiz / Pared", "JOSE LUIS GARCIA SANCHO", "JOE GARCIA OLIVAR",
+  "SERRANO GONZALEZ", "IVAR PEREZ", "SERRANO", "IRIN MUNUERA",
+  "LANDA LORENTE BENITO", "SUSANA NAVARRO MARQUINA", "PEÑA DURAN PEREZ",
+  "Mª JESUS BOILLOS CASADO", "VANESSA BETRIAN MORA", "Mª ISABEL IBARRA ARAMBURO",
+  "JOSE RAMON RUIZ CHAVES", "A. Contra Joyce"
+];
+
+// ==================== ESTADO GLOBAL ====================
+let trabajadores = [];
+let cuadrante = [];
 let checklist = [];
 let currentView = "home";
-let selectedWorker = null;
 
-// ==================== TAREAS RECURRENTES ====================
-function generarTareaFirmaDocumentacion(mes, año) {
-  const diasDelMes = new Date(año, mes + 1, 0).getDate();
-  const ultimoDia = diasDelMes;
-  const hoy = new Date();
-  const hoyNum = hoy.getDate();
-  const hoyMes = hoy.getMonth();
-  const hoyAño = hoy.getFullYear();
-  
-  // Solo para el mes actual (Junio 2026)
-  if (año === 2026 && mes === 5) { // Junio = 5 (0-index)
-    return {
-      id: "firma_doc_unica",
-      nombre: "📄 Firma documentación",
-      dia: ultimoDia,
-      recurrente: true,
-      completada: false,
-      completadaEnEsteMes: false,
-      ultimoDia: ultimoDia
-    };
-  }
-  return null;
+// ==================== INICIALIZACIÓN ====================
+function inicializarTrabajadores() {
+  trabajadores = NOMBRES_BASE.map((nombre, idx) => ({
+    id: idx,
+    nombre: nombre,
+    estado: "activo",
+    fechaInicioBaja: null,
+    fechaFinBaja: null,
+    cubreA: null,
+    notas: ""
+  }));
 }
 
-function actualizarChecklistConFecha() {
-  const ahora = new Date();
-  const año = ahora.getFullYear();
-  const mes = ahora.getMonth();
-  const hoy = ahora.getDate();
-  const diasDelMes = new Date(año, mes + 1, 0).getDate();
-  const ultimoDia = diasDelMes;
-  
-  // Buscar tarea de firma
-  let firmaIndex = checklist.findIndex(t => t.id === "firma_doc_unica");
-  if (firmaIndex === -1) {
-    // Crear tarea para el mes actual
-    checklist.push({
-      id: "firma_doc_unica",
-      nombre: "📄 Firma documentación",
-      dia: ultimoDia,
-      recurrente: true,
-      completada: false,
-      completadaEnEsteMes: false
-    });
-  } else {
-    // Si está completada, resetear al mes siguiente (simulación)
-    if (checklist[firmaIndex].completada && checklist[firmaIndex].completadaEnEsteMes) {
-      // No resetear automáticamente, lo haremos manual o al cambiar mes
-    }
-  }
-}
-
-function getUrgenciaTarea(tarea) {
-  const ahora = new Date();
-  const año = ahora.getFullYear();
-  const mes = ahora.getMonth();
-  const hoy = ahora.getDate();
-  const diasDelMes = new Date(año, mes + 1, 0).getDate();
-  const diaTarea = tarea.dia;
-  
-  if (tarea.completada) return null;
-  
-  const diasRestantes = diaTarea - hoy;
-  
-  if (diasRestantes <= 1 && diasRestantes >= 0) return "rojo";
-  if (diasRestantes <= 7 && diasRestantes > 1) return "amarillo";
-  if (diasRestantes > 7) return "verde";
-  if (diasRestantes < 0) return null;
-  return "verde";
-}
-
-function getEventosDelDia(dia) {
-  const eventos = [];
-  checklist.forEach(tarea => {
-    if (tarea.completada) return;
-    if (tarea.dia === dia) {
-      const urgencia = getUrgenciaTarea(tarea);
-      if (urgencia) {
-        eventos.push({ nombre: tarea.nombre, urgencia });
-      }
-    }
+function inicializarCuadrante() {
+  cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADrANTE));
+  // Ajustar al número de días del mes actual
+  cuadrante = cuadrante.map(fila => {
+    const nuevaFila = [...fila];
+    if (nuevaFila.length > diasDelMesActual) nuevaFila.length = diasDelMesActual;
+    while (nuevaFila.length < diasDelMesActual) nuevaFila.push("");
+    return nuevaFila;
   });
-  return eventos;
 }
 
-function completarTarea(id) {
-  const tarea = checklist.find(t => t.id === id);
-  if (tarea) {
-    tarea.completada = true;
-    tarea.completadaEnEsteMes = true;
-    mostrarToast(`✅ "${tarea.nombre}" completada`);
-    render();
+function inicializarChecklist() {
+  checklist = [{
+    id: "firma_doc",
+    nombre: "📄 Firma documentación",
+    dia: diasDelMesActual,
+    recurrente: true,
+    completada: false,
+    completadaEnEsteMes: false
+  }];
+}
+
+function cargarDatos() {
+  const guardado = localStorage.getItem("cuadrante_laboral_v3");
+  if (guardado) {
+    const data = JSON.parse(guardado);
+    trabajadores = data.trabajadores || [];
+    cuadrante = data.cuadrante || [];
+    checklist = data.checklist || [];
+    mesActual = data.mesActual !== undefined ? data.mesActual : 5;
+    diasDelMesActual = MESES[mesActual].dias;
   }
+  if (!trabajadores.length) inicializarTrabajadores();
+  if (!cuadrante.length) inicializarCuadrante();
+  if (!checklist.length) inicializarChecklist();
+  actualizarChecklistDia();
 }
 
-// ==================== REGLAS LABORALES ====================
-function analizarJornadaTrabajador(nombre, indice) {
-  const fila = cuadrante[indice];
-  if (!fila) return { trabajados: 0, tipos: {}, seguidos: 0, maxSeguidos: 0 };
-  
-  let trabajados = 0;
-  let tipos = { L:0, D:0, F1:0, N:0, otros:0 };
+function guardarDatos() {
+  const data = { trabajadores, cuadrante, checklist, mesActual };
+  localStorage.setItem("cuadrante_laboral_v3", JSON.stringify(data));
+}
+
+function actualizarChecklistDia() {
+  const firma = checklist.find(t => t.id === "firma_doc");
+  if (firma) firma.dia = diasDelMesActual;
+}
+
+// ==================== CÁLCULO DE CARGAS ====================
+function getHorasTurno(codigo) {
+  if (codigo === undefined || codigo === null || codigo === "") return 0;
+  const num = parseInt(codigo);
+  if (!isNaN(num) && num >= 2 && num <= 9) return num;
+  return HORAS_POR_CODIGO[codigo] || 0;
+}
+
+function getCargaTrabajador(idx) {
+  const fila = cuadrante[idx] || [];
+  let totalHoras = 0;
+  for (let i = 0; i < diasDelMesActual; i++) {
+    totalHoras += getHorasTurno(fila[i]);
+  }
+  return totalHoras;
+}
+
+function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
+  const fila = cuadrante[idx] || [];
   let maxSeguidos = 0;
-  let actualSeguidos = 0;
+  let actual = 0;
+  for (let i = 0; i <= hastaDia; i++) {
+    const tieneTurno = fila[i] && fila[i] !== "L" && fila[i] !== "D" && fila[i] !== "";
+    if (tieneTurno) {
+      actual++;
+      maxSeguidos = Math.max(maxSeguidos, actual);
+    } else actual = 0;
+  }
+  return maxSeguidos;
+}
+
+// ==================== BAJA Y REDISTRIBUCIÓN ====================
+function iniciarBaja(idTrabajador) {
+  const trabajador = trabajadores.find(t => t.id === idTrabajador);
+  if (!trabajador) return;
   
-  for (let i = 0; i < DAYS.length; i++) {
-    const val = fila[i];
-    const tieneTurno = val && val.trim() !== "";
-    if (tieneTurno && val !== "L" && val !== "D" && val !== "U") {
-      trabajados++;
-      actualSeguidos++;
-      maxSeguidos = Math.max(maxSeguidos, actualSeguidos);
-    } else {
-      actualSeguidos = 0;
+  const fechaInicio = prompt("📅 Fecha de inicio de la baja (día del mes, 1-31):", "");
+  if (!fechaInicio) return;
+  const diaInicio = parseInt(fechaInicio);
+  if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) {
+    mostrarToast("❌ Fecha inválida", true);
+    return;
+  }
+  
+  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
+  
+  if (opcion) {
+    // Cubrir con trabajador nuevo
+    const nuevoId = trabajadores.length;
+    const nuevoNombre = prompt("Nombre del nuevo trabajador sustituto:", `SUSTITUTO_${trabajador.nombre}`);
+    if (!nuevoNombre) return;
+    
+    trabajadores.push({
+      id: nuevoId,
+      nombre: nuevoNombre,
+      estado: "sustituto",
+      fechaInicioBaja: null,
+      fechaFinBaja: null,
+      cubreA: trabajador.id,
+      notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}`
+    });
+    
+    // Copiar turnos desde el día de inicio
+    const nuevaFila = [...cuadrante[idTrabajador]];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      nuevaFila[i] = cuadrante[idTrabajador][i] || "";
+    }
+    cuadrante.push(nuevaFila);
+    
+    // Marcar baja del original
+    trabajador.estado = "baja";
+    trabajador.fechaInicioBaja = diaInicio;
+    trabajador.fechaFinBaja = null;
+    
+    // Limpiar turnos del original desde el día de inicio
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      cuadrante[idTrabajador][i] = "L";
     }
     
-    if (val === "L") tipos.L++;
-    else if (val === "D") tipos.D++;
-    else if (val === "F1") tipos.F1++;
-    else if (val === "N") tipos.N++;
-    else if (tieneTurno && val !== "U") tipos.otros++;
+    mostrarToast(`✅ Baja cubierta por nuevo trabajador: ${nuevoNombre}`);
+  } else {
+    // Redistribuir entre activos
+    const turnosAPerdidos = [];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      const turno = cuadrante[idTrabajador][i];
+      if (turno && turno !== "L" && turno !== "D" && turno !== "") {
+        turnosAPerdidos.push({ dia: i, turno: turno });
+      }
+    }
+    
+    if (turnosAPerdidos.length === 0) {
+      mostrarToast("No hay turnos que redistribuir (el trabajador ya estaba libre)");
+      trabajador.estado = "baja";
+      trabajador.fechaInicioBaja = diaInicio;
+      guardarDatos();
+      renderTrabajadores();
+      return;
+    }
+    
+    // Obtener activos (excluyendo al de baja y los que ya están de baja)
+    const activos = trabajadores.filter(t => t.id !== idTrabajador && t.estado === "activo");
+    
+    for (const turno of turnosAPerdidos) {
+      // Buscar candidato con menor carga y que no supere 6 días seguidos
+      let mejorCandidato = null;
+      let menorCarga = Infinity;
+      
+      for (const candidato of activos) {
+        const cargaActual = getCargaTrabajador(candidato.id);
+        const seguidosSiAcepta = getMaxDiasSeguidos(candidato.id, turno.dia) + 1;
+        
+        if (seguidosSiAcepta <= 6 && cargaActual < menorCarga) {
+          menorCarga = cargaActual;
+          mejorCandidato = candidato;
+        }
+      }
+      
+      if (mejorCandidato) {
+        // Asignar el turno al candidato
+        cuadrante[mejorCandidato.id][turno.dia] = turno.turno;
+        mostrarToast(`📌 Turno ${turno.turno} del día ${turno.dia + 1} asignado a ${mejorCandidato.nombre}`);
+      } else {
+        mostrarToast(`⚠️ No se pudo asignar el turno del día ${turno.dia + 1} (${turno.turno}). Queda pendiente.`);
+      }
+    }
+    
+    // Marcar baja del original y limpiar sus turnos
+    trabajador.estado = "baja";
+    trabajador.fechaInicioBaja = diaInicio;
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      cuadrante[idTrabajador][i] = "L";
+    }
+    
+    mostrarToast(`✅ Baja de ${trabajador.nombre} procesada. Turnos redistribuidos.`);
   }
   
-  return { trabajados, tipos, maxSeguidos };
-}
-
-// ==================== EDICIÓN CUADRANTE ====================
-function mostrarModalEdicion(filaIdx, colIdx, valorActual) {
-  const nuevoValor = prompt(`Editar celda (${NAMES[filaIdx]}, día ${DAYS[colIdx]})`, valorActual);
-  if (nuevoValor !== null) {
-    cuadrante[filaIdx][colIdx] = nuevoValor;
-    guardarCuadrante();
-    mostrarToast(`Cambiado a "${nuevoValor}"`);
-    if (currentView === "cuadrante") renderizarCuadrante();
-    if (currentView === "trabajadores") renderTrabajadores();
-  }
-}
-
-function guardarCuadrante() {
-  localStorage.setItem("cuadrante_laboral", JSON.stringify(cuadrante));
-}
-
-function cargarCuadrante() {
-  const guardado = localStorage.getItem("cuadrante_laboral");
-  if (guardado) {
-    cuadrante = JSON.parse(guardado);
-  } else {
-    cuadrante = JSON.parse(JSON.stringify(ORIGINAL_RAW));
-  }
+  guardarDatos();
+  renderTrabajadores();
+  if (currentView === "cuadrante") renderizarCuadrante();
 }
 
 // ==================== RENDERIZADO ====================
 function renderizarCuadrante() {
-  const container = document.getElementById("content");
-  if (!container) return;
+  const monthSelector = `<div class="month-selector">${MESES.map((m, idx) => `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${m.nombre}</button>`).join("")}<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar cuadrante</button></div>`;
   
-  // Aviso de fines de semana
-  const avisoHtml = `<div class="aviso">📌 Los días con fondo azul son fines de semana. Toca cualquier celda para editarla.</div>`;
-  
-  let html = `<div class="wrap"><table><thead><tr><th class="name">Nombre</th>`;
-  DAYS.forEach(d => {
-    const cls = WEEKENDS.includes(d) ? 'wkend' : '';
-    html += `<th class="${cls}">${d}</th>`;
-  });
+  let html = monthSelector + `<div class="aviso">📌 Toca cualquier celda para editarla. Los turnos se guardan automáticamente.</div><div class="wrap"><table><thead><tr><th class="name">Nombre</th>`;
+  for (let d = 1; d <= diasDelMesActual; d++) {
+    html += `<th class="${WEEKENDS.includes(d) ? 'wkend' : ''}">${d}</th>`;
+  }
   html += `</tr></thead><tbody>`;
   
-  NAMES.forEach((nombre, i) => {
-    html += `<tr>`;
-    html += `<td class="name">${nombre}</td>`;
-    DAYS.forEach((d, j) => {
-      const val = cuadrante[i]?.[j] || "";
+  trabajadores.forEach((trab, i) => {
+    const isBaja = trabajadorEstaDeBaja(trab);
+    html += `<tr class="${isBaja ? 'baja-row' : ''}">`;
+    html += `<td class="name">${trab.nombre} ${getEstadoBadge(trab)}</td>`;
+    for (let d = 0; d < diasDelMesActual; d++) {
+      const val = cuadrante[i]?.[d] || "";
       let colorClass = "";
       if (val === "L") colorClass = "L";
       else if (val === "D") colorClass = "D";
       else if (val === "F1") colorClass = "F1";
       else if (val === "N") colorClass = "N";
-      
-      const wkendClass = WEEKENDS.includes(d) ? "wkend" : "";
-      html += `<td class="editable-cell ${colorClass} ${wkendClass}" onclick="mostrarModalEdicion(${i},${j},'${val.replace(/'/g, "\\'")}')">${val}</td>`;
-    });
+      const wkendClass = WEEKENDS.includes(d + 1) ? "wkend" : "";
+      html += `<td class="editable-cell ${colorClass} ${wkendClass}" onclick="editarCelda(${i},${d},'${val.replace(/'/g, "\\'")}')">${val}</td>`;
+    }
     html += `</tr>`;
   });
   html += `</tbody></table></div>`;
-  container.innerHTML = avisoHtml + html;
+  document.getElementById("content").innerHTML = html;
+  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
+}
+
+function trabajadorEstaDeBaja(trab) {
+  return trab.estado === "baja" || (trab.estado === "sustituto" && trab.fechaFinBaja && new Date(trab.fechaFinBaja) < new Date());
+}
+
+function getEstadoBadge(trab) {
+  if (trab.estado === "baja") return `<span class="badge-baja">🔴 BAJA</span>`;
+  if (trab.estado === "sustituto") return `<span class="badge-sustituto">🟡 SUSTITUTO</span>`;
+  return "";
+}
+
+function editarCelda(fila, col, valorActual) {
+  const nuevoValor = prompt(`Editar celda (${trabajadores[fila].nombre}, día ${col + 1})`, valorActual);
+  if (nuevoValor !== null) {
+    cuadrante[fila][col] = nuevoValor;
+    guardarDatos();
+    mostrarToast(`✅ Cambiado a "${nuevoValor}"`);
+    renderizarCuadrante();
+  }
+}
+
+function cambiarMes(idx) {
+  mesActual = idx;
+  diasDelMesActual = MESES[idx].dias;
+  inicializarCuadrante();
+  actualizarChecklistDia();
+  guardarDatos();
+  if (currentView === "cuadrante") renderizarCuadrante();
+  if (currentView === "home") renderHome();
+  mostrarToast(`📅 Cambiado a ${MESES[idx].nombre}`);
+}
+
+function importarNuevoCuadrante() {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = ".json";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (Array.isArray(data) && data.length === trabajadores.length) {
+          cuadrante = data;
+          guardarDatos();
+          mostrarToast("✅ Cuadrante importado correctamente");
+          renderizarCuadrante();
+        } else {
+          mostrarToast("❌ Formato inválido: debe ser una matriz de 27x31", true);
+        }
+      } catch(err) {
+        mostrarToast("❌ Archivo no válido", true);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 function renderHome() {
   const ahora = new Date();
-  const año = ahora.getFullYear();
-  const mes = ahora.getMonth();
   const hoy = ahora.getDate();
-  const diasDelMes = new Date(año, mes + 1, 0).getDate();
+  let avisosHtml = `<div class="card"><div class="card-header">⚠️ Alertas</div><div class="card-body">`;
+  let hayAvisos = false;
   
-  // Generar calendario
-  let calendarioHtml = `<div class="card"><div class="card-header">📅 Calendario de urgencias - Junio 2026</div><div class="card-body"><div class="calendar-grid">`;
-  
-  const diasSemana = ["L", "M", "M", "J", "V", "S", "D"];
-  diasSemana.forEach(d => { calendarioHtml += `<div style="font-weight:600; font-size:11px;">${d}</div>`; });
-  
-  // Simular primer día de junio 2026 (lunes = 1)
-  for (let i = 1; i <= diasDelMes; i++) {
-    const eventos = getEventosDelDia(i);
-    let color = null;
-    if (eventos.some(e => e.urgencia === "rojo")) color = "rojo";
-    else if (eventos.some(e => e.urgencia === "amarillo")) color = "amarillo";
-    else if (eventos.some(e => e.urgencia === "verde")) color = "verde";
-    
-    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
+  // Avisos de bajas próximas a terminar
+  for (const trab of trabajadores) {
+    if (trab.fechaFinBaja && trab.estado !== "activo") {
+      const fechaFin = new Date(trab.fechaFinBaja);
+      const diff = Math.ceil((fechaFin - ahora) / (1000 * 60 * 60 * 24));
+      if (diff <= 7 && diff >= 0) {
+        avisosHtml += `<div class="aviso aviso-rojo">⚠️ ${trab.nombre} (${trab.estado}) finaliza el ${trab.fechaFinBaja}</div>`;
+        hayAvisos = true;
+      }
+    }
   }
-  calendarioHtml += `</div></div></div>`;
   
-  // Avisos
-  const eventosHoy = getEventosDelDia(hoy);
-  let avisosHtml = `<div class="card"><div class="card-header">⚠️ Avisos de hoy</div><div class="card-body">`;
-  if (eventosHoy.length === 0) {
-    avisosHtml += `<p style="color:#64748b;">No hay tareas pendientes para hoy</p>`;
-  } else {
-    eventosHoy.forEach(e => {
-      const colorTexto = e.urgencia === "rojo" ? "urgente-rojo" : (e.urgencia === "amarillo" ? "urgente-amarillo" : "urgente-verde");
-      avisosHtml += `<div class="aviso">❗ <strong>${e.nombre}</strong> <span class="${colorTexto}">(${e.urgencia})</span></div>`;
-    });
+  // Aviso de trabajadores con más de 6 días seguidos
+  for (let i = 0; i < trabajadores.length; i++) {
+    const seguidos = getMaxDiasSeguidos(i);
+    if (seguidos > 6 && trabajadores[i].estado === "activo") {
+      avisosHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
+      hayAvisos = true;
+    }
   }
+  
+  if (!hayAvisos) avisosHtml += `<p style="color:#64748b;">No hay alertas pendientes</p>`;
   avisosHtml += `</div></div>`;
   
-  const container = document.getElementById("content");
-  container.innerHTML = calendarioHtml + avisosHtml;
+  document.getElementById("content").innerHTML = avisosHtml;
+  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
 }
 
 function renderTrabajadores() {
   let html = `<div class="worker-list">`;
-  NAMES.forEach((nombre, idx) => {
-    const stats = analizarJornadaTrabajador(nombre, idx);
-    html += `<div class="worker-item" onclick="verDetalleTrabajador(${idx})">
-      <div class="worker-name">${nombre}</div>
+  for (const trab of trabajadores) {
+    const carga = getCargaTrabajador(trab.id);
+    html += `<div class="worker-item" onclick="verDetalleTrabajador(${trab.id})">
+      <div class="worker-name">${trab.nombre} ${getEstadoBadge(trab)}</div>
       <div class="worker-summary">
-        <span>📆 Días trabajados: ${stats.trabajados}</span>
-        <span>🔥 Máximo seguidos: ${stats.maxSeguidos}</span>
-        <span>📊 Tipos: L=${stats.tipos.L} D=${stats.tipos.D} F1=${stats.tipos.F1} N=${stats.tipos.N}</span>
+        <span>📊 ${carga} horas mes</span>
+        <span>📆 Máx seguidos: ${getMaxDiasSeguidos(trab.id)} días</span>
       </div>
+      ${trab.estado === "activo" ? `<button class="btn-secondary" style="margin-top:8px;" onclick="event.stopPropagation();iniciarBaja(${trab.id})">🔴 Marcar baja</button>` : ""}
     </div>`;
-  });
-  html += `</div>`;
-  document.getElementById("content").innerHTML = html;
-}
-
-function verDetalleTrabajador(idx) {
-  const nombre = NAMES[idx];
-  const stats = analizarJornadaTrabajador(nombre, idx);
-  let mensaje = `${nombre}\n\n`;
-  mensaje += `📆 Días trabajados: ${stats.trabajados}\n`;
-  mensaje += `🔥 Máximo días seguidos: ${stats.maxSeguidos}\n`;
-  mensaje += `📊 Tipos de jornada:\n`;
-  mensaje += `   • Libre (L): ${stats.tipos.L}\n`;
-  mensaje += `   • Descanso (D): ${stats.tipos.D}\n`;
-  mensaje += `   • F1: ${stats.tipos.F1}\n`;
-  mensaje += `   • Noche (N): ${stats.tipos.N}\n`;
-  mensaje += `   • Otros: ${stats.tipos.otros}\n`;
-  
-  if (stats.maxSeguidos > 6) {
-    mensaje += `\n⚠️ ALERTA: Ha trabajado ${stats.maxSeguidos} días seguidos (recomendación máx 6).\n`;
   }
-  
-  alert(mensaje);
-}
-
-function renderChecklist() {
-  let html = `<div class="card"><div class="card-header">✅ Tareas recurrentes (mensuales)</div><div class="card-body">`;
-  
-  checklist.forEach(tarea => {
-    const urgencia = getUrgenciaTarea(tarea);
-    let urgenciaTexto = "";
-    let urgenciaClase = "";
-    if (urgencia === "rojo") { urgenciaTexto = "🔴 Muy urgente"; urgenciaClase = "urgente-rojo"; }
-    else if (urgencia === "amarillo") { urgenciaTexto = "🟡 Urgente"; urgenciaClase = "urgente-amarillo"; }
-    else if (urgencia === "verde") { urgenciaTexto = "🟢 Poco urgente"; urgenciaClase = "urgente-verde"; }
-    else { urgenciaTexto = "✅ Completada"; urgenciaClase = ""; }
-    
-    const completadaClass = tarea.completada ? "completado" : "";
-    html += `<div class="checklist-item ${completadaClass}">
-      <div class="checklist-info">
-        <div class="checklist-nombre">${tarea.nombre}</div>
-        <div class="checklist-fecha">📅 Día ${tarea.dia} de cada mes</div>
-        <div class="checklist-urgente ${urgenciaClase}">${urgenciaTexto}</div>
-      </div>
-      ${!tarea.completada ? `<button class="completado-btn" onclick="completarTarea('${tarea.id}')">Marcar completada</button>` : `<span style="font-size:11px; color:#16a34a;">✔️ Completada este mes</span>`}
-    </div>`;
-  });
-  
-  html += `</div></div><div class="card"><div class="card-header">📌 Leyenda</div><div class="card-body"><div style="font-size:12px;">🔴 Rojo: Vence hoy o mañana<br>🟡 Amarillo: Vence en 2-7 días<br>🟢 Verde: Vence en más de 7 días</div></div></div>`;
+  html += `<button class="btn-primary" onclick="añadirTrabajador()">➕ Añadir trabajador</button></div>`;
   document.getElementById("content").innerHTML = html;
 }
 
-function mostrarToast(msg) {
+function añadirTrabajador() {
+  const nombre = prompt("Nombre del nuevo trabajador:");
+  if (!nombre) return;
+  const nuevoId = trabajadores.length;
+  trabajadores.push({
+    id: nuevoId,
+    nombre: nombre,
+    estado: "activo",
+    fechaInicioBaja: null,
+    fechaFinBaja: null,
+    cubreA: null,
+    notas: ""
+  });
+  const nuevaFila = Array(diasDelMesActual).fill("");
+  cuadrante.push(nuevaFila);
+  guardarDatos();
+  renderTrabajadores();
+  mostrarToast(`✅ "${nombre}" añadido`);
+}
+
+function verDetalleTrabajador(id) {
+  const t = trabajadores.find(t => t.id === id);
+  if (!t) return;
+  const carga = getCargaTrabajador(id);
+  alert(`${t.nombre}\n\n📊 Horas este mes: ${carga}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.fechaInicioBaja ? `\n📅 Baja desde día ${t.fechaInicioBaja}` : ""}${t.cubreA ? `\n👥 Sustituye a: ${trabajadores.find(t2 => t2.id === t.cubreA)?.nombre}` : ""}`);
+}
+
+function renderSeguro() {
+  document.getElementById("content").innerHTML = `
+    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body">
+      <button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia de seguridad</button>
+      <button class="btn-secondary" onclick="triggerImport()">📂 Importar copia de seguridad</button>
+      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">📌 La copia incluye: trabajadores, cuadrante, checklist y configuración de meses.</div>
+    </div></div>
+  `;
+}
+
+function exportarDatos() {
+  const data = { trabajadores, cuadrante, checklist, mesActual };
+  const dataStr = JSON.stringify(data, null, 2);
+  const blob = new Blob([dataStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`;
+  a.href = url;
+  a.click();
+  URL.revokeObjectURL(url);
+  mostrarToast("✅ Copia de seguridad exportada");
+}
+
+function triggerImport() { document.getElementById("import-file").click(); }
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+      if (imported.trabajadores && imported.cuadrante) {
+        trabajadores = imported.trabajadores;
+        cuadrante = imported.cuadrante;
+        checklist = imported.checklist || [];
+        mesActual = imported.mesActual !== undefined ? imported.mesActual : 5;
+        diasDelMesActual = MESES[mesActual].dias;
+        guardarDatos();
+        mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`);
+        render();
+      } else throw new Error("Formato inválido");
+    } catch(err) { mostrarToast("❌ Archivo no válido", true); }
+  };
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function mostrarToast(msg, isError = false) {
   const toast = document.getElementById("toast");
   toast.textContent = msg;
+  toast.style.background = isError ? "#dc2626" : "#0f172a";
   toast.classList.add("show");
   setTimeout(() => toast.classList.remove("show"), 2000);
+  setTimeout(() => { toast.style.background = "#0f172a"; }, 2100);
 }
 
 function showView(view) {
   currentView = view;
   document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active"));
   document.getElementById(`nav-${view}`).classList.add("active");
-  
   if (view === "home") renderHome();
   else if (view === "cuadrante") renderizarCuadrante();
   else if (view === "trabajadores") renderTrabajadores();
-  else if (view === "checklist") renderChecklist();
+  else if (view === "seguro") renderSeguro();
 }
 
-// ==================== INICIALIZACIÓN ====================
-cargarCuadrante();
-actualizarChecklistConFecha();
+function render() { showView(currentView); }
 
 // Exponer funciones globales
-window.mostrarModalEdicion = mostrarModalEdicion;
-window.completarTarea = completarTarea;
+window.cambiarMes = cambiarMes;
+window.importarNuevoCuadrante = importarNuevoCuadrante;
+window.editarCelda = editarCelda;
+window.iniciarBaja = iniciarBaja;
+window.añadirTrabajador = añadirTrabajador;
 window.verDetalleTrabajador = verDetalleTrabajador;
+window.exportarDatos = exportarDatos;
+window.triggerImport = triggerImport;
+window.handleImport = handleImport;
 window.showView = showView;
 
+// Inicializar
+cargarDatos();
 renderHome();
 </script>
 </body>
