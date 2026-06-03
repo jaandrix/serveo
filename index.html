@@ -29,6 +29,26 @@
   .card-header { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
   .card-body { padding: 14px 16px; }
   
+  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 16px; }
+  .cal-day { background: #fff; border-radius: 12px; padding: 10px 4px; border: 1px solid #e2e8f0; }
+  .cal-day-num { font-size: 14px; font-weight: 600; }
+  .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin: 5px auto 0; }
+  .cal-dot.rojo { background: #dc2626; box-shadow: 0 0 4px #dc2626; }
+  .cal-dot.amarillo { background: #d97706; box-shadow: 0 0 4px #d97706; }
+  .cal-dot.verde { background: #16a34a; box-shadow: 0 0 4px #16a34a; }
+  .cal-weekday { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+  
+  .checklist-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+  .checklist-info { flex: 1; }
+  .checklist-nombre { font-weight: 600; }
+  .checklist-fecha { font-size: 11px; color: #64748b; }
+  .checklist-urgente { font-size: 11px; font-weight: 600; margin-top: 3px; }
+  .urgente-rojo { color: #dc2626; }
+  .urgente-amarillo { color: #d97706; }
+  .urgente-verde { color: #16a34a; }
+  .completado-btn { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
+  .completado { opacity: 0.5; text-decoration: line-through; }
+  
   .wrap { overflow-x: auto; padding: 1rem 0; }
   table { border-collapse: collapse; font-size: 11px; min-width: 900px; width: 100%; }
   th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 4px 2px; min-width: 28px; }
@@ -70,6 +90,8 @@
   .month-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
   .month-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
   .month-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+  
+  .empty-state { text-align: center; padding: 30px; color: #94a3b8; }
 </style>
 </head>
 <body>
@@ -80,6 +102,7 @@
     <button class="active" onclick="showView('home')" id="nav-home"><span class="nav-icon">🏠</span><span class="nav-label">Inicio</span></button>
     <button onclick="showView('cuadrante')" id="nav-cuadrante"><span class="nav-icon">📅</span><span class="nav-label">Cuadrante</span></button>
     <button onclick="showView('trabajadores')" id="nav-trabajadores"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button>
+    <button onclick="showView('tareas')" id="nav-tareas"><span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
     <button onclick="showView('seguro')" id="nav-seguro"><span class="nav-icon">🔒</span><span class="nav-label">Seguro</span></button>
   </nav>
 </div>
@@ -95,21 +118,26 @@ const HORAS_POR_CODIGO = {
 };
 for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
 
-// ==================== MESES Y CUADRANTES ====================
+// ==================== MESES (ENERO A DICIEMBRE) ====================
 const MESES = [
   { nombre: "Enero", dias: 31 },
   { nombre: "Febrero", dias: 28 },
   { nombre: "Marzo", dias: 31 },
   { nombre: "Abril", dias: 30 },
   { nombre: "Mayo", dias: 31 },
-  { nombre: "Junio", dias: 30 }
+  { nombre: "Junio", dias: 30 },
+  { nombre: "Julio", dias: 31 },
+  { nombre: "Agosto", dias: 31 },
+  { nombre: "Septiembre", dias: 30 },
+  { nombre: "Octubre", dias: 31 },
+  { nombre: "Noviembre", dias: 30 },
+  { nombre: "Diciembre", dias: 31 }
 ];
-let mesActual = 5; // Junio
+let mesActual = 5; // Junio (índice 5)
 let diasDelMesActual = 30;
 
-// Días con fondo especial (fines de semana según el ejemplo)
+// Días con fondo especial
 function isWeekend(dia) {
-  // Basado en el ejemplo: días 1,7,8,14,15,21,22,28,29
   return [1,7,8,14,15,21,22,28,29].includes(dia);
 }
 
@@ -159,6 +187,7 @@ const NOMBRES_BASE = [
 // ==================== ESTADO GLOBAL ====================
 let trabajadores = [];
 let cuadrante = [];
+let tareas = [];
 let currentView = "home";
 
 // ==================== FUNCIONES AUXILIARES ====================
@@ -184,6 +213,21 @@ function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
   return maxSeguidos;
 }
 
+function getUrgenciaTarea(tarea) {
+  if (tarea.completada) return null;
+  const hoy = new Date();
+  const diaTarea = tarea.dia;
+  const diasRestantes = diaTarea - hoy.getDate();
+  if (diasRestantes <= 1 && diasRestantes >= 0) return "rojo";
+  if (diasRestantes <= 7 && diasRestantes > 1) return "amarillo";
+  if (diasRestantes > 7) return "verde";
+  return null;
+}
+
+function getTareasDelDia(dia) {
+  return tareas.filter(t => !t.completada && t.dia === dia);
+}
+
 // ==================== INICIALIZACIÓN ====================
 function inicializarTrabajadores() {
   trabajadores = NOMBRES_BASE.map((nombre, idx) => ({
@@ -198,10 +242,7 @@ function inicializarTrabajadores() {
 }
 
 function inicializarCuadrante() {
-  // Copiar la plantilla exactamente
   cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADRANTE));
-  
-  // Ajustar al número de días del mes actual
   cuadrante = cuadrante.map(fila => {
     const nuevaFila = [];
     for (let i = 0; i < diasDelMesActual; i++) {
@@ -211,40 +252,217 @@ function inicializarCuadrante() {
   });
 }
 
+function inicializarTareas() {
+  tareas = [
+    { id: "firma_doc", nombre: "📄 Firma documentación", dia: diasDelMesActual, completada: false, recurrente: true }
+  ];
+}
+
 function cargarDatos() {
-  const guardado = localStorage.getItem("cuadrante_laboral_v4");
+  const guardado = localStorage.getItem("cuadrante_laboral_v5");
   if (guardado) {
     try {
       const data = JSON.parse(guardado);
       trabajadores = data.trabajadores || [];
       cuadrante = data.cuadrante || [];
+      tareas = data.tareas || [];
       mesActual = data.mesActual !== undefined ? data.mesActual : 5;
       diasDelMesActual = MESES[mesActual].dias;
     } catch(e) { console.error(e); }
   }
   if (!trabajadores.length) inicializarTrabajadores();
   if (!cuadrante.length) inicializarCuadrante();
+  if (!tareas.length) inicializarTareas();
 }
 
 function guardarDatos() {
-  const data = { trabajadores, cuadrante, mesActual };
-  localStorage.setItem("cuadrante_laboral_v4", JSON.stringify(data));
+  const data = { trabajadores, cuadrante, tareas, mesActual };
+  localStorage.setItem("cuadrante_laboral_v5", JSON.stringify(data));
 }
 
-// ==================== RENDERIZADO ====================
+// ==================== CALENDARIO DE INICIO ====================
+function renderHome() {
+  const hoy = new Date();
+  const diaActual = hoy.getDate();
+  const diasDelMes = diasDelMesActual;
+  
+  // Generar calendario
+  let calendarioHtml = `<div class="card"><div class="card-header">📅 Calendario de tareas - ${MESES[mesActual].nombre}</div><div class="card-body">`;
+  calendarioHtml += `<div class="calendar-grid">`;
+  
+  const diasSemana = ["L", "M", "M", "J", "V", "S", "D"];
+  diasSemana.forEach(d => { calendarioHtml += `<div class="cal-weekday">${d}</div>`; });
+  
+  // Simular que el día 1 es lunes (ajustable)
+  for (let i = 1; i <= diasDelMes; i++) {
+    const tareasDia = getTareasDelDia(i);
+    let color = null;
+    if (tareasDia.some(t => getUrgenciaTarea(t) === "rojo")) color = "rojo";
+    else if (tareasDia.some(t => getUrgenciaTarea(t) === "amarillo")) color = "amarillo";
+    else if (tareasDia.some(t => getUrgenciaTarea(t) === "verde")) color = "verde";
+    
+    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
+  }
+  calendarioHtml += `</div></div></div>`;
+  
+  // Alertas de hoy
+  const tareasHoy = getTareasDelDia(diaActual);
+  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Tareas pendientes para hoy</div><div class="card-body">`;
+  if (tareasHoy.length === 0) {
+    alertasHtml += `<p style="color:#64748b;">No hay tareas pendientes para hoy</p>`;
+  } else {
+    tareasHoy.forEach(t => {
+      const urgencia = getUrgenciaTarea(t);
+      const colorClass = urgencia === "rojo" ? "urgente-rojo" : (urgencia === "amarillo" ? "urgente-amarillo" : "urgente-verde");
+      alertasHtml += `<div class="aviso ${urgencia === 'rojo' ? 'aviso-rojo' : ''}"><strong>${t.nombre}</strong> <span class="${colorClass}">(${urgencia === 'rojo' ? 'Muy urgente' : urgencia === 'amarillo' ? 'Urgente' : 'Poco urgente'})</span></div>`;
+    });
+  }
+  alertasHtml += `</div></div>`;
+  
+  // Alertas de trabajadores
+  let trabajadoresHtml = `<div class="card"><div class="card-header">⚠️ Alertas de personal</div><div class="card-body">`;
+  let hayAlertasPersonal = false;
+  
+  for (let i = 0; i < trabajadores.length; i++) {
+    const seguidos = getMaxDiasSeguidos(i);
+    if (seguidos > 6 && trabajadores[i].estado === "activo") {
+      alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
+      hayAlertasPersonal = true;
+    }
+  }
+  
+  for (const trab of trabajadores) {
+    if (trab.fechaFinBaja) {
+      const fechaFin = new Date(trab.fechaFinBaja);
+      const hoyDate = new Date();
+      const diff = Math.ceil((fechaFin - hoyDate) / (1000 * 60 * 60 * 24));
+      if (diff <= 7 && diff >= 0) {
+        alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trab.nombre} (${trab.estado}) finaliza el ${trab.fechaFinBaja}</div>`;
+        hayAlertasPersonal = true;
+      }
+    }
+  }
+  
+  if (!hayAlertasPersonal) alertasHtml += `<p style="color:#64748b;">No hay alertas de personal</p>`;
+  alertasHtml += `</div></div>`;
+  
+  document.getElementById("content").innerHTML = calendarioHtml + alertasHtml + trabajadoresHtml;
+  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
+}
+
+// ==================== GESTIÓN DE TAREAS ====================
+function renderTareas() {
+  let html = `<div class="card"><div class="card-header">✅ Lista de tareas</div><div class="card-body">`;
+  
+  if (tareas.length === 0) {
+    html += `<div class="empty-state">No hay tareas. Añade una nueva.</div>`;
+  } else {
+    tareas.forEach(tarea => {
+      const urgencia = getUrgenciaTarea(tarea);
+      let urgenciaTexto = "";
+      let urgenciaClase = "";
+      if (urgencia === "rojo") { urgenciaTexto = "🔴 Muy urgente"; urgenciaClase = "urgente-rojo"; }
+      else if (urgencia === "amarillo") { urgenciaTexto = "🟡 Urgente"; urgenciaClase = "urgente-amarillo"; }
+      else if (urgencia === "verde") { urgenciaTexto = "🟢 Poco urgente"; urgenciaClase = "urgente-verde"; }
+      else { urgenciaTexto = "✅ Completada"; urgenciaClase = ""; }
+      
+      const completadaClass = tarea.completada ? "completado" : "";
+      html += `<div class="checklist-item ${completadaClass}">
+        <div class="checklist-info">
+          <div class="checklist-nombre">${tarea.nombre}</div>
+          <div class="checklist-fecha">📅 Día ${tarea.dia} de cada mes</div>
+          <div class="checklist-urgente ${urgenciaClase}">${urgenciaTexto}</div>
+        </div>
+        ${!tarea.completada ? `<button class="completado-btn" onclick="completarTarea('${tarea.id}')">✓ Completar</button>` : `<span style="font-size:11px; color:#16a34a;">✔️ Completada este mes</span>`}
+        <button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${tarea.id}')">🗑</button>
+      </div>`;
+    });
+  }
+  
+  html += `<button class="btn-primary" style="margin-top:12px;" onclick="mostrarModalNuevaTarea()">➕ Añadir nueva tarea</button>`;
+  html += `</div></div>`;
+  html += `<div class="card"><div class="card-header">📌 Leyenda</div><div class="card-body"><div style="font-size:12px;">🔴 Rojo: Vence hoy o mañana<br>🟡 Amarillo: Vence en 2-7 días<br>🟢 Verde: Vence en más de 7 días</div></div></div>`;
+  
+  document.getElementById("content").innerHTML = html;
+}
+
+function mostrarModalNuevaTarea() {
+  const modal = document.createElement("div");
+  modal.className = "modal";
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3 style="margin-bottom:12px;">➕ Nueva tarea recurrente</h3>
+      <input type="text" id="nueva-tarea-nombre" placeholder="Nombre de la tarea (ej: Reponer lejía)">
+      <input type="number" id="nueva-tarea-dia" placeholder="Día del mes (1-31)" value="1" min="1" max="31">
+      <div class="modal-buttons">
+        <button onclick="guardarNuevaTarea()">Guardar</button>
+        <button onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function guardarNuevaTarea() {
+  const nombre = document.getElementById("nueva-tarea-nombre")?.value;
+  const dia = parseInt(document.getElementById("nueva-tarea-dia")?.value);
+  if (!nombre || isNaN(dia) || dia < 1 || dia > 31) {
+    mostrarToast("❌ Nombre y día válido requeridos", true);
+    return;
+  }
+  
+  const nuevaTarea = {
+    id: Date.now().toString(),
+    nombre: nombre,
+    dia: dia,
+    completada: false,
+    recurrente: true
+  };
+  tareas.push(nuevaTarea);
+  guardarDatos();
+  cerrarModal();
+  renderTareas();
+  if (currentView === "home") renderHome();
+  mostrarToast(`✅ Tarea "${nombre}" añadida`);
+}
+
+function completarTarea(id) {
+  const tarea = tareas.find(t => t.id === id);
+  if (tarea) {
+    tarea.completada = true;
+    guardarDatos();
+    mostrarToast(`✅ "${tarea.nombre}" completada`);
+    renderTareas();
+    if (currentView === "home") renderHome();
+  }
+}
+
+function eliminarTarea(id) {
+  if (confirm("¿Eliminar esta tarea?")) {
+    tareas = tareas.filter(t => t.id !== id);
+    guardarDatos();
+    renderTareas();
+    if (currentView === "home") renderHome();
+    mostrarToast("🗑 Tarea eliminada");
+  }
+}
+
+function cerrarModal() {
+  const modal = document.querySelector(".modal");
+  if (modal) modal.remove();
+}
+
+// ==================== CUADRANTE ====================
 function renderizarCuadrante() {
-  // Selector de meses
   let html = `<div class="month-selector">`;
   MESES.forEach((mes, idx) => {
     html += `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${mes.nombre}</button>`;
   });
   html += `<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button>`;
   html += `</div>`;
-  
   html += `<div class="aviso">📌 Toca cualquier celda para editarla. Los cambios se guardan automáticamente.</div>`;
-  html += `<div class="wrap">`
+  html += `<div class="wrap">`;
   html += `<table><thead><tr><th class="name">Nombre</th>`;
-  
   for (let d = 1; d <= diasDelMesActual; d++) {
     html += `<th class="${isWeekend(d) ? 'wkend' : ''}">${d}</th>`;
   }
@@ -255,7 +473,6 @@ function renderizarCuadrante() {
     const isBaja = trab.estado === "baja";
     html += `<tr class="${isBaja ? 'baja-row' : ''}">`;
     html += `<td class="name">${trab.nombre} ${getEstadoBadge(trab)}</td>`;
-    
     for (let d = 0; d < diasDelMesActual; d++) {
       const val = (cuadrante[i] && cuadrante[i][d] !== undefined) ? cuadrante[i][d] : "";
       let colorClass = "";
@@ -296,7 +513,8 @@ function cambiarMes(idx) {
   diasDelMesActual = MESES[idx].dias;
   inicializarCuadrante();
   guardarDatos();
-  renderizarCuadrante();
+  if (currentView === "cuadrante") renderizarCuadrante();
+  if (currentView === "home") renderHome();
   mostrarToast(`📅 Cambiado a ${MESES[idx].nombre}`);
 }
 
@@ -328,49 +546,15 @@ function importarNuevoCuadrante() {
   input.click();
 }
 
-function renderHome() {
-  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Alertas</div><div class="card-body">`;
-  let hayAlertas = false;
-  
-  // Trabajadores con más de 6 días seguidos
-  for (let i = 0; i < trabajadores.length; i++) {
-    const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > 6 && trabajadores[i].estado === "activo") {
-      alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
-      hayAlertas = true;
-    }
-  }
-  
-  // Bajas próximas
-  for (const trab of trabajadores) {
-    if (trab.fechaFinBaja) {
-      const fechaFin = new Date(trab.fechaFinBaja);
-      const hoy = new Date();
-      const diff = Math.ceil((fechaFin - hoy) / (1000 * 60 * 60 * 24));
-      if (diff <= 7 && diff >= 0) {
-        alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trab.nombre} (${trab.estado}) finaliza el ${trab.fechaFinBaja}</div>`;
-        hayAlertas = true;
-      }
-    }
-  }
-  
-  if (!hayAlertas) alertasHtml += `<p style="color:#64748b;">No hay alertas pendientes</p>`;
-  alertasHtml += `</div></div>`;
-  
-  document.getElementById("content").innerHTML = alertasHtml;
-  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
-}
-
+// ==================== PERSONAL ====================
 function renderTrabajadores() {
   let html = `<div class="worker-list">`;
   for (const trab of trabajadores) {
-    // Calcular horas totales del mes
     let totalHoras = 0;
     const fila = cuadrante[trab.id] || [];
     for (let i = 0; i < diasDelMesActual; i++) {
       totalHoras += getHorasTurno(fila[i]);
     }
-    
     html += `<div class="worker-item" onclick="verDetalleTrabajador(${trab.id})">
       <div class="worker-name">${trab.nombre} ${getEstadoBadge(trab)}</div>
       <div class="worker-summary">
@@ -430,7 +614,6 @@ function iniciarBaja(idTrabajador) {
   const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
   
   if (opcion) {
-    // Cubrir con trabajador nuevo
     const nuevoId = trabajadores.length;
     const nuevoNombre = prompt("Nombre del nuevo trabajador sustituto:", `SUSTITUTO_${trabajador.nombre}`);
     if (!nuevoNombre) return;
@@ -445,25 +628,19 @@ function iniciarBaja(idTrabajador) {
       notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}`
     });
     
-    // Copiar turnos desde el día de inicio
     const nuevaFila = [...(cuadrante[idTrabajador] || [])];
     for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
       nuevaFila[i] = cuadrante[idTrabajador][i] || "";
     }
     cuadrante.push(nuevaFila);
     
-    // Marcar baja del original
     trabajador.estado = "baja";
     trabajador.fechaInicioBaja = diaInicio;
-    
-    // Limpiar turnos del original desde el día de inicio
     for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
       if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L";
     }
-    
     mostrarToast(`✅ Baja cubierta por nuevo trabajador: ${nuevoNombre}`);
   } else {
-    // Redistribuir entre activos
     const turnosAPerdidos = [];
     for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
       const turno = cuadrante[idTrabajador]?.[i];
@@ -473,7 +650,7 @@ function iniciarBaja(idTrabajador) {
     }
     
     if (turnosAPerdidos.length === 0) {
-      mostrarToast("No hay turnos que redistribuir (el trabajador ya estaba libre)");
+      mostrarToast("No hay turnos que redistribuir");
       trabajador.estado = "baja";
       trabajador.fechaInicioBaja = diaInicio;
       guardarDatos();
@@ -481,22 +658,18 @@ function iniciarBaja(idTrabajador) {
       return;
     }
     
-    // Obtener activos (excluyendo al de baja)
     const activos = trabajadores.filter(t => t.id !== idTrabajador && t.estado === "activo");
     
     for (const turno of turnosAPerdidos) {
-      // Buscar candidato con menor carga que no supere 6 días seguidos
       let mejorCandidato = null;
       let menorCarga = Infinity;
       
       for (const candidato of activos) {
-        // Calcular carga actual del candidato
         let carga = 0;
         const filaCand = cuadrante[candidato.id] || [];
         for (let i = 0; i < diasDelMesActual; i++) {
           carga += getHorasTurno(filaCand[i]);
         }
-        
         const seguidosSiAcepta = getMaxDiasSeguidos(candidato.id, turno.dia) + 1;
         if (seguidosSiAcepta <= 6 && carga < menorCarga) {
           menorCarga = carga;
@@ -507,20 +680,18 @@ function iniciarBaja(idTrabajador) {
       if (mejorCandidato) {
         if (!cuadrante[mejorCandidato.id]) cuadrante[mejorCandidato.id] = [];
         cuadrante[mejorCandidato.id][turno.dia] = turno.turno;
-        mostrarToast(`📌 Turno ${turno.turno} del día ${turno.dia + 1} asignado a ${mejorCandidato.nombre}`);
+        mostrarToast(`📌 Turno ${turno.turno} día ${turno.dia + 1} asignado a ${mejorCandidato.nombre}`);
       } else {
-        mostrarToast(`⚠️ No se pudo asignar el turno del día ${turno.dia + 1} (${turno.turno}). Queda pendiente.`, true);
+        mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia + 1}`, true);
       }
     }
     
-    // Marcar baja del original
     trabajador.estado = "baja";
     trabajador.fechaInicioBaja = diaInicio;
     for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
       if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L";
     }
-    
-    mostrarToast(`✅ Baja de ${trabajador.nombre} procesada. Turnos redistribuidos.`);
+    mostrarToast(`✅ Baja de ${trabajador.nombre} procesada`);
   }
   
   guardarDatos();
@@ -528,18 +699,19 @@ function iniciarBaja(idTrabajador) {
   if (currentView === "cuadrante") renderizarCuadrante();
 }
 
+// ==================== SEGURO ====================
 function renderSeguro() {
   document.getElementById("content").innerHTML = `
     <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body">
       <button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia de seguridad</button>
       <button class="btn-secondary" onclick="triggerImport()">📂 Importar copia de seguridad</button>
-      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">📌 La copia incluye: trabajadores, cuadrante y configuración de meses.</div>
+      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">📌 La copia incluye: trabajadores, cuadrante, tareas y configuración de meses.</div>
     </div></div>
   `;
 }
 
 function exportarDatos() {
-  const data = { trabajadores, cuadrante, mesActual };
+  const data = { trabajadores, cuadrante, tareas, mesActual };
   const dataStr = JSON.stringify(data, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -562,6 +734,7 @@ function handleImport(event) {
       if (imported.trabajadores && imported.cuadrante) {
         trabajadores = imported.trabajadores;
         cuadrante = imported.cuadrante;
+        tareas = imported.tareas || [];
         mesActual = imported.mesActual !== undefined ? imported.mesActual : 5;
         diasDelMesActual = MESES[mesActual].dias;
         guardarDatos();
@@ -574,6 +747,7 @@ function handleImport(event) {
   event.target.value = "";
 }
 
+// ==================== NAVEGACIÓN ====================
 function mostrarToast(msg, isError = false) {
   const toast = document.getElementById("toast");
   toast.textContent = msg;
@@ -590,6 +764,7 @@ function showView(view) {
   if (view === "home") renderHome();
   else if (view === "cuadrante") renderizarCuadrante();
   else if (view === "trabajadores") renderTrabajadores();
+  else if (view === "tareas") renderTareas();
   else if (view === "seguro") renderSeguro();
 }
 
@@ -606,6 +781,11 @@ window.exportarDatos = exportarDatos;
 window.triggerImport = triggerImport;
 window.handleImport = handleImport;
 window.showView = showView;
+window.completarTarea = completarTarea;
+window.eliminarTarea = eliminarTarea;
+window.mostrarModalNuevaTarea = mostrarModalNuevaTarea;
+window.guardarNuevaTarea = guardarNuevaTarea;
+window.cerrarModal = cerrarModal;
 
 // Inicializar
 cargarDatos();
