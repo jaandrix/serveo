@@ -29,14 +29,6 @@
   .card-header { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
   .card-body { padding: 14px 16px; }
   
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-  .cal-day { background: #fff; border-radius: 12px; padding: 10px 4px; border: 1px solid #e2e8f0; }
-  .cal-day-num { font-size: 14px; font-weight: 600; }
-  .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin: 5px auto 0; }
-  .cal-dot.rojo { background: #dc2626; }
-  .cal-dot.amarillo { background: #d97706; }
-  .cal-dot.verde { background: #16a34a; }
-  
   .wrap { overflow-x: auto; padding: 1rem 0; }
   table { border-collapse: collapse; font-size: 11px; min-width: 900px; width: 100%; }
   th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 4px 2px; min-width: 28px; }
@@ -101,24 +93,27 @@ const HORAS_POR_CODIGO = {
   "F1": 7, "N": 10, "M": 7, "T": 7,
   "U": 0, "G": 0, "H": 0
 };
-// Para números del 2 al 9, usar el propio número como horas
 for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
 
 // ==================== MESES Y CUADRANTES ====================
 const MESES = [
-  { nombre: "Enero", dias: 31, codigo: 0 },
-  { nombre: "Febrero", dias: 28, codigo: 1 },
-  { nombre: "Marzo", dias: 31, codigo: 2 },
-  { nombre: "Abril", dias: 30, codigo: 3 },
-  { nombre: "Mayo", dias: 31, codigo: 4 },
-  { nombre: "Junio", dias: 30, codigo: 5 }
+  { nombre: "Enero", dias: 31 },
+  { nombre: "Febrero", dias: 28 },
+  { nombre: "Marzo", dias: 31 },
+  { nombre: "Abril", dias: 30 },
+  { nombre: "Mayo", dias: 31 },
+  { nombre: "Junio", dias: 30 }
 ];
-let mesActual = 5; // Junio (índice 5)
+let mesActual = 5; // Junio
 let diasDelMesActual = 30;
 
-const WEEKENDS = [1, 7, 8, 14, 15, 21, 22, 28, 29];
+// Días con fondo especial (fines de semana según el ejemplo)
+function isWeekend(dia) {
+  // Basado en el ejemplo: días 1,7,8,14,15,21,22,28,29
+  return [1,7,8,14,15,21,22,28,29].includes(dia);
+}
 
-// Plantilla de cuadrante (la misma para todos los meses por ahora)
+// Plantilla original del cuadrante (27 filas, 31 columnas)
 const PLANTILLA_CUADRANTE = [
   ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
   ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
@@ -164,8 +159,30 @@ const NOMBRES_BASE = [
 // ==================== ESTADO GLOBAL ====================
 let trabajadores = [];
 let cuadrante = [];
-let checklist = [];
 let currentView = "home";
+
+// ==================== FUNCIONES AUXILIARES ====================
+function getHorasTurno(codigo) {
+  if (codigo === undefined || codigo === null || codigo === "") return 0;
+  const num = parseInt(codigo);
+  if (!isNaN(num) && num >= 2 && num <= 9) return num;
+  return HORAS_POR_CODIGO[codigo] || 0;
+}
+
+function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
+  const fila = cuadrante[idx] || [];
+  let maxSeguidos = 0;
+  let actual = 0;
+  for (let i = 0; i <= hastaDia; i++) {
+    const val = fila[i];
+    const tieneTurno = val && val !== "L" && val !== "D" && val !== "";
+    if (tieneTurno) {
+      actual++;
+      maxSeguidos = Math.max(maxSeguidos, actual);
+    } else actual = 0;
+  }
+  return maxSeguidos;
+}
 
 // ==================== INICIALIZACIÓN ====================
 function inicializarTrabajadores() {
@@ -181,227 +198,80 @@ function inicializarTrabajadores() {
 }
 
 function inicializarCuadrante() {
-  cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADrANTE));
+  // Copiar la plantilla exactamente
+  cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADRANTE));
+  
   // Ajustar al número de días del mes actual
   cuadrante = cuadrante.map(fila => {
-    const nuevaFila = [...fila];
-    if (nuevaFila.length > diasDelMesActual) nuevaFila.length = diasDelMesActual;
-    while (nuevaFila.length < diasDelMesActual) nuevaFila.push("");
+    const nuevaFila = [];
+    for (let i = 0; i < diasDelMesActual; i++) {
+      nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
+    }
     return nuevaFila;
   });
 }
 
-function inicializarChecklist() {
-  checklist = [{
-    id: "firma_doc",
-    nombre: "📄 Firma documentación",
-    dia: diasDelMesActual,
-    recurrente: true,
-    completada: false,
-    completadaEnEsteMes: false
-  }];
-}
-
 function cargarDatos() {
-  const guardado = localStorage.getItem("cuadrante_laboral_v3");
+  const guardado = localStorage.getItem("cuadrante_laboral_v4");
   if (guardado) {
-    const data = JSON.parse(guardado);
-    trabajadores = data.trabajadores || [];
-    cuadrante = data.cuadrante || [];
-    checklist = data.checklist || [];
-    mesActual = data.mesActual !== undefined ? data.mesActual : 5;
-    diasDelMesActual = MESES[mesActual].dias;
+    try {
+      const data = JSON.parse(guardado);
+      trabajadores = data.trabajadores || [];
+      cuadrante = data.cuadrante || [];
+      mesActual = data.mesActual !== undefined ? data.mesActual : 5;
+      diasDelMesActual = MESES[mesActual].dias;
+    } catch(e) { console.error(e); }
   }
   if (!trabajadores.length) inicializarTrabajadores();
   if (!cuadrante.length) inicializarCuadrante();
-  if (!checklist.length) inicializarChecklist();
-  actualizarChecklistDia();
 }
 
 function guardarDatos() {
-  const data = { trabajadores, cuadrante, checklist, mesActual };
-  localStorage.setItem("cuadrante_laboral_v3", JSON.stringify(data));
-}
-
-function actualizarChecklistDia() {
-  const firma = checklist.find(t => t.id === "firma_doc");
-  if (firma) firma.dia = diasDelMesActual;
-}
-
-// ==================== CÁLCULO DE CARGAS ====================
-function getHorasTurno(codigo) {
-  if (codigo === undefined || codigo === null || codigo === "") return 0;
-  const num = parseInt(codigo);
-  if (!isNaN(num) && num >= 2 && num <= 9) return num;
-  return HORAS_POR_CODIGO[codigo] || 0;
-}
-
-function getCargaTrabajador(idx) {
-  const fila = cuadrante[idx] || [];
-  let totalHoras = 0;
-  for (let i = 0; i < diasDelMesActual; i++) {
-    totalHoras += getHorasTurno(fila[i]);
-  }
-  return totalHoras;
-}
-
-function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
-  const fila = cuadrante[idx] || [];
-  let maxSeguidos = 0;
-  let actual = 0;
-  for (let i = 0; i <= hastaDia; i++) {
-    const tieneTurno = fila[i] && fila[i] !== "L" && fila[i] !== "D" && fila[i] !== "";
-    if (tieneTurno) {
-      actual++;
-      maxSeguidos = Math.max(maxSeguidos, actual);
-    } else actual = 0;
-  }
-  return maxSeguidos;
-}
-
-// ==================== BAJA Y REDISTRIBUCIÓN ====================
-function iniciarBaja(idTrabajador) {
-  const trabajador = trabajadores.find(t => t.id === idTrabajador);
-  if (!trabajador) return;
-  
-  const fechaInicio = prompt("📅 Fecha de inicio de la baja (día del mes, 1-31):", "");
-  if (!fechaInicio) return;
-  const diaInicio = parseInt(fechaInicio);
-  if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) {
-    mostrarToast("❌ Fecha inválida", true);
-    return;
-  }
-  
-  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
-  
-  if (opcion) {
-    // Cubrir con trabajador nuevo
-    const nuevoId = trabajadores.length;
-    const nuevoNombre = prompt("Nombre del nuevo trabajador sustituto:", `SUSTITUTO_${trabajador.nombre}`);
-    if (!nuevoNombre) return;
-    
-    trabajadores.push({
-      id: nuevoId,
-      nombre: nuevoNombre,
-      estado: "sustituto",
-      fechaInicioBaja: null,
-      fechaFinBaja: null,
-      cubreA: trabajador.id,
-      notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}`
-    });
-    
-    // Copiar turnos desde el día de inicio
-    const nuevaFila = [...cuadrante[idTrabajador]];
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
-      nuevaFila[i] = cuadrante[idTrabajador][i] || "";
-    }
-    cuadrante.push(nuevaFila);
-    
-    // Marcar baja del original
-    trabajador.estado = "baja";
-    trabajador.fechaInicioBaja = diaInicio;
-    trabajador.fechaFinBaja = null;
-    
-    // Limpiar turnos del original desde el día de inicio
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
-      cuadrante[idTrabajador][i] = "L";
-    }
-    
-    mostrarToast(`✅ Baja cubierta por nuevo trabajador: ${nuevoNombre}`);
-  } else {
-    // Redistribuir entre activos
-    const turnosAPerdidos = [];
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
-      const turno = cuadrante[idTrabajador][i];
-      if (turno && turno !== "L" && turno !== "D" && turno !== "") {
-        turnosAPerdidos.push({ dia: i, turno: turno });
-      }
-    }
-    
-    if (turnosAPerdidos.length === 0) {
-      mostrarToast("No hay turnos que redistribuir (el trabajador ya estaba libre)");
-      trabajador.estado = "baja";
-      trabajador.fechaInicioBaja = diaInicio;
-      guardarDatos();
-      renderTrabajadores();
-      return;
-    }
-    
-    // Obtener activos (excluyendo al de baja y los que ya están de baja)
-    const activos = trabajadores.filter(t => t.id !== idTrabajador && t.estado === "activo");
-    
-    for (const turno of turnosAPerdidos) {
-      // Buscar candidato con menor carga y que no supere 6 días seguidos
-      let mejorCandidato = null;
-      let menorCarga = Infinity;
-      
-      for (const candidato of activos) {
-        const cargaActual = getCargaTrabajador(candidato.id);
-        const seguidosSiAcepta = getMaxDiasSeguidos(candidato.id, turno.dia) + 1;
-        
-        if (seguidosSiAcepta <= 6 && cargaActual < menorCarga) {
-          menorCarga = cargaActual;
-          mejorCandidato = candidato;
-        }
-      }
-      
-      if (mejorCandidato) {
-        // Asignar el turno al candidato
-        cuadrante[mejorCandidato.id][turno.dia] = turno.turno;
-        mostrarToast(`📌 Turno ${turno.turno} del día ${turno.dia + 1} asignado a ${mejorCandidato.nombre}`);
-      } else {
-        mostrarToast(`⚠️ No se pudo asignar el turno del día ${turno.dia + 1} (${turno.turno}). Queda pendiente.`);
-      }
-    }
-    
-    // Marcar baja del original y limpiar sus turnos
-    trabajador.estado = "baja";
-    trabajador.fechaInicioBaja = diaInicio;
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
-      cuadrante[idTrabajador][i] = "L";
-    }
-    
-    mostrarToast(`✅ Baja de ${trabajador.nombre} procesada. Turnos redistribuidos.`);
-  }
-  
-  guardarDatos();
-  renderTrabajadores();
-  if (currentView === "cuadrante") renderizarCuadrante();
+  const data = { trabajadores, cuadrante, mesActual };
+  localStorage.setItem("cuadrante_laboral_v4", JSON.stringify(data));
 }
 
 // ==================== RENDERIZADO ====================
 function renderizarCuadrante() {
-  const monthSelector = `<div class="month-selector">${MESES.map((m, idx) => `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${m.nombre}</button>`).join("")}<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar cuadrante</button></div>`;
+  // Selector de meses
+  let html = `<div class="month-selector">`;
+  MESES.forEach((mes, idx) => {
+    html += `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${mes.nombre}</button>`;
+  });
+  html += `<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button>`;
+  html += `</div>`;
   
-  let html = monthSelector + `<div class="aviso">📌 Toca cualquier celda para editarla. Los turnos se guardan automáticamente.</div><div class="wrap"><table><thead><tr><th class="name">Nombre</th>`;
+  html += `<div class="aviso">📌 Toca cualquier celda para editarla. Los cambios se guardan automáticamente.</div>`;
+  html += `<div class="wrap">`
+  html += `<table><thead><tr><th class="name">Nombre</th>`;
+  
   for (let d = 1; d <= diasDelMesActual; d++) {
-    html += `<th class="${WEEKENDS.includes(d) ? 'wkend' : ''}">${d}</th>`;
+    html += `<th class="${isWeekend(d) ? 'wkend' : ''}">${d}</th>`;
   }
   html += `</tr></thead><tbody>`;
   
-  trabajadores.forEach((trab, i) => {
-    const isBaja = trabajadorEstaDeBaja(trab);
+  for (let i = 0; i < trabajadores.length; i++) {
+    const trab = trabajadores[i];
+    const isBaja = trab.estado === "baja";
     html += `<tr class="${isBaja ? 'baja-row' : ''}">`;
     html += `<td class="name">${trab.nombre} ${getEstadoBadge(trab)}</td>`;
+    
     for (let d = 0; d < diasDelMesActual; d++) {
-      const val = cuadrante[i]?.[d] || "";
+      const val = (cuadrante[i] && cuadrante[i][d] !== undefined) ? cuadrante[i][d] : "";
       let colorClass = "";
       if (val === "L") colorClass = "L";
       else if (val === "D") colorClass = "D";
       else if (val === "F1") colorClass = "F1";
       else if (val === "N") colorClass = "N";
-      const wkendClass = WEEKENDS.includes(d + 1) ? "wkend" : "";
+      const wkendClass = isWeekend(d + 1) ? "wkend" : "";
       html += `<td class="editable-cell ${colorClass} ${wkendClass}" onclick="editarCelda(${i},${d},'${val.replace(/'/g, "\\'")}')">${val}</td>`;
     }
     html += `</tr>`;
-  });
+  }
   html += `</tbody></table></div>`;
+  
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
-}
-
-function trabajadorEstaDeBaja(trab) {
-  return trab.estado === "baja" || (trab.estado === "sustituto" && trab.fechaFinBaja && new Date(trab.fechaFinBaja) < new Date());
 }
 
 function getEstadoBadge(trab) {
@@ -413,6 +283,7 @@ function getEstadoBadge(trab) {
 function editarCelda(fila, col, valorActual) {
   const nuevoValor = prompt(`Editar celda (${trabajadores[fila].nombre}, día ${col + 1})`, valorActual);
   if (nuevoValor !== null) {
+    if (!cuadrante[fila]) cuadrante[fila] = [];
     cuadrante[fila][col] = nuevoValor;
     guardarDatos();
     mostrarToast(`✅ Cambiado a "${nuevoValor}"`);
@@ -424,10 +295,8 @@ function cambiarMes(idx) {
   mesActual = idx;
   diasDelMesActual = MESES[idx].dias;
   inicializarCuadrante();
-  actualizarChecklistDia();
   guardarDatos();
-  if (currentView === "cuadrante") renderizarCuadrante();
-  if (currentView === "home") renderHome();
+  renderizarCuadrante();
   mostrarToast(`📅 Cambiado a ${MESES[idx].nombre}`);
 }
 
@@ -448,7 +317,7 @@ function importarNuevoCuadrante() {
           mostrarToast("✅ Cuadrante importado correctamente");
           renderizarCuadrante();
         } else {
-          mostrarToast("❌ Formato inválido: debe ser una matriz de 27x31", true);
+          mostrarToast("❌ Formato inválido: debe ser una matriz con el mismo número de trabajadores", true);
         }
       } catch(err) {
         mostrarToast("❌ Archivo no válido", true);
@@ -460,47 +329,52 @@ function importarNuevoCuadrante() {
 }
 
 function renderHome() {
-  const ahora = new Date();
-  const hoy = ahora.getDate();
-  let avisosHtml = `<div class="card"><div class="card-header">⚠️ Alertas</div><div class="card-body">`;
-  let hayAvisos = false;
+  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Alertas</div><div class="card-body">`;
+  let hayAlertas = false;
   
-  // Avisos de bajas próximas a terminar
+  // Trabajadores con más de 6 días seguidos
+  for (let i = 0; i < trabajadores.length; i++) {
+    const seguidos = getMaxDiasSeguidos(i);
+    if (seguidos > 6 && trabajadores[i].estado === "activo") {
+      alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
+      hayAlertas = true;
+    }
+  }
+  
+  // Bajas próximas
   for (const trab of trabajadores) {
-    if (trab.fechaFinBaja && trab.estado !== "activo") {
+    if (trab.fechaFinBaja) {
       const fechaFin = new Date(trab.fechaFinBaja);
-      const diff = Math.ceil((fechaFin - ahora) / (1000 * 60 * 60 * 24));
+      const hoy = new Date();
+      const diff = Math.ceil((fechaFin - hoy) / (1000 * 60 * 60 * 24));
       if (diff <= 7 && diff >= 0) {
-        avisosHtml += `<div class="aviso aviso-rojo">⚠️ ${trab.nombre} (${trab.estado}) finaliza el ${trab.fechaFinBaja}</div>`;
-        hayAvisos = true;
+        alertasHtml += `<div class="aviso aviso-rojo">⚠️ ${trab.nombre} (${trab.estado}) finaliza el ${trab.fechaFinBaja}</div>`;
+        hayAlertas = true;
       }
     }
   }
   
-  // Aviso de trabajadores con más de 6 días seguidos
-  for (let i = 0; i < trabajadores.length; i++) {
-    const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > 6 && trabajadores[i].estado === "activo") {
-      avisosHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
-      hayAvisos = true;
-    }
-  }
+  if (!hayAlertas) alertasHtml += `<p style="color:#64748b;">No hay alertas pendientes</p>`;
+  alertasHtml += `</div></div>`;
   
-  if (!hayAvisos) avisosHtml += `<p style="color:#64748b;">No hay alertas pendientes</p>`;
-  avisosHtml += `</div></div>`;
-  
-  document.getElementById("content").innerHTML = avisosHtml;
+  document.getElementById("content").innerHTML = alertasHtml;
   document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
 }
 
 function renderTrabajadores() {
   let html = `<div class="worker-list">`;
   for (const trab of trabajadores) {
-    const carga = getCargaTrabajador(trab.id);
+    // Calcular horas totales del mes
+    let totalHoras = 0;
+    const fila = cuadrante[trab.id] || [];
+    for (let i = 0; i < diasDelMesActual; i++) {
+      totalHoras += getHorasTurno(fila[i]);
+    }
+    
     html += `<div class="worker-item" onclick="verDetalleTrabajador(${trab.id})">
       <div class="worker-name">${trab.nombre} ${getEstadoBadge(trab)}</div>
       <div class="worker-summary">
-        <span>📊 ${carga} horas mes</span>
+        <span>📊 ${totalHoras} horas mes</span>
         <span>📆 Máx seguidos: ${getMaxDiasSeguidos(trab.id)} días</span>
       </div>
       ${trab.estado === "activo" ? `<button class="btn-secondary" style="margin-top:8px;" onclick="event.stopPropagation();iniciarBaja(${trab.id})">🔴 Marcar baja</button>` : ""}
@@ -533,8 +407,125 @@ function añadirTrabajador() {
 function verDetalleTrabajador(id) {
   const t = trabajadores.find(t => t.id === id);
   if (!t) return;
-  const carga = getCargaTrabajador(id);
-  alert(`${t.nombre}\n\n📊 Horas este mes: ${carga}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.fechaInicioBaja ? `\n📅 Baja desde día ${t.fechaInicioBaja}` : ""}${t.cubreA ? `\n👥 Sustituye a: ${trabajadores.find(t2 => t2.id === t.cubreA)?.nombre}` : ""}`);
+  let totalHoras = 0;
+  const fila = cuadrante[id] || [];
+  for (let i = 0; i < diasDelMesActual; i++) {
+    totalHoras += getHorasTurno(fila[i]);
+  }
+  alert(`${t.nombre}\n\n📊 Horas este mes: ${totalHoras}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.fechaInicioBaja ? `\n📅 Baja desde día ${t.fechaInicioBaja}` : ""}${t.cubreA ? `\n👥 Sustituye a: ${trabajadores.find(t2 => t2.id === t.cubreA)?.nombre}` : ""}`);
+}
+
+function iniciarBaja(idTrabajador) {
+  const trabajador = trabajadores.find(t => t.id === idTrabajador);
+  if (!trabajador) return;
+  
+  const fechaInicio = prompt("📅 Fecha de inicio de la baja (día del mes, 1-31):", "");
+  if (!fechaInicio) return;
+  const diaInicio = parseInt(fechaInicio);
+  if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) {
+    mostrarToast("❌ Fecha inválida", true);
+    return;
+  }
+  
+  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
+  
+  if (opcion) {
+    // Cubrir con trabajador nuevo
+    const nuevoId = trabajadores.length;
+    const nuevoNombre = prompt("Nombre del nuevo trabajador sustituto:", `SUSTITUTO_${trabajador.nombre}`);
+    if (!nuevoNombre) return;
+    
+    trabajadores.push({
+      id: nuevoId,
+      nombre: nuevoNombre,
+      estado: "sustituto",
+      fechaInicioBaja: null,
+      fechaFinBaja: null,
+      cubreA: trabajador.id,
+      notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}`
+    });
+    
+    // Copiar turnos desde el día de inicio
+    const nuevaFila = [...(cuadrante[idTrabajador] || [])];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      nuevaFila[i] = cuadrante[idTrabajador][i] || "";
+    }
+    cuadrante.push(nuevaFila);
+    
+    // Marcar baja del original
+    trabajador.estado = "baja";
+    trabajador.fechaInicioBaja = diaInicio;
+    
+    // Limpiar turnos del original desde el día de inicio
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L";
+    }
+    
+    mostrarToast(`✅ Baja cubierta por nuevo trabajador: ${nuevoNombre}`);
+  } else {
+    // Redistribuir entre activos
+    const turnosAPerdidos = [];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      const turno = cuadrante[idTrabajador]?.[i];
+      if (turno && turno !== "L" && turno !== "D" && turno !== "") {
+        turnosAPerdidos.push({ dia: i, turno: turno });
+      }
+    }
+    
+    if (turnosAPerdidos.length === 0) {
+      mostrarToast("No hay turnos que redistribuir (el trabajador ya estaba libre)");
+      trabajador.estado = "baja";
+      trabajador.fechaInicioBaja = diaInicio;
+      guardarDatos();
+      renderTrabajadores();
+      return;
+    }
+    
+    // Obtener activos (excluyendo al de baja)
+    const activos = trabajadores.filter(t => t.id !== idTrabajador && t.estado === "activo");
+    
+    for (const turno of turnosAPerdidos) {
+      // Buscar candidato con menor carga que no supere 6 días seguidos
+      let mejorCandidato = null;
+      let menorCarga = Infinity;
+      
+      for (const candidato of activos) {
+        // Calcular carga actual del candidato
+        let carga = 0;
+        const filaCand = cuadrante[candidato.id] || [];
+        for (let i = 0; i < diasDelMesActual; i++) {
+          carga += getHorasTurno(filaCand[i]);
+        }
+        
+        const seguidosSiAcepta = getMaxDiasSeguidos(candidato.id, turno.dia) + 1;
+        if (seguidosSiAcepta <= 6 && carga < menorCarga) {
+          menorCarga = carga;
+          mejorCandidato = candidato;
+        }
+      }
+      
+      if (mejorCandidato) {
+        if (!cuadrante[mejorCandidato.id]) cuadrante[mejorCandidato.id] = [];
+        cuadrante[mejorCandidato.id][turno.dia] = turno.turno;
+        mostrarToast(`📌 Turno ${turno.turno} del día ${turno.dia + 1} asignado a ${mejorCandidato.nombre}`);
+      } else {
+        mostrarToast(`⚠️ No se pudo asignar el turno del día ${turno.dia + 1} (${turno.turno}). Queda pendiente.`, true);
+      }
+    }
+    
+    // Marcar baja del original
+    trabajador.estado = "baja";
+    trabajador.fechaInicioBaja = diaInicio;
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L";
+    }
+    
+    mostrarToast(`✅ Baja de ${trabajador.nombre} procesada. Turnos redistribuidos.`);
+  }
+  
+  guardarDatos();
+  renderTrabajadores();
+  if (currentView === "cuadrante") renderizarCuadrante();
 }
 
 function renderSeguro() {
@@ -542,13 +533,13 @@ function renderSeguro() {
     <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body">
       <button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia de seguridad</button>
       <button class="btn-secondary" onclick="triggerImport()">📂 Importar copia de seguridad</button>
-      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">📌 La copia incluye: trabajadores, cuadrante, checklist y configuración de meses.</div>
+      <div style="margin-top: 12px; font-size: 12px; color: #64748b;">📌 La copia incluye: trabajadores, cuadrante y configuración de meses.</div>
     </div></div>
   `;
 }
 
 function exportarDatos() {
-  const data = { trabajadores, cuadrante, checklist, mesActual };
+  const data = { trabajadores, cuadrante, mesActual };
   const dataStr = JSON.stringify(data, null, 2);
   const blob = new Blob([dataStr], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -571,7 +562,6 @@ function handleImport(event) {
       if (imported.trabajadores && imported.cuadrante) {
         trabajadores = imported.trabajadores;
         cuadrante = imported.cuadrante;
-        checklist = imported.checklist || [];
         mesActual = imported.mesActual !== undefined ? imported.mesActual : 5;
         diasDelMesActual = MESES[mesActual].dias;
         guardarDatos();
