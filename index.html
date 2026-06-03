@@ -33,10 +33,11 @@
   .cal-day { background: #fff; border-radius: 12px; padding: 10px 4px; border: 1px solid #e2e8f0; }
   .cal-day-num { font-size: 14px; font-weight: 600; }
   .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin: 5px auto 0; }
-  .cal-dot.rojo { background: #dc2626; box-shadow: 0 0 4px #dc2626; }
-  .cal-dot.amarillo { background: #d97706; box-shadow: 0 0 4px #d97706; }
-  .cal-dot.verde { background: #16a34a; box-shadow: 0 0 4px #16a34a; }
+  .cal-dot.rojo { background: #dc2626; }
+  .cal-dot.amarillo { background: #d97706; }
+  .cal-dot.verde { background: #16a34a; }
   .cal-weekday { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
+  .festivo-icon { font-size: 10px; margin-left: 2px; }
   
   .checklist-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
   .checklist-info { flex: 1; }
@@ -59,6 +60,8 @@
   .D { color: #3B6D11; font-weight: 600; }
   .F1 { color: #A32D2D; font-weight: 600; }
   .N { color: #854F0B; font-weight: 600; }
+  .HE { color: #7c3aed; font-weight: 600; }
+  .LIB { color: #0891b2; font-weight: 600; }
   .wkend { background: #eef2ff !important; }
   .editable-cell { cursor: pointer; transition: background 0.1s; }
   .editable-cell:active { background: #dbeafe; }
@@ -69,6 +72,7 @@
   .worker-name { font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .badge-baja { background: #dc2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
   .badge-sustituto { background: #d97706; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+  .badge-embarazo { background: #ec489a; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
   .worker-summary { font-size: 11px; color: #64748b; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
   
   .btn-primary { background: #0f172a; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
@@ -78,6 +82,7 @@
   .aviso { background: #fef3c7; border-left: 4px solid #d97706; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 12px; }
   .aviso-rojo { background: #fee2e2; border-left-color: #dc2626; }
   .aviso-verde { background: #dcfce7; border-left-color: #16a34a; }
+  .aviso-azul { background: #dbeafe; border-left-color: #2563eb; }
   
   .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
   .modal-content { background: #fff; border-radius: 20px; padding: 20px; width: 90%; max-width: 340px; max-height: 80vh; overflow-y: auto; }
@@ -99,6 +104,8 @@
   
   .split-lists { display: flex; gap: 12px; flex-wrap: wrap; }
   .split-lists > div { flex: 1; min-width: 140px; }
+  
+  .banner-vencido { background: #dc2626; color: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: center; }
 </style>
 </head>
 <body>
@@ -118,21 +125,45 @@
 <input type="file" id="import-legal-file" class="import-input" accept=".json" onchange="handleLegalImport(event)">
 
 <script>
-// ==================== CONFIGURACIÓN HORAS ====================
+// ==================== PARÁMETROS LEGALES COMPLETOS ====================
+let PARAMETROS_LEGALES = {
+  // Convenio
+  jornadaAnualDia: 1602,
+  jornadaAnualNoche: 1430,
+  jornadaMaximaDiaria: 9,
+  jornadaMinimaDiaria: 7,
+  descansoEntreJornadas: 12, // horas mínimas
+  descansoSemanalMinimo: 36, // horas consecutivas
+  franjaNocturna: { inicio: 22, fin: 6 },
+  festivosEspeciales: ["12-25", "01-01"], // 25-dic y 1-ene
+  trabajoLibranzaGeneraDescanso: true,
+  
+  // Estatuto de los Trabajadores
+  horasExtrasMaximasAnuales: 80,
+  descansoSemanalAcumulable: true,
+  vacacionesMinimasAnuales: 30,
+  pausaJornadaMinima: 15, // minutos si jornada > 6h
+  jornadaMaximaSemanal: 40,
+  jornadaNocturnaMaxima: 8, // horas promedio en 15 días
+  preavisoCuadranteDias: 5,
+  
+  // Otros
+  edadMinima18HorasMaxima: 8,
+  registroJornadaObligatorio: true,
+  horasComplementariasMaxPorcentaje: 30
+};
+
+// Horas por código (configurable)
 let HORAS_POR_CODIGO = {
   "L": 0, "D": 0, "": 0,
-  "F1": 7, "N": 10, "M": 7, "T": 7,
+  "F1": 7, "N": 8, "M": 7, "T": 7,
+  "HE": 0, "LIB": 0,
   "U": 0, "G": 0, "H": 0
 };
 for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
 
-// Parámetros legales
-let PARAMETROS_LEGALES = {
-  maxDiasSeguidos: 6,
-  minDescansosSemanales: 2,  // días libres a la semana (L o D)
-  horasMaximasSemanales: 40,
-  horasMaximasMensuales: 160
-};
+// Festivos fijos (25-dic, 1-ene) y variables (se pueden importar)
+let FESTIVOS = ["12-25", "01-01"];
 
 // ==================== MESES ====================
 const MESES = [
@@ -143,9 +174,11 @@ const MESES = [
 ];
 let mesActual = 5;
 let diasDelMesActual = 30;
+let añoActual = 2026;
 
 function isWeekend(dia) { return [1,7,8,14,15,21,22,28,29].includes(dia); }
 
+// Plantilla base
 const PLANTILLA_CUADRANTE = [
   ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
   ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
@@ -209,10 +242,8 @@ function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
   for (let i = 0; i <= hastaDia; i++) {
     const val = fila[i];
     const tieneTurno = val && val !== "L" && val !== "D" && val !== "";
-    if (tieneTurno) {
-      actual++;
-      maxSeguidos = Math.max(maxSeguidos, actual);
-    } else actual = 0;
+    if (tieneTurno) { actual++; maxSeguidos = Math.max(maxSeguidos, actual); }
+    else actual = 0;
   }
   return maxSeguidos;
 }
@@ -229,10 +260,18 @@ function trabajadorHaTrabajado(idx) {
 function getTotalHorasTrabajador(idx) {
   let total = 0;
   const fila = cuadrante[idx] || [];
-  for (let i = 0; i < diasDelMesActual; i++) {
-    total += getHorasTurno(fila[i]);
-  }
+  for (let i = 0; i < diasDelMesActual; i++) total += getHorasTurno(fila[i]);
   return total;
+}
+
+function esFestivo(dia, mes) {
+  const mesStr = (mes + 1).toString().padStart(2, "0");
+  const diaStr = dia.toString().padStart(2, "0");
+  return FESTIVOS.includes(`${mesStr}-${diaStr}`);
+}
+
+function formatearFecha(dia) {
+  return `${(mesActual + 1).toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}`;
 }
 
 function validarCuadranteConParametros() {
@@ -242,57 +281,37 @@ function validarCuadranteConParametros() {
   for (let i = 0; i < trabajadores.length; i++) {
     if (trabajadores[i].estado === "baja") continue;
     
-    // 1. Días seguidos
     const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > PARAMETROS_LEGALES.maxDiasSeguidos) {
-      incidencias.push(`${trabajadores[i].nombre}: ${seguidos} días seguidos (máx ${PARAMETROS_LEGALES.maxDiasSeguidos})`);
-    }
+    if (seguidos > 6) incidencias.push(`${trabajadores[i].nombre}: ${seguidos} días seguidos (máx 6)`);
     
-    // 2. Horas semanales (aproximado)
-    let horasSemana = 0;
-    let semana = 0;
+    let horasSemana = 0, semana = 0;
     const fila = cuadrante[i] || [];
     for (let d = 0; d < diasDelMesActual; d++) {
-      horasSemana += getHorasTurno(fila[d]);
+      const horas = getHorasTurno(fila[d]);
+      horasSemana += horas;
+      if (horas > PARAMETROS_LEGALES.jornadaMaximaDiaria && horas !== 0)
+        incidencias.push(`${trabajadores[i].nombre}: ${horas}h día ${d+1} (máx ${PARAMETROS_LEGALES.jornadaMaximaDiaria})`);
+      if (horas < PARAMETROS_LEGALES.jornadaMinimaDiaria && horas > 0)
+        incidencias.push(`${trabajadores[i].nombre}: ${horas}h día ${d+1} (mín ${PARAMETROS_LEGALES.jornadaMinimaDiaria})`);
+      
       if ((d + 1) % 7 === 0 || d === diasDelMesActual - 1) {
-        if (horasSemana > PARAMETROS_LEGALES.horasMaximasSemanales) {
-          incidencias.push(`${trabajadores[i].nombre}: ${horasSemana}h semana ${semana + 1} (máx ${PARAMETROS_LEGALES.horasMaximasSemanales})`);
-        }
-        horasSemana = 0;
-        semana++;
+        if (horasSemana > PARAMETROS_LEGALES.jornadaMaximaSemanal)
+          incidencias.push(`${trabajadores[i].nombre}: ${horasSemana}h semana ${semana+1} (máx ${PARAMETROS_LEGALES.jornadaMaximaSemanal})`);
+        horasSemana = 0; semana++;
       }
     }
     
-    // 3. Horas mensuales
     const totalHoras = getTotalHorasTrabajador(i);
-    if (totalHoras > PARAMETROS_LEGALES.horasMaximasMensuales) {
-      incidencias.push(`${trabajadores[i].nombre}: ${totalHoras}h en el mes (máx ${PARAMETROS_LEGALES.horasMaximasMensuales})`);
-    }
-    
-    // 4. Descansos semanales (días L o D)
-    let descansos = 0;
-    for (let d = 0; d < Math.min(7, diasDelMesActual); d++) {
-      const val = fila[d];
-      if (val === "L" || val === "D") descansos++;
-    }
-    if (descansos < PARAMETROS_LEGALES.minDescansosSemanales) {
-      incidencias.push(`${trabajadores[i].nombre}: solo ${descansos} descanso/s primera semana (mín ${PARAMETROS_LEGALES.minDescansosSemanales})`);
-    }
+    if (totalHoras > 160) incidencias.push(`${trabajadores[i].nombre}: ${totalHoras}h en el mes (máx orientativo 160)`);
   }
-  
   return incidencias;
 }
 
 // ==================== INICIALIZACIÓN ====================
 function inicializarTrabajadores() {
   trabajadores = NOMBRES_BASE.map((nombre, idx) => ({
-    id: idx,
-    nombre: nombre,
-    estado: "activo",
-    fechaInicioBaja: null,
-    fechaFinBaja: null,
-    cubreA: null,
-    notas: ""
+    id: idx, nombre: nombre, estado: "activo", fechaInicioBaja: null, fechaFinBaja: null,
+    cubreA: null, notas: "", embarazo: false, discapacidad: false
   }));
 }
 
@@ -300,9 +319,7 @@ function inicializarCuadrante() {
   cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADRANTE));
   cuadrante = cuadrante.map(fila => {
     const nuevaFila = [];
-    for (let i = 0; i < diasDelMesActual; i++) {
-      nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
-    }
+    for (let i = 0; i < diasDelMesActual; i++) nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
     return nuevaFila;
   });
 }
@@ -314,7 +331,7 @@ function inicializarTareas() {
 }
 
 function cargarDatos() {
-  const guardado = localStorage.getItem("cuadrante_laboral_v6");
+  const guardado = localStorage.getItem("cuadrante_laboral_v7");
   if (guardado) {
     try {
       const data = JSON.parse(guardado);
@@ -323,8 +340,9 @@ function cargarDatos() {
       tareas = data.tareas || [];
       mesActual = data.mesActual !== undefined ? data.mesActual : 5;
       diasDelMesActual = MESES[mesActual].dias;
-      if (data.parametrosLegales) PARAMETROS_LEGALES = data.parametrosLegales;
-      if (data.horasPorCodigo) HORAS_POR_CODIGO = data.horasPorCodigo;
+      if (data.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...data.parametrosLegales };
+      if (data.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...data.horasPorCodigo };
+      if (data.festivos) FESTIVOS = data.festivos;
     } catch(e) { console.error(e); }
   }
   if (!trabajadores.length) inicializarTrabajadores();
@@ -333,8 +351,8 @@ function cargarDatos() {
 }
 
 function guardarDatos() {
-  const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO };
-  localStorage.setItem("cuadrante_laboral_v6", JSON.stringify(data));
+  const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS };
+  localStorage.setItem("cuadrante_laboral_v7", JSON.stringify(data));
 }
 
 // ==================== CALENDARIO ====================
@@ -344,10 +362,11 @@ function getTareasDelDia(dia) {
 
 function renderHome() {
   const diasDelMes = diasDelMesActual;
-  let calendarioHtml = `<div class="card"><div class="card-header">📅 Calendario de tareas - ${MESES[mesActual].nombre}</div><div class="card-body">`;
-  calendarioHtml += `<div class="calendar-grid">`;
+  const hoy = new Date().getDate();
+  let calendarioHtml = `<div class="banner-vencido">⚠️ CONVENIO VENCIDO DESDE 31/12/2023 · NEGOCIACIÓN EN CURSO · ALGUNOS VALORES PUEDEN ESTAR DESACTUALIZADOS</div>`;
+  calendarioHtml += `<div class="card"><div class="card-header">📅 Calendario de tareas - ${MESES[mesActual].nombre} ${añoActual}</div><div class="card-body"><div class="calendar-grid">`;
   const diasSemana = ["L", "M", "M", "J", "V", "S", "D"];
-  diasSemana.forEach(d => { calendarioHtml += `<div class="cal-weekday">${d}</div>`; });
+  diasSemana.forEach(d => calendarioHtml += `<div class="cal-weekday">${d}</div>`);
   
   for (let i = 1; i <= diasDelMes; i++) {
     const tareasDia = getTareasDelDia(i);
@@ -355,87 +374,47 @@ function renderHome() {
     if (tareasDia.some(t => t.prioridad === "rojo")) color = "rojo";
     else if (tareasDia.some(t => t.prioridad === "amarillo")) color = "amarillo";
     else if (tareasDia.some(t => t.prioridad === "verde")) color = "verde";
-    
-    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
+    const esFest = esFestivo(i, mesActual);
+    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}${esFest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
   }
   calendarioHtml += `</div></div></div>`;
   
-  // Alertas de hoy
-  const hoy = new Date().getDate();
   const tareasHoy = getTareasDelDia(hoy);
   let alertasHtml = `<div class="card"><div class="card-header">⚠️ Tareas pendientes para hoy</div><div class="card-body">`;
-  if (tareasHoy.length === 0) {
-    alertasHtml += `<p style="color:#64748b;">No hay tareas pendientes para hoy</p>`;
-  } else {
-    tareasHoy.forEach(t => {
-      const colorClass = t.prioridad === "rojo" ? "urgente-rojo" : (t.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
-      alertasHtml += `<div class="aviso ${t.prioridad === 'rojo' ? 'aviso-rojo' : ''}"><strong>${t.nombre}</strong> <span class="${colorClass}">(${t.prioridad === 'rojo' ? 'Muy urgente' : t.prioridad === 'amarillo' ? 'Urgente' : 'Poco urgente'})</span></div>`;
-    });
-  }
+  if (tareasHoy.length === 0) alertasHtml += `<p style="color:#64748b;">No hay tareas pendientes para hoy</p>`;
+  else tareasHoy.forEach(t => { const colorClass = t.prioridad === "rojo" ? "urgente-rojo" : (t.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde"); alertasHtml += `<div class="aviso ${t.prioridad === 'rojo' ? 'aviso-rojo' : ''}"><strong>${t.nombre}</strong> <span class="${colorClass}">(${t.prioridad === 'rojo' ? 'Muy urgente' : t.prioridad === 'amarillo' ? 'Urgente' : 'Poco urgente'})</span></div>`; });
   alertasHtml += `</div></div>`;
   
-  // Alertas personales
   let personalHtml = `<div class="card"><div class="card-header">⚠️ Alertas de personal</div><div class="card-body">`;
   let hayAlertas = false;
   for (let i = 0; i < trabajadores.length; i++) {
     const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > PARAMETROS_LEGALES.maxDiasSeguidos && trabajadores[i].estado === "activo") {
-      personalHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos trabajando</div>`;
-      hayAlertas = true;
-    }
+    if (seguidos > 6 && trabajadores[i].estado === "activo") { personalHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos</div>`; hayAlertas = true; }
+    if (trabajadores[i].embarazo && trabajadores[i].estado === "activo") personalHtml += `<div class="aviso aviso-azul">🤰 ${trabajadores[i].nombre} - No asignar turnos de noche (LPRL)</div>`;
   }
   if (!hayAlertas) personalHtml += `<p style="color:#64748b;">No hay alertas de personal</p>`;
   personalHtml += `</div></div>`;
   
   document.getElementById("content").innerHTML = calendarioHtml + alertasHtml + personalHtml;
-  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
+  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${añoActual}`;
 }
 
 // ==================== TAREAS ====================
 function renderTareas() {
   let html = `<div class="card"><div class="card-header">✅ Lista de tareas</div><div class="card-body">`;
-  if (tareas.length === 0) {
-    html += `<div class="empty-state">No hay tareas. Añade una nueva.</div>`;
-  } else {
-    tareas.forEach(tarea => {
-      const prioridadTexto = tarea.prioridad === "rojo" ? "🔴 Muy urgente" : (tarea.prioridad === "amarillo" ? "🟡 Urgente" : "🟢 Poco urgente");
-      const prioridadClase = tarea.prioridad === "rojo" ? "urgente-rojo" : (tarea.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
-      const completadaClass = tarea.completada ? "completado" : "";
-      html += `<div class="checklist-item ${completadaClass}">
-        <div class="checklist-info">
-          <div class="checklist-nombre">${tarea.nombre}</div>
-          <div class="checklist-fecha">📅 Día ${tarea.dia} de cada mes</div>
-          <div class="checklist-urgente ${prioridadClase}">${prioridadTexto}</div>
-        </div>
-        ${!tarea.completada ? `<button class="completado-btn" onclick="completarTarea('${tarea.id}')">✓ Completar</button>` : `<span style="font-size:11px; color:#16a34a;">✔️ Completada este mes</span>`}
-        <button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${tarea.id}')">🗑</button>
-      </div>`;
-    });
-  }
-  html += `<button class="btn-primary" style="margin-top:12px;" onclick="mostrarModalNuevaTarea()">➕ Añadir nueva tarea</button>`;
-  html += `</div></div>`;
+  if (tareas.length === 0) html += `<div class="empty-state">No hay tareas. Añade una nueva.</div>`;
+  else tareas.forEach(tarea => {
+    const prioridadTexto = tarea.prioridad === "rojo" ? "🔴 Muy urgente" : (tarea.prioridad === "amarillo" ? "🟡 Urgente" : "🟢 Poco urgente");
+    const prioridadClase = tarea.prioridad === "rojo" ? "urgente-rojo" : (tarea.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
+    html += `<div class="checklist-item ${tarea.completada ? 'completado' : ''}"><div class="checklist-info"><div class="checklist-nombre">${tarea.nombre}</div><div class="checklist-fecha">📅 Día ${tarea.dia}</div><div class="checklist-urgente ${prioridadClase}">${prioridadTexto}</div></div>${!tarea.completada ? `<button class="completado-btn" onclick="completarTarea('${tarea.id}')">✓ Completar</button>` : `<span style="font-size:11px; color:#16a34a;">✔️ Completada</span>`}<button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${tarea.id}')">🗑</button></div>`;
+  });
+  html += `<button class="btn-primary" style="margin-top:12px;" onclick="mostrarModalNuevaTarea()">➕ Añadir nueva tarea</button></div></div>`;
   document.getElementById("content").innerHTML = html;
 }
 
 function mostrarModalNuevaTarea() {
-  const modal = document.createElement("div");
-  modal.className = "modal";
-  modal.innerHTML = `
-    <div class="modal-content">
-      <h3 style="margin-bottom:12px;">➕ Nueva tarea recurrente</h3>
-      <input type="text" id="nueva-tarea-nombre" placeholder="Nombre de la tarea">
-      <input type="number" id="nueva-tarea-dia" placeholder="Día del mes (1-31)" value="1" min="1" max="31">
-      <select id="nueva-tarea-prioridad">
-        <option value="rojo">🔴 Muy urgente (rojo)</option>
-        <option value="amarillo">🟡 Urgente (amarillo)</option>
-        <option value="verde">🟢 Poco urgente (verde)</option>
-      </select>
-      <div class="modal-buttons">
-        <button onclick="guardarNuevaTarea()">Guardar</button>
-        <button onclick="cerrarModal()">Cancelar</button>
-      </div>
-    </div>
-  `;
+  const modal = document.createElement("div"); modal.className = "modal";
+  modal.innerHTML = `<div class="modal-content"><h3>➕ Nueva tarea</h3><input type="text" id="nueva-tarea-nombre" placeholder="Nombre"><input type="number" id="nueva-tarea-dia" placeholder="Día del mes" value="1" min="1" max="31"><select id="nueva-tarea-prioridad"><option value="rojo">🔴 Muy urgente (rojo)</option><option value="amarillo">🟡 Urgente (amarillo)</option><option value="verde">🟢 Poco urgente (verde)</option></select><div class="modal-buttons"><button onclick="guardarNuevaTarea()">Guardar</button><button onclick="cerrarModal()">Cancelar</button></div></div>`;
   document.body.appendChild(modal);
 }
 
@@ -443,40 +422,26 @@ function guardarNuevaTarea() {
   const nombre = document.getElementById("nueva-tarea-nombre")?.value;
   const dia = parseInt(document.getElementById("nueva-tarea-dia")?.value);
   const prioridad = document.getElementById("nueva-tarea-prioridad")?.value;
-  if (!nombre || isNaN(dia) || dia < 1 || dia > 31) {
-    mostrarToast("❌ Nombre y día válido requeridos", true);
-    return;
-  }
-  const nuevaTarea = { id: Date.now().toString(), nombre: nombre, dia: dia, prioridad: prioridad, completada: false, recurrente: true };
-  tareas.push(nuevaTarea);
-  guardarDatos();
-  cerrarModal();
-  renderTareas();
-  if (currentView === "home") renderHome();
+  if (!nombre || isNaN(dia)) { mostrarToast("❌ Nombre y día válido requeridos", true); return; }
+  tareas.push({ id: Date.now().toString(), nombre, dia, prioridad, completada: false, recurrente: true });
+  guardarDatos(); cerrarModal(); renderTareas(); if (currentView === "home") renderHome();
   mostrarToast(`✅ Tarea "${nombre}" añadida`);
 }
 
-function completarTarea(id) {
-  const tarea = tareas.find(t => t.id === id);
-  if (tarea) { tarea.completada = true; guardarDatos(); mostrarToast(`✅ "${tarea.nombre}" completada`); renderTareas(); if (currentView === "home") renderHome(); }
-}
-
-function eliminarTarea(id) {
-  if (confirm("¿Eliminar esta tarea?")) { tareas = tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast("🗑 Tarea eliminada"); }
-}
+function completarTarea(id) { const t = tareas.find(t => t.id === id); if (t) { t.completada = true; guardarDatos(); mostrarToast(`✅ "${t.nombre}" completada`); renderTareas(); if (currentView === "home") renderHome(); } }
+function eliminarTarea(id) { if (confirm("¿Eliminar esta tarea?")) { tareas = tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast("🗑 Tarea eliminada"); } }
 
 // ==================== CUADRANTE ====================
 function renderizarCuadrante() {
   let html = `<div class="month-selector">`;
   MESES.forEach((mes, idx) => { html += `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${mes.nombre}</button>`; });
   html += `<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button></div>`;
-  html += `<div class="aviso">📌 Toca cualquier celda para editarla.</div><div class="wrap">`;
-  html += `<table><thead><tr><th class="name">Nombre</th>`;
+  html += `<div class="aviso">📌 Toca cualquier celda para editarla. Códigos: L=Libre, D=Descanso, F1=Jornada, N=Noche, HE=HoraExtra, LIB=Libranza</div><div class="wrap"><table><thead><tr><th class="name">Nombre</th>`;
   for (let d = 1; d <= diasDelMesActual; d++) html += `<th class="${isWeekend(d) ? 'wkend' : ''}">${d}</th>`;
   html += `</tr></thead><tbody>`;
   for (let i = 0; i < trabajadores.length; i++) {
     const trab = trabajadores[i];
-    html += `<tr class="${trab.estado === 'baja' ? 'baja-row' : ''}"><td class="name">${trab.nombre} ${trab.estado === 'baja' ? '<span class="badge-baja">BAJA</span>' : (trab.estado === 'sustituto' ? '<span class="badge-sustituto">SUSTITUTO</span>' : '')}</td>`;
+    html += `<tr class="${trab.estado === 'baja' ? 'baja-row' : ''}"><td class="name">${trab.nombre} ${trab.estado === 'baja' ? '<span class="badge-baja">BAJA</span>' : (trab.estado === 'sustituto' ? '<span class="badge-sustituto">SUSTITUTO</span>' : '')}${trab.embarazo ? '<span class="badge-embarazo">🤰 EMBARAZO</span>' : ''}</td>`;
     for (let d = 0; d < diasDelMesActual; d++) {
       const val = cuadrante[i]?.[d] || "";
       let colorClass = "";
@@ -484,91 +449,88 @@ function renderizarCuadrante() {
       else if (val === "D") colorClass = "D";
       else if (val === "F1") colorClass = "F1";
       else if (val === "N") colorClass = "N";
-      html += `<td class="editable-cell ${colorClass} ${isWeekend(d + 1) ? 'wkend' : ''}" onclick="editarCelda(${i},${d},'${val.replace(/'/g, "\\'")}')">${val}</td>`;
+      else if (val === "HE") colorClass = "HE";
+      else if (val === "LIB") colorClass = "LIB";
+      html += `<td class="editable-cell ${colorClass} ${isWeekend(d + 1) ? 'wkend' : ''}" onclick="editarCelda(${i},${d},'${val.replace(/'/g, "\\'")}')">${val}${esFestivo(d + 1, mesActual) && val !== "L" && val !== "D" ? '🌟' : ''}</td>`;
     }
     html += `</tr>`;
   }
   html += `</tbody></table></div>`;
   document.getElementById("content").innerHTML = html;
-  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${new Date().getFullYear()}`;
+  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${añoActual}`;
 }
 
 function editarCelda(fila, col, valorActual) {
-  const nuevoValor = prompt(`Editar celda (${trabajadores[fila].nombre}, día ${col + 1})`, valorActual);
-  if (nuevoValor !== null) { if (!cuadrante[fila]) cuadrante[fila] = []; cuadrante[fila][col] = nuevoValor; guardarDatos(); mostrarToast(`✅ Cambiado a "${nuevoValor}"`); renderizarCuadrante(); }
+  const fechaEdicion = new Date(añoActual, mesActual, col + 1);
+  const hoy = new Date();
+  const diasDiferencia = Math.ceil((fechaEdicion - hoy) / (1000 * 60 * 60 * 24));
+  if (diasDiferencia < PARAMETROS_LEGALES.preavisoCuadranteDias && diasDiferencia > 0) {
+    if (!confirm(`⚠️ Este día está a menos de ${PARAMETROS_LEGALES.preavisoCuadranteDias} días (preaviso legal). ¿Modificar igualmente?`)) return;
+  }
+  const nuevoValor = prompt(`Editar celda (${trabajadores[fila].nombre}, día ${col + 1})\nCódigos: L, D, F1, N, HE, LIB, o número de horas`, valorActual);
+  if (nuevoValor !== null) {
+    if (trabajadores[fila].embarazo && nuevoValor === "N") { mostrarToast("❌ Esta trabajadora NO puede hacer turnos de noche (LPRL)", true); return; }
+    if (!cuadrante[fila]) cuadrante[fila] = [];
+    cuadrante[fila][col] = nuevoValor;
+    guardarDatos();
+    mostrarToast(`✅ Cambiado a "${nuevoValor}"`);
+    renderizarCuadrante();
+  }
 }
 
 function cambiarMes(idx) { mesActual = idx; diasDelMesActual = MESES[idx].dias; inicializarCuadrante(); guardarDatos(); if (currentView === "cuadrante") renderizarCuadrante(); if (currentView === "home") renderHome(); mostrarToast(`📅 Cambiado a ${MESES[idx].nombre}`); }
-
 function importarNuevoCuadrante() { const input = document.createElement("input"); input.type = "file"; input.accept = ".json"; input.onchange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if (Array.isArray(data) && data.length === trabajadores.length) { cuadrante = data; guardarDatos(); mostrarToast("✅ Cuadrante importado"); renderizarCuadrante(); } else mostrarToast("❌ Formato inválido", true); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); }; input.click(); }
 
 // ==================== PERSONAL ====================
 function renderTrabajadores() {
-  const trabajaron = [];
-  const noTrabajaron = [];
-  for (let i = 0; i < trabajadores.length; i++) {
-    if (trabajadorHaTrabajado(i)) trabajaron.push(trabajadores[i]);
-    else noTrabajaron.push(trabajadores[i]);
-  }
-  
+  const trabajaron = [], noTrabajaron = [];
+  for (let i = 0; i < trabajadores.length; i++) { if (trabajadorHaTrabajado(i)) trabajaron.push(trabajadores[i]); else noTrabajaron.push(trabajadores[i]); }
   let html = `<div class="split-lists"><div><div class="stats-badge" style="background:#dcfce7;">✅ HAN TRABAJADO (${trabajaron.length})</div>`;
-  trabajaron.forEach(t => { html += `<div class="worker-item" style="margin-bottom:6px; padding:8px;" onclick="verDetalleTrabajador(${t.id})"><div class="worker-name">${t.nombre}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(t.id)}h este mes</div></div>`; });
+  trabajaron.forEach(t => { html += `<div class="worker-item" style="margin-bottom:6px; padding:8px;" onclick="verDetalleTrabajador(${t.id})"><div class="worker-name">${t.nombre}${t.embarazo ? '<span class="badge-embarazo">🤰</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(t.id)}h este mes</div></div>`; });
   html += `</div><div><div class="stats-badge" style="background:#fee2e2;">❌ NO HAN TRABAJADO (${noTrabajaron.length})</div>`;
   noTrabajaron.forEach(t => { html += `<div class="worker-item" style="margin-bottom:6px; padding:8px; opacity:0.7;" onclick="verDetalleTrabajador(${t.id})"><div class="worker-name">${t.nombre}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(t.id)}h este mes</div></div>`; });
-  html += `</div></div><button class="btn-primary" style="margin-top:12px;" onclick="añadirTrabajador()">➕ Añadir trabajador</button>`;
+  html += `</div></div><button class="btn-primary" style="margin-top:12px;" onclick="añadirTrabajador()">➕ Añadir trabajador</button><button class="btn-secondary" onclick="marcarEmbarazo()">🤰 Marcar/Desmarcar embarazo</button>`;
   document.getElementById("content").innerHTML = html;
 }
 
-function añadirTrabajador() { const nombre = prompt("Nombre:"); if (!nombre) return; const nuevoId = trabajadores.length; trabajadores.push({ id: nuevoId, nombre: nombre, estado: "activo", fechaInicioBaja: null, fechaFinBaja: null, cubreA: null, notas: "" }); cuadrante.push(Array(diasDelMesActual).fill("")); guardarDatos(); renderTrabajadores(); mostrarToast(`✅ "${nombre}" añadido`); }
+function añadirTrabajador() { const nombre = prompt("Nombre:"); if (!nombre) return; const nuevoId = trabajadores.length; trabajadores.push({ id: nuevoId, nombre, estado: "activo", fechaInicioBaja: null, fechaFinBaja: null, cubreA: null, notas: "", embarazo: false, discapacidad: false }); cuadrante.push(Array(diasDelMesActual).fill("")); guardarDatos(); renderTrabajadores(); mostrarToast(`✅ "${nombre}" añadido`); }
+function marcarEmbarazo() { const nombre = prompt("Nombre exacto del trabajador:"); const trabajador = trabajadores.find(t => t.nombre.toLowerCase().includes(nombre.toLowerCase())); if (!trabajador) { mostrarToast("❌ Trabajador no encontrado", true); return; } trabajador.embarazo = !trabajador.embarazo; guardarDatos(); renderTrabajadores(); mostrarToast(`${trabajador.nombre}: embarazo ${trabajador.embarazo ? 'marcado' : 'desmarcado'}`); }
+function verDetalleTrabajador(id) { const t = trabajadores.find(t => t.id === id); if (!t) return; alert(`${t.nombre}\n\n📊 Horas este mes: ${getTotalHorasTrabajador(id)}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.embarazo ? '\n🤰 Embarazo marcado (no asignar noche)' : ''}`); }
 
-function verDetalleTrabajador(id) { const t = trabajadores.find(t => t.id === id); if (!t) return; alert(`${t.nombre}\n\n📊 Horas este mes: ${getTotalHorasTrabajador(id)}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.fechaInicioBaja ? `\n📅 Baja desde día ${t.fechaInicioBaja}` : ""}`); }
-
-function iniciarBaja(idTrabajador) { const trabajador = trabajadores.find(t => t.id === idTrabajador); if (!trabajador) return; const fechaInicio = prompt("📅 Día de inicio de baja (1-31):", ""); if (!fechaInicio) return; const diaInicio = parseInt(fechaInicio); if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) { mostrarToast("❌ Fecha inválida", true); return; }
+function iniciarBaja(idTrabajador) { const t = trabajadores.find(t => t.id === idTrabajador); if (!t) return; const fechaInicio = prompt("📅 Día de inicio de baja (1-31):", ""); if (!fechaInicio) return; const diaInicio = parseInt(fechaInicio); if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) { mostrarToast("❌ Fecha inválida", true); return; }
   const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir)");
-  if (opcion) { const nuevoId = trabajadores.length; const nuevoNombre = prompt("Nombre del sustituto:", `SUSTITUTO_${trabajador.nombre}`); if (!nuevoNombre) return; trabajadores.push({ id: nuevoId, nombre: nuevoNombre, estado: "sustituto", fechaInicioBaja: null, fechaFinBaja: null, cubreA: trabajador.id, notas: `Sustituye desde día ${diaInicio}` }); const nuevaFila = [...(cuadrante[idTrabajador] || [])]; for (let i = diaInicio - 1; i < diasDelMesActual; i++) nuevaFila[i] = cuadrante[idTrabajador][i] || ""; cuadrante.push(nuevaFila); trabajador.estado = "baja"; trabajador.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja cubierta por ${nuevoNombre}`); }
-  else { const turnosAPerdidos = []; for (let i = diaInicio - 1; i < diasDelMesActual; i++) { const turno = cuadrante[idTrabajador]?.[i]; if (turno && turno !== "L" && turno !== "D" && turno !== "") turnosAPerdidos.push({ dia: i, turno: turno }); } if (turnosAPerdidos.length === 0) { mostrarToast("No hay turnos que redistribuir"); trabajador.estado = "baja"; trabajador.fechaInicioBaja = diaInicio; guardarDatos(); renderTrabajadores(); return; } const activos = trabajadores.filter(t => t.id !== idTrabajador && t.estado === "activo"); for (const turno of turnosAPerdidos) { let mejorCandidato = null; let menorCarga = Infinity; for (const candidato of activos) { let carga = 0; const filaCand = cuadrante[candidato.id] || []; for (let i = 0; i < diasDelMesActual; i++) carga += getHorasTurno(filaCand[i]); const seguidosSiAcepta = getMaxDiasSeguidos(candidato.id, turno.dia) + 1; if (seguidosSiAcepta <= PARAMETROS_LEGALES.maxDiasSeguidos && carga < menorCarga) { menorCarga = carga; mejorCandidato = candidato; } } if (mejorCandidato) { if (!cuadrante[mejorCandidato.id]) cuadrante[mejorCandidato.id] = []; cuadrante[mejorCandidato.id][turno.dia] = turno.turno; mostrarToast(`📌 Turno día ${turno.dia + 1} → ${mejorCandidato.nombre}`); } else mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia + 1}`, true); } trabajador.estado = "baja"; trabajador.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja de ${trabajador.nombre} procesada`); }
+  if (opcion) { const nuevoId = trabajadores.length; const nuevoNombre = prompt("Nombre del sustituto:", `SUSTITUTO_${t.nombre}`); if (!nuevoNombre) return; trabajadores.push({ id: nuevoId, nombre: nuevoNombre, estado: "sustituto", fechaInicioBaja: null, fechaFinBaja: null, cubreA: t.id, notas: `Sustituye desde día ${diaInicio}`, embarazo: false, discapacidad: false }); const nuevaFila = [...(cuadrante[idTrabajador] || [])]; for (let i = diaInicio - 1; i < diasDelMesActual; i++) nuevaFila[i] = cuadrante[idTrabajador][i] || ""; cuadrante.push(nuevaFila); t.estado = "baja"; t.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja cubierta por ${nuevoNombre}`); }
+  else { const turnos = []; for (let i = diaInicio - 1; i < diasDelMesActual; i++) { const turno = cuadrante[idTrabajador]?.[i]; if (turno && turno !== "L" && turno !== "D" && turno !== "") turnos.push({ dia: i, turno }); } if (turnos.length === 0) { mostrarToast("No hay turnos que redistribuir"); t.estado = "baja"; t.fechaInicioBaja = diaInicio; guardarDatos(); renderTrabajadores(); return; } const activos = trabajadores.filter(w => w.id !== idTrabajador && w.estado === "activo" && !w.embarazo); for (const turno of turnos) { let mejor = null; let menorCarga = Infinity; for (const candidato of activos) { let carga = 0; for (let i = 0; i < diasDelMesActual; i++) carga += getHorasTurno(cuadrante[candidato.id]?.[i] || ""); const seg = getMaxDiasSeguidos(candidato.id, turno.dia) + 1; if (seg <= 6 && carga < menorCarga) { menorCarga = carga; mejor = candidato; } } if (mejor) { if (!cuadrante[mejor.id]) cuadrante[mejor.id] = []; cuadrante[mejor.id][turno.dia] = turno.turno; mostrarToast(`📌 Turno día ${turno.dia+1} → ${mejor.nombre}`); } else mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia+1}`, true); } t.estado = "baja"; t.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja de ${t.nombre} procesada`); }
   guardarDatos(); renderTrabajadores(); if (currentView === "cuadrante") renderizarCuadrante();
 }
 
 // ==================== SEGURO ====================
 function renderSeguro() {
   document.getElementById("content").innerHTML = `
-    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body">
-      <button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia de seguridad</button>
-      <button class="btn-secondary" onclick="triggerImport()">📂 Importar copia de seguridad</button>
-    </div></div>
-    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body">
-      <button class="btn-legal" onclick="importarParametrosLegales()">📄 Importar nuevo convenio (JSON)</button>
-      <div style="margin-top:12px; font-size:12px; color:#64748b;">
-        <strong>Parámetros actuales:</strong><br>
-        • Máx días seguidos: ${PARAMETROS_LEGALES.maxDiasSeguidos}<br>
-        • Mín descansos semanales: ${PARAMETROS_LEGALES.minDescansosSemanales}<br>
-        • Horas máximas semanales: ${PARAMETROS_LEGALES.horasMaximasSemanales}<br>
-        • Horas máximas mensuales: ${PARAMETROS_LEGALES.horasMaximasMensuales}
-      </div>
-      <button class="btn-secondary" style="margin-top:12px;" onclick="validarYMostrarIncidencias()">🔍 Validar cuadrante actual</button>
-    </div></div>
+    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body"><button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia</button><button class="btn-secondary" onclick="triggerImport()">📂 Importar copia</button></div></div>
+    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn-legal" onclick="importarParametrosLegales()">📄 Importar nuevo convenio (JSON)</button><div style="margin-top:12px; font-size:11px; color:#64748b;"><strong>Valores actuales:</strong><br>• Jornada máx diaria: ${PARAMETROS_LEGALES.jornadaMaximaDiaria}h<br>• Jornada mín diaria: ${PARAMETROS_LEGALES.jornadaMinimaDiaria}h<br>• Descanso entre jornadas: ${PARAMETROS_LEGALES.descansoEntreJornadas}h min<br>• Jornada máx semanal: ${PARAMETROS_LEGALES.jornadaMaximaSemanal}h<br>• Preaviso cuadrante: ${PARAMETROS_LEGALES.preavisoCuadranteDias} días</div><button class="btn-secondary" style="margin-top:12px;" onclick="validarYMostrarIncidencias()">🔍 Validar cuadrante actual</button></div></div>
   `;
 }
 
-function exportarDatos() { const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO }; const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Copia exportada"); }
-
+function exportarDatos() { const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS }; const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Copia exportada"); }
 function triggerImport() { document.getElementById("import-file").click(); }
-function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (imported.trabajadores && imported.cuadrante) { trabajadores = imported.trabajadores; cuadrante = imported.cuadrante; tareas = imported.tareas || []; mesActual = imported.mesActual !== undefined ? imported.mesActual : 5; diasDelMesActual = MESES[mesActual].dias; if (imported.parametrosLegales) PARAMETROS_LEGALES = imported.parametrosLegales; if (imported.horasPorCodigo) HORAS_POR_CODIGO = imported.horasPorCodigo; guardarDatos(); mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`); render(); } else throw new Error("Formato inválido"); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
-
+function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (imported.trabajadores && imported.cuadrante) { trabajadores = imported.trabajadores; cuadrante = imported.cuadrante; tareas = imported.tareas || []; mesActual = imported.mesActual !== undefined ? imported.mesActual : 5; diasDelMesActual = MESES[mesActual].dias; if (imported.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...imported.parametrosLegales }; if (imported.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...imported.horasPorCodigo }; if (imported.festivos) FESTIVOS = imported.festivos; guardarDatos(); mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`); render(); } else throw new Error("Formato inválido"); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
 function importarParametrosLegales() { document.getElementById("import-legal-file").click(); }
-function handleLegalImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const params = JSON.parse(e.target.result); if (params.maxDiasSeguidos !== undefined) PARAMETROS_LEGALES.maxDiasSeguidos = params.maxDiasSeguidos; if (params.minDescansosSemanales !== undefined) PARAMETROS_LEGALES.minDescansosSemanales = params.minDescansosSemanales; if (params.horasMaximasSemanales !== undefined) PARAMETROS_LEGALES.horasMaximasSemanales = params.horasMaximasSemanales; if (params.horasMaximasMensuales !== undefined) PARAMETROS_LEGALES.horasMaximasMensuales = params.horasMaximasMensuales; if (params.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...params.horasPorCodigo }; guardarDatos(); mostrarToast("✅ Parámetros legales actualizados"); validarYMostrarIncidencias(); } catch(err) { mostrarToast("❌ Archivo de convenio no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
-
-function validarYMostrarIncidencias() { const incidencias = validarCuadranteConParametros(); if (incidencias.length === 0) { mostrarToast("✅ No se encontraron incidencias. El cuadrante cumple los parámetros."); alert("✅ No hay incidencias. El cuadrante cumple los parámetros legales."); } else { let mensaje = "⚠️ INCIDENCIAS ENCONTRADAS:\n\n"; incidencias.forEach(i => mensaje += `• ${i}\n`); mensaje += `\n📌 Revisa el cuadrante para corregir estas incidencias.`; alert(mensaje); mostrarToast(`${incidencias.length} incidencias encontradas`, true); } }
+function handleLegalImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const params = JSON.parse(e.target.result); if (params.jornadaMaximaDiaria !== undefined) PARAMETROS_LEGALES.jornadaMaximaDiaria = params.jornadaMaximaDiaria; if (params.jornadaMinimaDiaria !== undefined) PARAMETROS_LEGALES.jornadaMinimaDiaria = params.jornadaMinimaDiaria; if (params.descansoEntreJornadas !== undefined) PARAMETROS_LEGALES.descansoEntreJornadas = params.descansoEntreJornadas; if (params.jornadaMaximaSemanal !== undefined) PARAMETROS_LEGALES.jornadaMaximaSemanal = params.jornadaMaximaSemanal; if (params.preavisoCuadranteDias !== undefined) PARAMETROS_LEGALES.preavisoCuadranteDias = params.preavisoCuadranteDias; if (params.festivos) FESTIVOS = params.festivos; if (params.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...params.horasPorCodigo }; guardarDatos(); mostrarToast("✅ Parámetros legales actualizados"); validarYMostrarIncidencias(); } catch(err) { mostrarToast("❌ Archivo de convenio no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
+function validarYMostrarIncidencias() { const incidencias = validarCuadranteConParametros(); if (incidencias.length === 0) { mostrarToast("✅ No hay incidencias. Cuadrante OK"); alert("✅ No hay incidencias. El cuadrante cumple los parámetros legales."); } else { let mensaje = "⚠️ INCIDENCIAS:\n\n"; incidencias.forEach(i => mensaje += `• ${i}\n`); alert(mensaje); mostrarToast(`${incidencias.length} incidencias encontradas`, true); } }
 
 function mostrarToast(msg, isError = false) { const toast = document.getElementById("toast"); toast.textContent = msg; toast.style.background = isError ? "#dc2626" : "#0f172a"; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2000); setTimeout(() => { toast.style.background = "#0f172a"; }, 2100); }
-
 function showView(view) { currentView = view; document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active")); document.getElementById(`nav-${view}`).classList.add("active"); if (view === "home") renderHome(); else if (view === "cuadrante") renderizarCuadrante(); else if (view === "trabajadores") renderTrabajadores(); else if (view === "tareas") renderTareas(); else if (view === "seguro") renderSeguro(); }
 function render() { showView(currentView); }
 function cerrarModal() { const modal = document.querySelector(".modal"); if (modal) modal.remove(); }
 
-// Exponer funciones globales
-window.cambiarMes = cambiarMes; window.importarNuevoCuadrante = importarNuevoCuadrante; window.editarCelda = editarCelda; window.iniciarBaja = iniciarBaja; window.añadirTrabajador = añadirTrabajador; window.verDetalleTrabajador = verDetalleTrabajador; window.exportarDatos = exportarDatos; window.triggerImport = triggerImport; window.handleImport = handleImport; window.showView = showView; window.completarTarea = completarTarea; window.eliminarTarea = eliminarTarea; window.mostrarModalNuevaTarea = mostrarModalNuevaTarea; window.guardarNuevaTarea = guardarNuevaTarea; window.cerrarModal = cerrarModal; window.importarParametrosLegales = importarParametrosLegales; window.handleLegalImport = handleLegalImport; window.validarYMostrarIncidencias = validarYMostrarIncidencias;
+// Exponer funciones
+window.cambiarMes = cambiarMes; window.importarNuevoCuadrante = importarNuevoCuadrante; window.editarCelda = editarCelda;
+window.iniciarBaja = iniciarBaja; window.añadirTrabajador = añadirTrabajador; window.verDetalleTrabajador = verDetalleTrabajador;
+window.exportarDatos = exportarDatos; window.triggerImport = triggerImport; window.handleImport = handleImport; window.showView = showView;
+window.completarTarea = completarTarea; window.eliminarTarea = eliminarTarea; window.mostrarModalNuevaTarea = mostrarModalNuevaTarea;
+window.guardarNuevaTarea = guardarNuevaTarea; window.cerrarModal = cerrarModal; window.importarParametrosLegales = importarParametrosLegales;
+window.handleLegalImport = handleLegalImport; window.validarYMostrarIncidencias = validarYMostrarIncidencias; window.marcarEmbarazo = marcarEmbarazo;
 
 cargarDatos();
 renderHome();
