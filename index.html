@@ -211,7 +211,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -220,20 +220,38 @@ const ZONA_COLORES = ["#dbeafe","#dcfce7","#fee2e2","#fef3c7","#ede9fe","#cffafe
 function diasEnMes(mes, anio) { return new Date(anio, mes + 1, 0).getDate(); }
 function esFinDeSemana(dia, mes, anio) { const dow = new Date(anio, mes, dia).getDay(); return dow === 0 || dow === 6; }
 
-// ==================== FESTIVOS 2026 ====================
-const FESTIVOS_AUTONOMICOS = [
-  "2026-01-01", "2026-01-06", "2026-04-02", "2026-04-03",
-  "2026-04-23", "2026-05-01", "2026-08-15", "2026-10-12",
-  "2026-11-02", "2026-12-07", "2026-12-08", "2026-12-25"
-];
-const FESTIVOS_CONVENIO = ["2026-12-24", "2026-12-31"];
-const FESTIVOS_LOCALES = { "Zaragoza": ["2026-01-29", "2026-03-05"] };
+// ==================== FESTIVOS 2026 CON NOMBRES ====================
+const FESTIVOS_DETALLE = {
+  "2026-01-01": { nombre: "Año Nuevo", emoji: "🎆", color: "verde" },
+  "2026-01-06": { nombre: "Epifanía del Señor", emoji: "👑", color: "verde" },
+  "2026-04-02": { nombre: "Jueves Santo", emoji: "⛪", color: "verde" },
+  "2026-04-03": { nombre: "Viernes Santo", emoji: "⛪", color: "verde" },
+  "2026-04-23": { nombre: "San Jorge · Día de Aragón", emoji: "🐉", color: "verde" },
+  "2026-05-01": { nombre: "Fiesta del Trabajo", emoji: "👷", color: "verde" },
+  "2026-08-15": { nombre: "Asunción de la Virgen", emoji: "🙏", color: "verde" },
+  "2026-10-12": { nombre: "Fiesta Nacional de España", emoji: "🇪🇸", color: "verde" },
+  "2026-11-02": { nombre: "Todos los Santos", emoji: "🕯️", color: "verde" },
+  "2026-12-07": { nombre: "Día de la Constitución", emoji: "📜", color: "verde" },
+  "2026-12-08": { nombre: "Inmaculada Concepción", emoji: "🙏", color: "verde" },
+  "2026-12-25": { nombre: "Navidad", emoji: "🎄", color: "verde" },
+  "2026-12-24": { nombre: "Nochebuena (festivo convenio)", emoji: "🎅", color: "verde" },
+  "2026-12-31": { nombre: "Nochevieja (festivo convenio)", emoji: "🍾", color: "verde" }
+};
+// Festivos locales Zaragoza
+FESTIVOS_DETALLE["2026-01-29"] = { nombre: "San Valero (Zaragoza)", emoji: "🎉", color: "verde" };
+FESTIVOS_DETALLE["2026-03-05"] = { nombre: "Cincomarzada (Zaragoza)", emoji: "⚔️", color: "verde" };
+
 function esFestivo(anio, mes, dia) {
   const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
-  if (FESTIVOS_AUTONOMICOS.includes(fechaStr)) return true;
-  if (FESTIVOS_CONVENIO.includes(fechaStr)) return true;
-  if (FESTIVOS_LOCALES["Zaragoza"] && FESTIVOS_LOCALES["Zaragoza"].includes(fechaStr)) return true;
-  return false;
+  return FESTIVOS_DETALLE.hasOwnProperty(fechaStr);
+}
+
+function getNombreFestivo(anio, mes, dia) {
+  const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+  if (FESTIVOS_DETALLE[fechaStr]) {
+    return FESTIVOS_DETALLE[fechaStr];
+  }
+  return { nombre: "Día festivo", emoji: "🌟", color: "verde" };
 }
 
 // ==================== CÓDIGOS DE TURNO ====================
@@ -338,9 +356,10 @@ function getEventosDelDia(anio, mes, dia) {
     }
   });
 
-  // Festivos
+  // Festivos (con nombre específico)
   if (esFestivo(anio, mes, dia)) {
-    eventos.push({ tipo: "festivo", nombre: "Festivo", emoji: "🌟", descripcion: "Día festivo según calendario", color: "verde" });
+    const festivo = getNombreFestivo(anio, mes, dia);
+    eventos.push({ tipo: "festivo", nombre: festivo.nombre, emoji: festivo.emoji, descripcion: "Día festivo según calendario", color: "verde" });
   }
 
   // Eventos de trabajadores (contratos, bajas, vacaciones)
@@ -389,7 +408,7 @@ function mostrarEventosDia(anio, mes, dia) {
         <div class="evento-titulo">${ev.nombre}</div>
         <div class="evento-desc">${ev.descripcion}</div>
       </div>
-      <div class="evento-badge" style="${bgColor}">${ev.tipo}</div>
+      <div class="evento-badge" style="${bgColor}">${ev.tipo === "festivo" ? "Festivo" : (ev.tipo === "tarea" ? "Tarea" : ev.tipo)}</div>
     </div>`;
   });
   eventosHtml += `</div>`;
@@ -534,13 +553,13 @@ function generarPDF() {
   </head><body><h2>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</h2>`;
   html += `<table><thead><tr><th>Nombre</th>`;
   for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
-  html += `<th>H</th></table></thead><tbody>`;
+  html += `<th>H</th></tr></thead><tbody>`;
   for (let i = 0; i < state.trabajadores.length; i++) {
     const t = state.trabajadores[i];
     const total = getTotalHorasMes(t.id, mes, anio);
     html += `<tr><td style="text-align:left">${t.nombre}${t.estado==="baja"?" [B]":""}</td>`;
     for (let d = 0; d < dias; d++) html += `<td>${cuad[i]?.[d] || ""}</td>`;
-    html += `<td style="font-weight:700">${total}</td></td>`;
+    html += `<td style="font-weight:700">${total}</td></tr>`;
   }
   html += `</tbody></table></body></html>`;
   const ventana = window.open();
@@ -550,7 +569,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v11";
+const STORAGE_KEY = "cuadrantes_v12";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -829,7 +848,7 @@ function renderCuadrante() {
     const cob = coberturaDelDia(d, mes, anio);
     html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}</td>`;
   }
-  html += `<td class="total-col"><\/td>`;
+  html += `<td class="total-col"></td>`;
   html += `<\/tr>`;
   html += `</tbody>`;
   html += `<\/table>`;
@@ -850,7 +869,8 @@ function abrirSelectorTurno(trabId, dia) {
   const esFest = esFestivo(state.anio, state.mesActual, dia + 1);
   let festivoMsg = "";
   if (esFest && valorActual && valorActual !== "L" && valorActual !== "D") {
-    festivoMsg = `\n⚠️ ATENCIÓN: Este día es FESTIVO. Si se trabaja, genera derecho a descanso compensatorio y paga extra (59.34 €).`;
+    const festInfo = getNombreFestivo(state.anio, state.mesActual, dia + 1);
+    festivoMsg = `\n⚠️ ATENCIÓN: ${festInfo.nombre}. Si se trabaja, genera derecho a descanso compensatorio y paga extra (59.34 €).`;
   }
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -1135,9 +1155,9 @@ function renderZonas() {
       </div>
       <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">COBERTURA MÍNIMA REQUERIDA</div>
       <div class="zona-turnos">
-        <div class="zona-turno-box"><div class="zona-turno-label">🌅 MAÑANA</div><div class="zona-turno-num">${z.coberturaMin?.M ?? 0}</div><div class="zona-turno-sub">personas</div></div>
-        <div class="zona-turno-box"><div class="zona-turno-label">☀️ TARDE</div><div class="zona-turno-num">${z.coberturaMin?.T ?? 0}</div><div class="zona-turno-sub">personas</div></div>
-        <div class="zona-turno-box"><div class="zona-turno-label">🌙 NOCHE</div><div class="zona-turno-num">${z.coberturaMin?.N ?? 0}</div><div class="zona-turno-sub">personas</div></div>
+        <div class="zona-turno-box"><div class="zona-turno-label">🌅 MAÑANA</div><div class="zona-turno-num">${z.coberturaMin?.M ?? 0}</div></div>
+        <div class="zona-turno-box"><div class="zona-turno-label">☀️ TARDE</div><div class="zona-turno-num">${z.coberturaMin?.T ?? 0}</div></div>
+        <div class="zona-turno-box"><div class="zona-turno-label">🌙 NOCHE</div><div class="zona-turno-num">${z.coberturaMin?.N ?? 0}</div></div>
       </div>
       ${z.notas ? `<div class="zona-notas" style="font-size:11px;color:#64748b;margin-bottom:8px">📝 ${z.notas}</div>` : ""}
       <div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">PERSONAL ASIGNADO (${trabajadoresZona.length})</div><div class="zona-workers">${trabajadoresZona.length === 0 ? '<span style="font-size:11px;color:#94a3b8">Ninguno asignado</span>' : trabajadoresZona.map(t => `<span class="badge ${t.estado==="baja"?"badge-red":"badge-green"}">${t.nombre.split(" ")[0]}</span>`).join("")}</div></div>
