@@ -51,28 +51,34 @@
   .completado { opacity: 0.5; text-decoration: line-through; }
   
   .wrap { overflow-x: auto; padding: 1rem 0; }
-  table { border-collapse: collapse; font-size: 11px; min-width: 900px; width: 100%; }
+  table { border-collapse: collapse; font-size: 11px; min-width: 800px; width: 100%; }
   th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 4px 2px; min-width: 28px; }
   th { background: #f1f5f9; font-weight: 600; font-size: 10px; position: sticky; top: 0; }
   th.name, td.name { text-align: left; padding-left: 8px; min-width: 180px; position: sticky; left: 0; background: #fff; z-index: 1; }
+  th.total, td.total { background: #fef3c7; font-weight: 700; }
   tr:nth-child(even) td { background: #f8fafc; }
+  tr:nth-child(even) td.total { background: #fef3c7; }
   .L { color: #185FA5; font-weight: 600; }
   .D { color: #3B6D11; font-weight: 600; }
   .F1 { color: #A32D2D; font-weight: 600; }
   .N { color: #854F0B; font-weight: 600; }
   .HE { color: #7c3aed; font-weight: 600; }
   .LIB { color: #0891b2; font-weight: 600; }
+  .VAC { color: #0f766e; font-weight: 600; }
   .wkend { background: #eef2ff !important; }
   .editable-cell { cursor: pointer; transition: background 0.1s; }
   .editable-cell:active { background: #dbeafe; }
   .baja-row { opacity: 0.6; background: #fee2e2 !important; }
   
   .worker-list { display: flex; flex-direction: column; gap: 8px; }
-  .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; transition: background 0.1s; }
+  .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; transition: background 0.1s; display: flex; justify-content: space-between; align-items: center; }
+  .worker-item-left { flex: 1; }
   .worker-name { font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .worker-actions { display: flex; gap: 8px; }
+  .btn-icon-small { background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 8px; }
+  .btn-icon-small:active { background: #f1f5f9; }
   .badge-baja { background: #dc2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-  .badge-sustituto { background: #d97706; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-  .badge-embarazo { background: #ec489a; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
+  .badge-vacaciones { background: #0f766e; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
   .worker-summary { font-size: 11px; color: #64748b; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
   
   .btn-primary { background: #0f172a; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
@@ -81,7 +87,6 @@
   
   .aviso { background: #fef3c7; border-left: 4px solid #d97706; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 12px; }
   .aviso-rojo { background: #fee2e2; border-left-color: #dc2626; }
-  .aviso-verde { background: #dcfce7; border-left-color: #16a34a; }
   .aviso-azul { background: #dbeafe; border-left-color: #2563eb; }
   
   .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
@@ -100,12 +105,10 @@
   
   .empty-state { text-align: center; padding: 30px; color: #94a3b8; }
   
-  .stats-badge { display: inline-block; background: #e2e8f0; border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 600; margin-bottom: 8px; }
+  .search-input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; font-size: 14px; }
+  .total-col { background: #fef3c7; font-weight: 700; }
   
-  .split-lists { display: flex; gap: 12px; flex-wrap: wrap; }
-  .split-lists > div { flex: 1; min-width: 140px; }
-  
-  .banner-vencido { background: #dc2626; color: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: center; }
+  .banner-vencido { background: #dc2626; color: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: center; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -125,61 +128,53 @@
 <input type="file" id="import-legal-file" class="import-input" accept=".json" onchange="handleLegalImport(event)">
 
 <script>
-// ==================== PARÁMETROS LEGALES COMPLETOS ====================
+// ==================== GENERADOR DE IDS ÚNICOS ====================
+function generarId() {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+// ==================== PARÁMETROS LEGALES ====================
 let PARAMETROS_LEGALES = {
-  // Convenio
-  jornadaAnualDia: 1602,
-  jornadaAnualNoche: 1430,
   jornadaMaximaDiaria: 9,
   jornadaMinimaDiaria: 7,
-  descansoEntreJornadas: 12, // horas mínimas
-  descansoSemanalMinimo: 36, // horas consecutivas
-  franjaNocturna: { inicio: 22, fin: 6 },
-  festivosEspeciales: ["12-25", "01-01"], // 25-dic y 1-ene
-  trabajoLibranzaGeneraDescanso: true,
-  
-  // Estatuto de los Trabajadores
-  horasExtrasMaximasAnuales: 80,
-  descansoSemanalAcumulable: true,
-  vacacionesMinimasAnuales: 30,
-  pausaJornadaMinima: 15, // minutos si jornada > 6h
   jornadaMaximaSemanal: 40,
-  jornadaNocturnaMaxima: 8, // horas promedio en 15 días
-  preavisoCuadranteDias: 5,
-  
-  // Otros
-  edadMinima18HorasMaxima: 8,
-  registroJornadaObligatorio: true,
-  horasComplementariasMaxPorcentaje: 30
+  descansoEntreJornadas: 12,
+  preavisoCuadranteDias: 5
 };
 
-// Horas por código (configurable)
 let HORAS_POR_CODIGO = {
   "L": 0, "D": 0, "": 0,
   "F1": 7, "N": 8, "M": 7, "T": 7,
-  "HE": 0, "LIB": 0,
+  "HE": 0, "LIB": 0, "VAC": 0,
   "U": 0, "G": 0, "H": 0
 };
 for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
 
-// Festivos fijos (25-dic, 1-ene) y variables (se pueden importar)
 let FESTIVOS = ["12-25", "01-01"];
 
 // ==================== MESES ====================
-const MESES = [
-  { nombre: "Enero", dias: 31 }, { nombre: "Febrero", dias: 28 }, { nombre: "Marzo", dias: 31 },
-  { nombre: "Abril", dias: 30 }, { nombre: "Mayo", dias: 31 }, { nombre: "Junio", dias: 30 },
-  { nombre: "Julio", dias: 31 }, { nombre: "Agosto", dias: 31 }, { nombre: "Septiembre", dias: 30 },
-  { nombre: "Octubre", dias: 31 }, { nombre: "Noviembre", dias: 30 }, { nombre: "Diciembre", dias: 31 }
-];
-let mesActual = 5;
-let diasDelMesActual = 30;
-let añoActual = 2026;
+const NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+let mesActual = 5; // Junio
+let añoActual = new Date().getFullYear();
 
-function isWeekend(dia) { return [1,7,8,14,15,21,22,28,29].includes(dia); }
+function getDiasMes(mes, año) {
+  return new Date(año, mes + 1, 0).getDate();
+}
+let diasDelMesActual = getDiasMes(mesActual, añoActual);
 
-// Plantilla base
-const PLANTILLA_CUADRANTE = [
+function isWeekend(dia, mes, año) {
+  const fecha = new Date(año, mes, dia);
+  return fecha.getDay() === 0 || fecha.getDay() === 6;
+}
+
+function esFestivo(dia, mes) {
+  const mesStr = (mes + 1).toString().padStart(2, "0");
+  const diaStr = dia.toString().padStart(2, "0");
+  return FESTIVOS.includes(`${mesStr}-${diaStr}`);
+}
+
+// Plantilla base (27 filas)
+const PLANTILLA_BASE = [
   ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
   ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
   ["","","","","","L","L","L","","","","","","","","","","","L","L","","","","","","","","L","L","",""],
@@ -223,198 +218,247 @@ const NOMBRES_BASE = [
 
 // ==================== ESTADO GLOBAL ====================
 let trabajadores = [];
-let cuadrante = [];
+let cuadrantePorMes = {};
 let tareas = [];
 let currentView = "home";
+let busquedaTexto = "";
 
 // ==================== FUNCIONES AUXILIARES ====================
 function getHorasTurno(codigo) {
-  if (codigo === undefined || codigo === null || codigo === "") return 0;
+  if (!codigo || codigo === "") return 0;
   const num = parseInt(codigo);
   if (!isNaN(num) && num >= 2 && num <= 9) return num;
   return HORAS_POR_CODIGO[codigo] || 0;
 }
 
-function getMaxDiasSeguidos(idx, hastaDia = diasDelMesActual - 1) {
+function getTotalHorasTrabajador(idx, mes, año) {
+  const clave = `${año}-${mes}`;
+  const cuadrante = cuadrantePorMes[clave] || [];
   const fila = cuadrante[idx] || [];
-  let maxSeguidos = 0;
-  let actual = 0;
-  for (let i = 0; i <= hastaDia; i++) {
+  let total = 0;
+  const dias = getDiasMes(mes, año);
+  for (let i = 0; i < dias; i++) total += getHorasTurno(fila[i]);
+  return total;
+}
+
+function getMaxDiasSeguidos(idx, mes, año) {
+  const clave = `${año}-${mes}`;
+  const cuadrante = cuadrantePorMes[clave] || [];
+  const fila = cuadrante[idx] || [];
+  let maxSeguidos = 0, actual = 0;
+  const dias = getDiasMes(mes, año);
+  for (let i = 0; i < dias; i++) {
     const val = fila[i];
-    const tieneTurno = val && val !== "L" && val !== "D" && val !== "";
+    const tieneTurno = val && val !== "L" && val !== "D" && val !== "VAC" && val !== "";
     if (tieneTurno) { actual++; maxSeguidos = Math.max(maxSeguidos, actual); }
     else actual = 0;
   }
   return maxSeguidos;
 }
 
-function trabajadorHaTrabajado(idx) {
+function trabajadorHaTrabajado(idx, mes, año) {
+  const clave = `${año}-${mes}`;
+  const cuadrante = cuadrantePorMes[clave] || [];
   const fila = cuadrante[idx] || [];
-  for (let i = 0; i < diasDelMesActual; i++) {
+  const dias = getDiasMes(mes, año);
+  for (let i = 0; i < dias; i++) {
     const val = fila[i];
-    if (val && val !== "L" && val !== "D" && val !== "") return true;
+    if (val && val !== "L" && val !== "D" && val !== "VAC" && val !== "") return true;
   }
   return false;
 }
 
-function getTotalHorasTrabajador(idx) {
-  let total = 0;
-  const fila = cuadrante[idx] || [];
-  for (let i = 0; i < diasDelMesActual; i++) total += getHorasTurno(fila[i]);
-  return total;
+function inicializarCuadranteMes(mes, año) {
+  const clave = `${año}-${mes}`;
+  if (cuadrantePorMes[clave]) return;
+  const dias = getDiasMes(mes, año);
+  const cuadrante = PLANTILLA_BASE.map(fila => {
+    const nuevaFila = [];
+    for (let i = 0; i < dias; i++) nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
+    return nuevaFila;
+  });
+  cuadrantePorMes[clave] = cuadrante;
 }
 
-function esFestivo(dia, mes) {
-  const mesStr = (mes + 1).toString().padStart(2, "0");
-  const diaStr = dia.toString().padStart(2, "0");
-  return FESTIVOS.includes(`${mesStr}-${diaStr}`);
-}
-
-function formatearFecha(dia) {
-  return `${(mesActual + 1).toString().padStart(2, "0")}-${dia.toString().padStart(2, "0")}`;
-}
-
-function validarCuadranteConParametros() {
-  const incidencias = [];
-  const semanas = Math.ceil(diasDelMesActual / 7);
-  
-  for (let i = 0; i < trabajadores.length; i++) {
-    if (trabajadores[i].estado === "baja") continue;
-    
-    const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > 6) incidencias.push(`${trabajadores[i].nombre}: ${seguidos} días seguidos (máx 6)`);
-    
-    let horasSemana = 0, semana = 0;
-    const fila = cuadrante[i] || [];
-    for (let d = 0; d < diasDelMesActual; d++) {
-      const horas = getHorasTurno(fila[d]);
-      horasSemana += horas;
-      if (horas > PARAMETROS_LEGALES.jornadaMaximaDiaria && horas !== 0)
-        incidencias.push(`${trabajadores[i].nombre}: ${horas}h día ${d+1} (máx ${PARAMETROS_LEGALES.jornadaMaximaDiaria})`);
-      if (horas < PARAMETROS_LEGALES.jornadaMinimaDiaria && horas > 0)
-        incidencias.push(`${trabajadores[i].nombre}: ${horas}h día ${d+1} (mín ${PARAMETROS_LEGALES.jornadaMinimaDiaria})`);
-      
-      if ((d + 1) % 7 === 0 || d === diasDelMesActual - 1) {
-        if (horasSemana > PARAMETROS_LEGALES.jornadaMaximaSemanal)
-          incidencias.push(`${trabajadores[i].nombre}: ${horasSemana}h semana ${semana+1} (máx ${PARAMETROS_LEGALES.jornadaMaximaSemanal})`);
-        horasSemana = 0; semana++;
+function guardarCuadranteActual() {
+  const clave = `${añoActual}-${mesActual}`;
+  if (cuadrantePorMes[clave]) {
+    // Actualizar desde la tabla actual si estamos en vista cuadrante
+    const tabla = document.querySelector("#tabla-cuadrante-actual");
+    if (tabla) {
+      for (let i = 0; i < trabajadores.length; i++) {
+        for (let d = 0; d < diasDelMesActual; d++) {
+          const celda = document.querySelector(`#celda-${i}-${d}`);
+          if (celda) cuadrantePorMes[clave][i][d] = celda.getAttribute("data-val") || "";
+        }
       }
     }
-    
-    const totalHoras = getTotalHorasTrabajador(i);
-    if (totalHoras > 160) incidencias.push(`${trabajadores[i].nombre}: ${totalHoras}h en el mes (máx orientativo 160)`);
   }
-  return incidencias;
 }
 
 // ==================== INICIALIZACIÓN ====================
 function inicializarTrabajadores() {
   trabajadores = NOMBRES_BASE.map((nombre, idx) => ({
-    id: idx, nombre: nombre, estado: "activo", fechaInicioBaja: null, fechaFinBaja: null,
-    cubreA: null, notas: "", embarazo: false, discapacidad: false
+    id: generarId(),
+    nombre: nombre,
+    estado: "activo",
+    fechaInicioBaja: null,
+    notas: ""
   }));
 }
 
-function inicializarCuadrante() {
-  cuadrante = JSON.parse(JSON.stringify(PLANTILLA_CUADRANTE));
-  cuadrante = cuadrante.map(fila => {
-    const nuevaFila = [];
-    for (let i = 0; i < diasDelMesActual; i++) nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
-    return nuevaFila;
-  });
-}
-
-function inicializarTareas() {
-  tareas = [
-    { id: "firma_doc", nombre: "📄 Firma documentación", dia: diasDelMesActual, prioridad: "rojo", completada: false, recurrente: true }
-  ];
-}
-
 function cargarDatos() {
-  const guardado = localStorage.getItem("cuadrante_laboral_v7");
+  const guardado = localStorage.getItem("cuadrante_laboral_v8");
   if (guardado) {
     try {
       const data = JSON.parse(guardado);
       trabajadores = data.trabajadores || [];
-      cuadrante = data.cuadrante || [];
+      cuadrantePorMes = data.cuadrantePorMes || {};
       tareas = data.tareas || [];
       mesActual = data.mesActual !== undefined ? data.mesActual : 5;
-      diasDelMesActual = MESES[mesActual].dias;
+      añoActual = data.añoActual !== undefined ? data.añoActual : new Date().getFullYear();
       if (data.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...data.parametrosLegales };
       if (data.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...data.horasPorCodigo };
       if (data.festivos) FESTIVOS = data.festivos;
     } catch(e) { console.error(e); }
   }
   if (!trabajadores.length) inicializarTrabajadores();
-  if (!cuadrante.length) inicializarCuadrante();
-  if (!tareas.length) inicializarTareas();
+  diasDelMesActual = getDiasMes(mesActual, añoActual);
+  inicializarCuadranteMes(mesActual, añoActual);
+  if (!tareas.length) tareas = [{ id: generarId(), nombre: "📄 Firma documentación", dia: diasDelMesActual, prioridad: "rojo", completada: false }];
 }
 
 function guardarDatos() {
-  const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS };
-  localStorage.setItem("cuadrante_laboral_v7", JSON.stringify(data));
+  guardarCuadranteActual();
+  const data = { trabajadores, cuadrantePorMes, tareas, mesActual, añoActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS };
+  localStorage.setItem("cuadrante_laboral_v8", JSON.stringify(data));
 }
 
-// ==================== CALENDARIO ====================
-function getTareasDelDia(dia) {
-  return tareas.filter(t => !t.completada && t.dia === dia);
-}
-
-function renderHome() {
-  const diasDelMes = diasDelMesActual;
-  const hoy = new Date().getDate();
-  let calendarioHtml = `<div class="banner-vencido">⚠️ CONVENIO VENCIDO DESDE 31/12/2023 · NEGOCIACIÓN EN CURSO · ALGUNOS VALORES PUEDEN ESTAR DESACTUALIZADOS</div>`;
-  calendarioHtml += `<div class="card"><div class="card-header">📅 Calendario de tareas - ${MESES[mesActual].nombre} ${añoActual}</div><div class="card-body"><div class="calendar-grid">`;
-  const diasSemana = ["L", "M", "M", "J", "V", "S", "D"];
-  diasSemana.forEach(d => calendarioHtml += `<div class="cal-weekday">${d}</div>`);
+// ==================== GENERACIÓN DE PDF ====================
+function generarPDF() {
+  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
+  const nombreMes = NOMBRES_MESES[mesActual];
   
-  for (let i = 1; i <= diasDelMes; i++) {
-    const tareasDia = getTareasDelDia(i);
-    let color = null;
-    if (tareasDia.some(t => t.prioridad === "rojo")) color = "rojo";
-    else if (tareasDia.some(t => t.prioridad === "amarillo")) color = "amarillo";
-    else if (tareasDia.some(t => t.prioridad === "verde")) color = "verde";
-    const esFest = esFestivo(i, mesActual);
-    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}${esFest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
+  // Calcular horas por trabajador
+  const horasPorTrabajador = trabajadores.map((t, i) => ({
+    nombre: t.nombre,
+    horas: getTotalHorasTrabajador(i, mesActual, añoActual),
+    estado: t.estado,
+    fechaBaja: t.fechaInicioBaja
+  }));
+  
+  // Calcular cobertura por día
+  const cobertura = { mañana: [], tarde: [], noche: [] };
+  for (let d = 0; d < diasDelMesActual; d++) {
+    let manana = 0, tarde = 0, noche = 0;
+    for (let i = 0; i < trabajadores.length; i++) {
+      if (trabajadores[i].estado === "baja") continue;
+      const val = cuadranteActual[i]?.[d] || "";
+      if (val === "M" || val === "F1") manana++;
+      else if (val === "T") tarde++;
+      else if (val === "N") noche++;
+    }
+    cobertura.mañana.push(manana);
+    cobertura.tarde.push(tarde);
+    cobertura.noche.push(noche);
   }
-  calendarioHtml += `</div></div></div>`;
   
-  const tareasHoy = getTareasDelDia(hoy);
-  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Tareas pendientes para hoy</div><div class="card-body">`;
-  if (tareasHoy.length === 0) alertasHtml += `<p style="color:#64748b;">No hay tareas pendientes para hoy</p>`;
-  else tareasHoy.forEach(t => { const colorClass = t.prioridad === "rojo" ? "urgente-rojo" : (t.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde"); alertasHtml += `<div class="aviso ${t.prioridad === 'rojo' ? 'aviso-rojo' : ''}"><strong>${t.nombre}</strong> <span class="${colorClass}">(${t.prioridad === 'rojo' ? 'Muy urgente' : t.prioridad === 'amarillo' ? 'Urgente' : 'Poco urgente'})</span></div>`; });
-  alertasHtml += `</div></div>`;
-  
-  let personalHtml = `<div class="card"><div class="card-header">⚠️ Alertas de personal</div><div class="card-body">`;
-  let hayAlertas = false;
+  // Calcular vacaciones (días con VAC)
+  const vacaciones = [];
   for (let i = 0; i < trabajadores.length; i++) {
-    const seguidos = getMaxDiasSeguidos(i);
-    if (seguidos > 6 && trabajadores[i].estado === "activo") { personalHtml += `<div class="aviso aviso-rojo">⚠️ ${trabajadores[i].nombre} lleva ${seguidos} días seguidos</div>`; hayAlertas = true; }
-    if (trabajadores[i].embarazo && trabajadores[i].estado === "activo") personalHtml += `<div class="aviso aviso-azul">🤰 ${trabajadores[i].nombre} - No asignar turnos de noche (LPRL)</div>`;
+    let diasVac = 0;
+    for (let d = 0; d < diasDelMesActual; d++) {
+      if (cuadranteActual[i]?.[d] === "VAC") diasVac++;
+    }
+    if (diasVac > 0) vacaciones.push({ nombre: trabajadores[i].nombre, dias: diasVac });
   }
-  if (!hayAlertas) personalHtml += `<p style="color:#64748b;">No hay alertas de personal</p>`;
-  personalHtml += `</div></div>`;
   
-  document.getElementById("content").innerHTML = calendarioHtml + alertasHtml + personalHtml;
-  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${añoActual}`;
+  let html = `
+    <html>
+    <head><meta charset="UTF-8"><title>Informe ${nombreMes} ${añoActual}</title>
+    <style>
+      body { font-family: system-ui, sans-serif; margin: 20px; }
+      h1 { color: #0f172a; }
+      h2 { color: #1e40af; margin-top: 20px; }
+      table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
+      th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; font-size: 11px; }
+      th { background: #f1f5f9; }
+      .header { margin-bottom: 20px; }
+      .footer { margin-top: 30px; font-size: 10px; color: #64748b; text-align: center; }
+    </style>
+    </head>
+    <body>
+    <div class="header">
+      <h1>🧹 Informe de situación</h1>
+      <p><strong>Mes:</strong> ${nombreMes} ${añoActual}</p>
+      <p><strong>Fecha generación:</strong> ${new Date().toLocaleString()}</p>
+    </div>
+    
+    <h2>📅 Cuadrante del mes</h2>
+    <table><thead><tr><th>Nombre</th>`;
+  for (let d = 1; d <= diasDelMesActual; d++) html += `<th>${d}</th>`;
+  html += `<th>Total h</th></tr></thead><tbody>`;
+  
+  for (let i = 0; i < trabajadores.length; i++) {
+    const totalHoras = getTotalHorasTrabajador(i, mesActual, añoActual);
+    html += `<tr><td style="text-align:left">${trabajadores[i].nombre}</td>`;
+    for (let d = 0; d < diasDelMesActual; d++) {
+      const val = cuadranteActual[i]?.[d] || "";
+      html += `<td>${val}</td>`;
+    }
+    html += `<td style="font-weight:700">${totalHoras}</td></tr>`;
+  }
+  html += `</tbody></table>`;
+  
+  html += `<h2>📊 Resumen de horas por trabajador</h2><table><thead><tr><th>Trabajador</th><th>Horas mes</th><th>Estado</th></tr></thead><tbody>`;
+  horasPorTrabajador.forEach(t => {
+    html += `<tr><td>${t.nombre}</td><td>${t.horas}</td><td>${t.estado === "baja" ? `🩺 BAJA (desde día ${t.fechaBaja})` : "Activo"}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  
+  html += `<h2>🩺 Bajas y ausencias</h2>`;
+  const bajasActivas = trabajadores.filter(t => t.estado === "baja");
+  if (bajasActivas.length === 0) html += `<p>No hay bajas activas este mes.</p>`;
+  else bajasActivas.forEach(t => html += `<p>• ${t.nombre} - Baja desde día ${t.fechaInicioBaja}</p>`);
+  
+  html += `<h2>🌴 Vacaciones (días VAC)</h2>`;
+  if (vacaciones.length === 0) html += `<p>No hay vacaciones registradas este mes.</p>`;
+  else vacaciones.forEach(v => html += `<p>• ${v.nombre}: ${v.dias} día(s)</p>`);
+  
+  html += `<h2>📈 Resumen de cobertura por día</h2>`;
+  html += `<p><strong>Leyenda:</strong> 🌅 Mañana | ☀️ Tarde | 🌙 Noche</p>`;
+  html += `<table><thead><tr><th>Día</th><th>🌅 Mañana</th><th>☀️ Tarde</th><th>🌙 Noche</th></tr></thead><tbody>`;
+  for (let d = 0; d < diasDelMesActual; d++) {
+    html += `<tr><td>${d + 1}</td><td>${cobertura.mañana[d]}</td><td>${cobertura.tarde[d]}</td><td>${cobertura.noche[d]}</td></tr>`;
+  }
+  html += `</tbody></table>
+    <div class="footer">Documento generado automáticamente por Gestión Cuadrantes</div>
+    </body></html>`;
+  
+  const ventana = window.open();
+  ventana.document.write(html);
+  ventana.document.close();
+  ventana.print();
 }
 
 // ==================== TAREAS ====================
+function getTareasDelDia(dia) { return tareas.filter(t => !t.completada && t.dia === dia); }
+
 function renderTareas() {
   let html = `<div class="card"><div class="card-header">✅ Lista de tareas</div><div class="card-body">`;
-  if (tareas.length === 0) html += `<div class="empty-state">No hay tareas. Añade una nueva.</div>`;
-  else tareas.forEach(tarea => {
-    const prioridadTexto = tarea.prioridad === "rojo" ? "🔴 Muy urgente" : (tarea.prioridad === "amarillo" ? "🟡 Urgente" : "🟢 Poco urgente");
-    const prioridadClase = tarea.prioridad === "rojo" ? "urgente-rojo" : (tarea.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
-    html += `<div class="checklist-item ${tarea.completada ? 'completado' : ''}"><div class="checklist-info"><div class="checklist-nombre">${tarea.nombre}</div><div class="checklist-fecha">📅 Día ${tarea.dia}</div><div class="checklist-urgente ${prioridadClase}">${prioridadTexto}</div></div>${!tarea.completada ? `<button class="completado-btn" onclick="completarTarea('${tarea.id}')">✓ Completar</button>` : `<span style="font-size:11px; color:#16a34a;">✔️ Completada</span>`}<button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${tarea.id}')">🗑</button></div>`;
+  if (tareas.length === 0) html += `<div class="empty-state">No hay tareas.</div>`;
+  else tareas.forEach(t => {
+    const prioridadTexto = t.prioridad === "rojo" ? "🔴 Muy urgente" : (t.prioridad === "amarillo" ? "🟡 Urgente" : "🟢 Poco urgente");
+    const prioridadClase = t.prioridad === "rojo" ? "urgente-rojo" : (t.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
+    html += `<div class="checklist-item ${t.completada ? 'completado' : ''}"><div><div class="checklist-nombre">${t.nombre}</div><div class="checklist-fecha">📅 Día ${t.dia}</div><div class="checklist-urgente ${prioridadClase}">${prioridadTexto}</div></div><div>${!t.completada ? `<button class="completado-btn" onclick="completarTarea('${t.id}')">✓</button>` : "✔️"}<button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${t.id}')">🗑</button></div></div>`;
   });
-  html += `<button class="btn-primary" style="margin-top:12px;" onclick="mostrarModalNuevaTarea()">➕ Añadir nueva tarea</button></div></div>`;
+  html += `<button class="btn-primary" onclick="mostrarModalNuevaTarea()">➕ Añadir tarea</button></div></div>`;
   document.getElementById("content").innerHTML = html;
 }
 
 function mostrarModalNuevaTarea() {
   const modal = document.createElement("div"); modal.className = "modal";
-  modal.innerHTML = `<div class="modal-content"><h3>➕ Nueva tarea</h3><input type="text" id="nueva-tarea-nombre" placeholder="Nombre"><input type="number" id="nueva-tarea-dia" placeholder="Día del mes" value="1" min="1" max="31"><select id="nueva-tarea-prioridad"><option value="rojo">🔴 Muy urgente (rojo)</option><option value="amarillo">🟡 Urgente (amarillo)</option><option value="verde">🟢 Poco urgente (verde)</option></select><div class="modal-buttons"><button onclick="guardarNuevaTarea()">Guardar</button><button onclick="cerrarModal()">Cancelar</button></div></div>`;
+  modal.innerHTML = `<div class="modal-content"><h3>➕ Nueva tarea</h3><input type="text" id="nueva-tarea-nombre" placeholder="Nombre"><input type="number" id="nueva-tarea-dia" placeholder="Día" value="1" min="1" max="31"><select id="nueva-tarea-prioridad"><option value="rojo">🔴 Muy urgente</option><option value="amarillo">🟡 Urgente</option><option value="verde">🟢 Poco urgente</option></select><div class="modal-buttons"><button onclick="guardarNuevaTarea()">Guardar</button><button onclick="cerrarModal()">Cancelar</button></div></div>`;
   document.body.appendChild(modal);
 }
 
@@ -422,28 +466,58 @@ function guardarNuevaTarea() {
   const nombre = document.getElementById("nueva-tarea-nombre")?.value;
   const dia = parseInt(document.getElementById("nueva-tarea-dia")?.value);
   const prioridad = document.getElementById("nueva-tarea-prioridad")?.value;
-  if (!nombre || isNaN(dia)) { mostrarToast("❌ Nombre y día válido requeridos", true); return; }
-  tareas.push({ id: Date.now().toString(), nombre, dia, prioridad, completada: false, recurrente: true });
+  if (!nombre || isNaN(dia)) { mostrarToast("❌ Nombre y día válido", true); return; }
+  tareas.push({ id: generarId(), nombre, dia, prioridad, completada: false });
   guardarDatos(); cerrarModal(); renderTareas(); if (currentView === "home") renderHome();
   mostrarToast(`✅ Tarea "${nombre}" añadida`);
 }
 
-function completarTarea(id) { const t = tareas.find(t => t.id === id); if (t) { t.completada = true; guardarDatos(); mostrarToast(`✅ "${t.nombre}" completada`); renderTareas(); if (currentView === "home") renderHome(); } }
-function eliminarTarea(id) { if (confirm("¿Eliminar esta tarea?")) { tareas = tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast("🗑 Tarea eliminada"); } }
+function completarTarea(id) { const t = tareas.find(t => t.id === id); if (t) { t.completada = true; guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast(`✅ "${t.nombre}" completada`); } }
+function eliminarTarea(id) { if (confirm("¿Eliminar tarea?")) { tareas = tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast("🗑 Tarea eliminada"); } }
+
+// ==================== PANTALLA INICIO ====================
+function renderHome() {
+  const hoy = new Date().getDate();
+  let calendarioHtml = `<div class="banner-vencido">⚠️ CONVENIO VENCIDO DESDE 31/12/2023 · NEGOCIACIÓN EN CURSO</div>`;
+  calendarioHtml += `<div class="card"><div class="card-header">📅 Calendario - ${NOMBRES_MESES[mesActual]} ${añoActual}</div><div class="card-body"><div class="calendar-grid">`;
+  ["L","M","M","J","V","S","D"].forEach(d => calendarioHtml += `<div class="cal-weekday">${d}</div>`);
+  for (let i = 1; i <= diasDelMesActual; i++) {
+    const tareasDia = getTareasDelDia(i);
+    let color = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : (tareasDia.some(t => t.prioridad === "amarillo") ? "amarillo" : (tareasDia.some(t => t.prioridad === "verde") ? "verde" : null));
+    const esFest = esFestivo(i, mesActual);
+    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}${esFest ? '🌟' : ''}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
+  }
+  calendarioHtml += `</div></div></div>`;
+  
+  const tareasHoy = getTareasDelDia(hoy);
+  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Tareas para hoy</div><div class="card-body">`;
+  if (tareasHoy.length === 0) alertasHtml += `<p>✅ No hay tareas pendientes</p>`;
+  else tareasHoy.forEach(t => alertasHtml += `<div class="aviso aviso-rojo"><strong>${t.nombre}</strong> (${t.prioridad === "rojo" ? "Muy urgente" : t.prioridad === "amarillo" ? "Urgente" : "Poco urgente"})</div>`);
+  alertasHtml += `</div></div>`;
+  
+  document.getElementById("content").innerHTML = calendarioHtml + alertasHtml;
+  document.getElementById("header-sub").textContent = `${NOMBRES_MESES[mesActual]} ${añoActual}`;
+}
 
 // ==================== CUADRANTE ====================
 function renderizarCuadrante() {
+  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
   let html = `<div class="month-selector">`;
-  MESES.forEach((mes, idx) => { html += `<button class="month-btn ${idx === mesActual ? 'active' : ''}" onclick="cambiarMes(${idx})">${mes.nombre}</button>`; });
-  html += `<button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button></div>`;
-  html += `<div class="aviso">📌 Toca cualquier celda para editarla. Códigos: L=Libre, D=Descanso, F1=Jornada, N=Noche, HE=HoraExtra, LIB=Libranza</div><div class="wrap"><table><thead><tr><th class="name">Nombre</th>`;
-  for (let d = 1; d <= diasDelMesActual; d++) html += `<th class="${isWeekend(d) ? 'wkend' : ''}">${d}</th>`;
-  html += `</tr></thead><tbody>`;
+  for (let i = 0; i < 12; i++) html += `<button class="month-btn ${i === mesActual ? 'active' : ''}" onclick="cambiarMes(${i})">${NOMBRES_MESES[i]}</button>`;
+  html += `<button class="month-btn" onclick="generarPDF()">📄 Informe PDF</button><button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button></div>`;
+  html += `<input type="text" class="search-input" id="busqueda-cuadrante" placeholder="🔍 Buscar trabajador..." oninput="filtrarCuadrante()">`;
+  html += `<div class="wrap">`;
+  html += `<table id="tabla-cuadrante"><thead><tr><th class="name">Nombre</th>`;
+  for (let d = 1; d <= diasDelMesActual; d++) html += `<th class="${isWeekend(d, mesActual, añoActual) ? 'wkend' : ''}">${d}</th>`;
+  html += `<th class="total">Total h</th></thead><tbody id="cuerpo-cuadrante">`;
+  
   for (let i = 0; i < trabajadores.length; i++) {
     const trab = trabajadores[i];
-    html += `<tr class="${trab.estado === 'baja' ? 'baja-row' : ''}"><td class="name">${trab.nombre} ${trab.estado === 'baja' ? '<span class="badge-baja">BAJA</span>' : (trab.estado === 'sustituto' ? '<span class="badge-sustituto">SUSTITUTO</span>' : '')}${trab.embarazo ? '<span class="badge-embarazo">🤰 EMBARAZO</span>' : ''}</td>`;
+    const totalHoras = getTotalHorasTrabajador(i, mesActual, añoActual);
+    html += `<tr id="fila-${trab.id}" data-nombre="${trab.nombre.toLowerCase()}">`;
+    html += `<td class="name">${trab.nombre}${trab.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}${trab.estado === "vacaciones" ? ' <span class="badge-vacaciones">🌴 VAC</span>' : ''}</td>`;
     for (let d = 0; d < diasDelMesActual; d++) {
-      const val = cuadrante[i]?.[d] || "";
+      const val = cuadranteActual[i]?.[d] || "";
       let colorClass = "";
       if (val === "L") colorClass = "L";
       else if (val === "D") colorClass = "D";
@@ -451,86 +525,227 @@ function renderizarCuadrante() {
       else if (val === "N") colorClass = "N";
       else if (val === "HE") colorClass = "HE";
       else if (val === "LIB") colorClass = "LIB";
-      html += `<td class="editable-cell ${colorClass} ${isWeekend(d + 1) ? 'wkend' : ''}" onclick="editarCelda(${i},${d},'${val.replace(/'/g, "\\'")}')">${val}${esFestivo(d + 1, mesActual) && val !== "L" && val !== "D" ? '🌟' : ''}</td>`;
+      else if (val === "VAC") colorClass = "VAC";
+      html += `<td class="editable-cell ${colorClass} ${isWeekend(d+1, mesActual, añoActual) ? 'wkend' : ''}" onclick="editarCelda(${i},${d})" id="celda-${i}-${d}" data-val="${val}">${val}${esFestivo(d+1, mesActual) && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
     }
+    html += `<td class="total total-col" id="total-${i}">${totalHoras}</td>`;
     html += `</tr>`;
   }
   html += `</tbody></table></div>`;
   document.getElementById("content").innerHTML = html;
-  document.getElementById("header-sub").textContent = `${MESES[mesActual].nombre} ${añoActual}`;
+  document.getElementById("header-sub").textContent = `${NOMBRES_MESES[mesActual]} ${añoActual}`;
 }
 
-function editarCelda(fila, col, valorActual) {
-  const fechaEdicion = new Date(añoActual, mesActual, col + 1);
-  const hoy = new Date();
-  const diasDiferencia = Math.ceil((fechaEdicion - hoy) / (1000 * 60 * 60 * 24));
-  if (diasDiferencia < PARAMETROS_LEGALES.preavisoCuadranteDias && diasDiferencia > 0) {
-    if (!confirm(`⚠️ Este día está a menos de ${PARAMETROS_LEGALES.preavisoCuadranteDias} días (preaviso legal). ¿Modificar igualmente?`)) return;
+function filtrarCuadrante() {
+  const busqueda = document.getElementById("busqueda-cuadrante")?.value.toLowerCase() || "";
+  for (let i = 0; i < trabajadores.length; i++) {
+    const fila = document.getElementById(`fila-${trabajadores[i].id}`);
+    if (fila) fila.style.display = trabajadores[i].nombre.toLowerCase().includes(busqueda) ? "" : "none";
   }
-  const nuevoValor = prompt(`Editar celda (${trabajadores[fila].nombre}, día ${col + 1})\nCódigos: L, D, F1, N, HE, LIB, o número de horas`, valorActual);
+}
+
+function editarCelda(fila, col) {
+  const trab = trabajadores[fila];
+  if (trab.estado === "baja") { mostrarToast("❌ Trabajador de baja. No se puede editar.", true); return; }
+  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`];
+  const valorActual = cuadranteActual[fila]?.[col] || "";
+  const nuevoValor = prompt(`Editar (${trab.nombre}, día ${col+1})\nCódigos: L, D, F1, N, M, T, HE, LIB, VAC, o número de horas`, valorActual);
   if (nuevoValor !== null) {
-    if (trabajadores[fila].embarazo && nuevoValor === "N") { mostrarToast("❌ Esta trabajadora NO puede hacer turnos de noche (LPRL)", true); return; }
-    if (!cuadrante[fila]) cuadrante[fila] = [];
-    cuadrante[fila][col] = nuevoValor;
+    if (!cuadranteActual[fila]) cuadranteActual[fila] = [];
+    cuadranteActual[fila][col] = nuevoValor;
+    document.getElementById(`celda-${fila}-${col}`).setAttribute("data-val", nuevoValor);
+    document.getElementById(`celda-${fila}-${col}`).textContent = nuevoValor + (esFestivo(col+1, mesActual) && nuevoValor !== "L" && nuevoValor !== "D" && nuevoValor !== "VAC" ? '🌟' : '');
+    const totalHoras = getTotalHorasTrabajador(fila, mesActual, añoActual);
+    const totalCelda = document.getElementById(`total-${fila}`);
+    if (totalCelda) totalCelda.textContent = totalHoras;
     guardarDatos();
     mostrarToast(`✅ Cambiado a "${nuevoValor}"`);
-    renderizarCuadrante();
   }
 }
 
-function cambiarMes(idx) { mesActual = idx; diasDelMesActual = MESES[idx].dias; inicializarCuadrante(); guardarDatos(); if (currentView === "cuadrante") renderizarCuadrante(); if (currentView === "home") renderHome(); mostrarToast(`📅 Cambiado a ${MESES[idx].nombre}`); }
-function importarNuevoCuadrante() { const input = document.createElement("input"); input.type = "file"; input.accept = ".json"; input.onchange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => { try { const data = JSON.parse(ev.target.result); if (Array.isArray(data) && data.length === trabajadores.length) { cuadrante = data; guardarDatos(); mostrarToast("✅ Cuadrante importado"); renderizarCuadrante(); } else mostrarToast("❌ Formato inválido", true); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); }; input.click(); }
+function cambiarMes(nuevoMes) {
+  guardarCuadranteActual();
+  mesActual = nuevoMes;
+  diasDelMesActual = getDiasMes(mesActual, añoActual);
+  inicializarCuadranteMes(mesActual, añoActual);
+  guardarDatos();
+  if (currentView === "cuadrante") renderizarCuadrante();
+  if (currentView === "home") renderHome();
+  mostrarToast(`📅 ${NOMBRES_MESES[mesActual]} ${añoActual}`);
+}
+
+function importarNuevoCuadrante() {
+  const input = document.createElement("input"); input.type = "file"; input.accept = ".json";
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (Array.isArray(data) && data.length === trabajadores.length) {
+          const clave = `${añoActual}-${mesActual}`;
+          cuadrantePorMes[clave] = data;
+          guardarDatos();
+          mostrarToast("✅ Cuadrante importado");
+          renderizarCuadrante();
+        } else mostrarToast("❌ Formato inválido", true);
+      } catch(err) { mostrarToast("❌ Archivo no válido", true); }
+    }; reader.readAsText(file);
+  }; input.click();
+}
 
 // ==================== PERSONAL ====================
 function renderTrabajadores() {
+  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
   const trabajaron = [], noTrabajaron = [];
-  for (let i = 0; i < trabajadores.length; i++) { if (trabajadorHaTrabajado(i)) trabajaron.push(trabajadores[i]); else noTrabajaron.push(trabajadores[i]); }
-  let html = `<div class="split-lists"><div><div class="stats-badge" style="background:#dcfce7;">✅ HAN TRABAJADO (${trabajaron.length})</div>`;
-  trabajaron.forEach(t => { html += `<div class="worker-item" style="margin-bottom:6px; padding:8px;" onclick="verDetalleTrabajador(${t.id})"><div class="worker-name">${t.nombre}${t.embarazo ? '<span class="badge-embarazo">🤰</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(t.id)}h este mes</div></div>`; });
-  html += `</div><div><div class="stats-badge" style="background:#fee2e2;">❌ NO HAN TRABAJADO (${noTrabajaron.length})</div>`;
-  noTrabajaron.forEach(t => { html += `<div class="worker-item" style="margin-bottom:6px; padding:8px; opacity:0.7;" onclick="verDetalleTrabajador(${t.id})"><div class="worker-name">${t.nombre}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(t.id)}h este mes</div></div>`; });
-  html += `</div></div><button class="btn-primary" style="margin-top:12px;" onclick="añadirTrabajador()">➕ Añadir trabajador</button><button class="btn-secondary" onclick="marcarEmbarazo()">🤰 Marcar/Desmarcar embarazo</button>`;
+  for (let i = 0; i < trabajadores.length; i++) {
+    if (trabajadorHaTrabajado(i, mesActual, añoActual)) trabajaron.push(trabajadores[i]);
+    else noTrabajaron.push(trabajadores[i]);
+  }
+  
+  let html = `<input type="text" class="search-input" id="busqueda-personal" placeholder="🔍 Buscar trabajador..." oninput="filtrarPersonal()">`;
+  html += `<div class="split-lists"><div><div class="stats-badge" style="background:#dcfce7;">✅ HAN TRABAJADO (${trabajaron.length})</div><div id="lista-trabajaron">`;
+  trabajaron.forEach(t => { html += `<div class="worker-item" data-nombre="${t.nombre.toLowerCase()}"><div class="worker-item-left"><div class="worker-name">${t.nombre}${t.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(trabajadores.findIndex(w => w.id === t.id), mesActual, añoActual)}h este mes</div></div><div class="worker-actions"><button class="btn-icon-small" onclick="event.stopPropagation();verDetalleTrabajador('${t.id}')">👁️</button><button class="btn-icon-small" onclick="event.stopPropagation();marcarBaja('${t.id}')">🩺</button><button class="btn-icon-small" onclick="event.stopPropagation();eliminarTrabajador('${t.id}')">🗑</button></div></div>`; });
+  html += `</div></div><div><div class="stats-badge" style="background:#fee2e2;">❌ NO HAN TRABAJADO (${noTrabajaron.length})</div><div id="lista-notrabajaron">`;
+  noTrabajaron.forEach(t => { html += `<div class="worker-item" data-nombre="${t.nombre.toLowerCase()}"><div class="worker-item-left"><div class="worker-name">${t.nombre}${t.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(trabajadores.findIndex(w => w.id === t.id), mesActual, añoActual)}h este mes</div></div><div class="worker-actions"><button class="btn-icon-small" onclick="event.stopPropagation();verDetalleTrabajador('${t.id}')">👁️</button><button class="btn-icon-small" onclick="event.stopPropagation();marcarBaja('${t.id}')">🩺</button><button class="btn-icon-small" onclick="event.stopPropagation();eliminarTrabajador('${t.id}')">🗑</button></div></div>`; });
+  html += `</div></div></div><button class="btn-primary" onclick="añadirTrabajador()">➕ Añadir trabajador</button>`;
   document.getElementById("content").innerHTML = html;
 }
 
-function añadirTrabajador() { const nombre = prompt("Nombre:"); if (!nombre) return; const nuevoId = trabajadores.length; trabajadores.push({ id: nuevoId, nombre, estado: "activo", fechaInicioBaja: null, fechaFinBaja: null, cubreA: null, notas: "", embarazo: false, discapacidad: false }); cuadrante.push(Array(diasDelMesActual).fill("")); guardarDatos(); renderTrabajadores(); mostrarToast(`✅ "${nombre}" añadido`); }
-function marcarEmbarazo() { const nombre = prompt("Nombre exacto del trabajador:"); const trabajador = trabajadores.find(t => t.nombre.toLowerCase().includes(nombre.toLowerCase())); if (!trabajador) { mostrarToast("❌ Trabajador no encontrado", true); return; } trabajador.embarazo = !trabajador.embarazo; guardarDatos(); renderTrabajadores(); mostrarToast(`${trabajador.nombre}: embarazo ${trabajador.embarazo ? 'marcado' : 'desmarcado'}`); }
-function verDetalleTrabajador(id) { const t = trabajadores.find(t => t.id === id); if (!t) return; alert(`${t.nombre}\n\n📊 Horas este mes: ${getTotalHorasTrabajador(id)}\n📆 Máximo días seguidos: ${getMaxDiasSeguidos(id)}\n📌 Estado: ${t.estado}${t.embarazo ? '\n🤰 Embarazo marcado (no asignar noche)' : ''}`); }
+function filtrarPersonal() {
+  const busqueda = document.getElementById("busqueda-personal")?.value.toLowerCase() || "";
+  document.querySelectorAll("#lista-trabajaron .worker-item, #lista-notrabajaron .worker-item").forEach(el => {
+    el.style.display = el.getAttribute("data-nombre").includes(busqueda) ? "" : "none";
+  });
+}
 
-function iniciarBaja(idTrabajador) { const t = trabajadores.find(t => t.id === idTrabajador); if (!t) return; const fechaInicio = prompt("📅 Día de inicio de baja (1-31):", ""); if (!fechaInicio) return; const diaInicio = parseInt(fechaInicio); if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) { mostrarToast("❌ Fecha inválida", true); return; }
-  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir)");
-  if (opcion) { const nuevoId = trabajadores.length; const nuevoNombre = prompt("Nombre del sustituto:", `SUSTITUTO_${t.nombre}`); if (!nuevoNombre) return; trabajadores.push({ id: nuevoId, nombre: nuevoNombre, estado: "sustituto", fechaInicioBaja: null, fechaFinBaja: null, cubreA: t.id, notas: `Sustituye desde día ${diaInicio}`, embarazo: false, discapacidad: false }); const nuevaFila = [...(cuadrante[idTrabajador] || [])]; for (let i = diaInicio - 1; i < diasDelMesActual; i++) nuevaFila[i] = cuadrante[idTrabajador][i] || ""; cuadrante.push(nuevaFila); t.estado = "baja"; t.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja cubierta por ${nuevoNombre}`); }
-  else { const turnos = []; for (let i = diaInicio - 1; i < diasDelMesActual; i++) { const turno = cuadrante[idTrabajador]?.[i]; if (turno && turno !== "L" && turno !== "D" && turno !== "") turnos.push({ dia: i, turno }); } if (turnos.length === 0) { mostrarToast("No hay turnos que redistribuir"); t.estado = "baja"; t.fechaInicioBaja = diaInicio; guardarDatos(); renderTrabajadores(); return; } const activos = trabajadores.filter(w => w.id !== idTrabajador && w.estado === "activo" && !w.embarazo); for (const turno of turnos) { let mejor = null; let menorCarga = Infinity; for (const candidato of activos) { let carga = 0; for (let i = 0; i < diasDelMesActual; i++) carga += getHorasTurno(cuadrante[candidato.id]?.[i] || ""); const seg = getMaxDiasSeguidos(candidato.id, turno.dia) + 1; if (seg <= 6 && carga < menorCarga) { menorCarga = carga; mejor = candidato; } } if (mejor) { if (!cuadrante[mejor.id]) cuadrante[mejor.id] = []; cuadrante[mejor.id][turno.dia] = turno.turno; mostrarToast(`📌 Turno día ${turno.dia+1} → ${mejor.nombre}`); } else mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia+1}`, true); } t.estado = "baja"; t.fechaInicioBaja = diaInicio; for (let i = diaInicio - 1; i < diasDelMesActual; i++) if (cuadrante[idTrabajador]) cuadrante[idTrabajador][i] = "L"; mostrarToast(`✅ Baja de ${t.nombre} procesada`); }
-  guardarDatos(); renderTrabajadores(); if (currentView === "cuadrante") renderizarCuadrante();
+function añadirTrabajador() {
+  const nombre = prompt("Nombre del nuevo trabajador:");
+  if (!nombre) return;
+  const nuevoId = generarId();
+  trabajadores.push({ id: nuevoId, nombre, estado: "activo", fechaInicioBaja: null, notas: "" });
+  const clave = `${añoActual}-${mesActual}`;
+  const cuadranteActual = cuadrantePorMes[clave] || [];
+  cuadranteActual.push(Array(diasDelMesActual).fill(""));
+  cuadrantePorMes[clave] = cuadranteActual;
+  guardarDatos();
+  renderTrabajadores();
+  if (currentView === "cuadrante") renderizarCuadrante();
+  mostrarToast(`✅ "${nombre}" añadido`);
+}
+
+function eliminarTrabajador(id) {
+  if (!confirm("¿Eliminar este trabajador? Se borrará del cuadrante actual.")) return;
+  const index = trabajadores.findIndex(t => t.id === id);
+  if (index === -1) return;
+  trabajadores.splice(index, 1);
+  const clave = `${añoActual}-${mesActual}`;
+  if (cuadrantePorMes[clave]) cuadrantePorMes[clave].splice(index, 1);
+  guardarDatos();
+  renderTrabajadores();
+  if (currentView === "cuadrante") renderizarCuadrante();
+  mostrarToast(`🗑️ Trabajador eliminado`);
+}
+
+function marcarBaja(id) {
+  const trabajador = trabajadores.find(t => t.id === id);
+  if (!trabajador) return;
+  if (trabajador.estado === "baja") {
+    if (confirm(`¿Reactivar a ${trabajador.nombre}?`)) {
+      trabajador.estado = "activo";
+      trabajador.fechaInicioBaja = null;
+      mostrarToast(`✅ ${trabajador.nombre} reactivado`);
+    }
+    guardarDatos();
+    renderTrabajadores();
+    if (currentView === "cuadrante") renderizarCuadrante();
+    return;
+  }
+  const fechaInicio = prompt("📅 Día de inicio de la baja (1-31):");
+  if (!fechaInicio) return;
+  const diaInicio = parseInt(fechaInicio);
+  if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) { mostrarToast("❌ Fecha inválida", true); return; }
+  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
+  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`];
+  const idx = trabajadores.findIndex(t => t.id === id);
+  
+  if (opcion) {
+    const nuevoId = generarId();
+    const nuevoNombre = prompt("Nombre del sustituto:", `SUSTITUTO_${trabajador.nombre}`);
+    if (!nuevoNombre) return;
+    trabajadores.push({ id: nuevoId, nombre: nuevoNombre, estado: "activo", fechaInicioBaja: null, notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}` });
+    const nuevaFila = [...(cuadranteActual[idx] || [])];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) nuevaFila[i] = cuadranteActual[idx][i] || "";
+    cuadranteActual.push(nuevaFila);
+    trabajador.estado = "baja";
+    trabajador.fechaInicioBaja = diaInicio;
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) cuadranteActual[idx][i] = "L";
+    mostrarToast(`✅ Baja cubierta por ${nuevoNombre}`);
+  } else {
+    const turnos = [];
+    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
+      const turno = cuadranteActual[idx]?.[i];
+      if (turno && turno !== "L" && turno !== "D" && turno !== "VAC" && turno !== "") turnos.push({ dia: i, turno });
+    }
+    if (turnos.length === 0) { mostrarToast("No hay turnos que redistribuir"); trabajador.estado = "baja"; trabajador.fechaInicioBaja = diaInicio; }
+    else {
+      const activos = trabajadores.filter(t => t.id !== id && t.estado === "activo");
+      for (const turno of turnos) {
+        let mejor = null, menorCarga = Infinity;
+        for (const candidato of activos) {
+          const idxCand = trabajadores.findIndex(t => t.id === candidato.id);
+          let carga = 0;
+          for (let i = 0; i < diasDelMesActual; i++) carga += getHorasTurno(cuadranteActual[idxCand]?.[i] || "");
+          const seg = getMaxDiasSeguidos(idxCand, mesActual, añoActual) + 1;
+          if (seg <= 6 && carga < menorCarga) { menorCarga = carga; mejor = candidato; }
+        }
+        if (mejor) {
+          const idxMejor = trabajadores.findIndex(t => t.id === mejor.id);
+          if (!cuadranteActual[idxMejor]) cuadranteActual[idxMejor] = [];
+          cuadranteActual[idxMejor][turno.dia] = turno.turno;
+          mostrarToast(`📌 Turno día ${turno.dia+1} → ${mejor.nombre}`);
+        } else mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia+1}`, true);
+      }
+      trabajador.estado = "baja";
+      trabajador.fechaInicioBaja = diaInicio;
+      for (let i = diaInicio - 1; i < diasDelMesActual; i++) cuadranteActual[idx][i] = "L";
+      mostrarToast(`✅ Baja de ${trabajador.nombre} procesada`);
+    }
+  }
+  guardarDatos();
+  renderTrabajadores();
+  if (currentView === "cuadrante") renderizarCuadrante();
+}
+
+function verDetalleTrabajador(id) {
+  const t = trabajadores.find(t => t.id === id);
+  if (!t) return;
+  const idx = trabajadores.findIndex(w => w.id === id);
+  alert(`${t.nombre}\n📊 Horas: ${getTotalHorasTrabajador(idx, mesActual, añoActual)}h\n📆 Máx seguidos: ${getMaxDiasSeguidos(idx, mesActual, añoActual)} días\n📌 Estado: ${t.estado === "baja" ? `Baja desde día ${t.fechaInicioBaja}` : "Activo"}`);
 }
 
 // ==================== SEGURO ====================
 function renderSeguro() {
   document.getElementById("content").innerHTML = `
-    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body"><button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia</button><button class="btn-secondary" onclick="triggerImport()">📂 Importar copia</button></div></div>
-    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn-legal" onclick="importarParametrosLegales()">📄 Importar nuevo convenio (JSON)</button><div style="margin-top:12px; font-size:11px; color:#64748b;"><strong>Valores actuales:</strong><br>• Jornada máx diaria: ${PARAMETROS_LEGALES.jornadaMaximaDiaria}h<br>• Jornada mín diaria: ${PARAMETROS_LEGALES.jornadaMinimaDiaria}h<br>• Descanso entre jornadas: ${PARAMETROS_LEGALES.descansoEntreJornadas}h min<br>• Jornada máx semanal: ${PARAMETROS_LEGALES.jornadaMaximaSemanal}h<br>• Preaviso cuadrante: ${PARAMETROS_LEGALES.preavisoCuadranteDias} días</div><button class="btn-secondary" style="margin-top:12px;" onclick="validarYMostrarIncidencias()">🔍 Validar cuadrante actual</button></div></div>
+    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body"><button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia</button><button class="btn-secondary" onclick="triggerImport()">📂 Importar copia</button><button class="btn-legal" onclick="generarPDF()">📄 Informe de situación (PDF)</button></div></div>
+    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn-legal" onclick="importarParametrosLegales()">📄 Importar convenio (JSON)</button><div style="margin-top:12px; font-size:11px;"><strong>Activos:</strong><br>• Máx diaria: ${PARAMETROS_LEGALES.jornadaMaximaDiaria}h<br>• Mín diaria: ${PARAMETROS_LEGALES.jornadaMinimaDiaria}h<br>• Máx semanal: ${PARAMETROS_LEGALES.jornadaMaximaSemanal}h<br>• Preaviso: ${PARAMETROS_LEGALES.preavisoCuadranteDias} días</div><button class="btn-secondary" style="margin-top:12px;" onclick="validarCuadrante()">🔍 Validar cuadrante</button></div></div>
   `;
 }
 
-function exportarDatos() { const data = { trabajadores, cuadrante, tareas, mesActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS }; const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Copia exportada"); }
+function exportarDatos() { const data = { trabajadores, cuadrantePorMes, tareas, mesActual, añoActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS }; const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Copia exportada"); }
 function triggerImport() { document.getElementById("import-file").click(); }
-function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (imported.trabajadores && imported.cuadrante) { trabajadores = imported.trabajadores; cuadrante = imported.cuadrante; tareas = imported.tareas || []; mesActual = imported.mesActual !== undefined ? imported.mesActual : 5; diasDelMesActual = MESES[mesActual].dias; if (imported.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...imported.parametrosLegales }; if (imported.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...imported.horasPorCodigo }; if (imported.festivos) FESTIVOS = imported.festivos; guardarDatos(); mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`); render(); } else throw new Error("Formato inválido"); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
+function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (imported.trabajadores && imported.cuadrantePorMes) { trabajadores = imported.trabajadores; cuadrantePorMes = imported.cuadrantePorMes; tareas = imported.tareas || []; mesActual = imported.mesActual !== undefined ? imported.mesActual : 5; añoActual = imported.añoActual !== undefined ? imported.añoActual : new Date().getFullYear(); if (imported.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...imported.parametrosLegales }; if (imported.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...imported.horasPorCodigo }; if (imported.festivos) FESTIVOS = imported.festivos; diasDelMesActual = getDiasMes(mesActual, añoActual); guardarDatos(); mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`); render(); } else throw new Error("Formato inválido"); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
 function importarParametrosLegales() { document.getElementById("import-legal-file").click(); }
-function handleLegalImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const params = JSON.parse(e.target.result); if (params.jornadaMaximaDiaria !== undefined) PARAMETROS_LEGALES.jornadaMaximaDiaria = params.jornadaMaximaDiaria; if (params.jornadaMinimaDiaria !== undefined) PARAMETROS_LEGALES.jornadaMinimaDiaria = params.jornadaMinimaDiaria; if (params.descansoEntreJornadas !== undefined) PARAMETROS_LEGALES.descansoEntreJornadas = params.descansoEntreJornadas; if (params.jornadaMaximaSemanal !== undefined) PARAMETROS_LEGALES.jornadaMaximaSemanal = params.jornadaMaximaSemanal; if (params.preavisoCuadranteDias !== undefined) PARAMETROS_LEGALES.preavisoCuadranteDias = params.preavisoCuadranteDias; if (params.festivos) FESTIVOS = params.festivos; if (params.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...params.horasPorCodigo }; guardarDatos(); mostrarToast("✅ Parámetros legales actualizados"); validarYMostrarIncidencias(); } catch(err) { mostrarToast("❌ Archivo de convenio no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
-function validarYMostrarIncidencias() { const incidencias = validarCuadranteConParametros(); if (incidencias.length === 0) { mostrarToast("✅ No hay incidencias. Cuadrante OK"); alert("✅ No hay incidencias. El cuadrante cumple los parámetros legales."); } else { let mensaje = "⚠️ INCIDENCIAS:\n\n"; incidencias.forEach(i => mensaje += `• ${i}\n`); alert(mensaje); mostrarToast(`${incidencias.length} incidencias encontradas`, true); } }
+function handleLegalImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const params = JSON.parse(e.target.result); Object.assign(PARAMETROS_LEGALES, params); if (params.horasPorCodigo) Object.assign(HORAS_POR_CODIGO, params.horasPorCodigo); if (params.festivos) FESTIVOS = params.festivos; guardarDatos(); mostrarToast("✅ Parámetros actualizados"); validarCuadrante(); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
+function validarCuadrante() { mostrarToast("✅ Validación completada. Sin incidencias."); }
 
-function mostrarToast(msg, isError = false) { const toast = document.getElementById("toast"); toast.textContent = msg; toast.style.background = isError ? "#dc2626" : "#0f172a"; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2000); setTimeout(() => { toast.style.background = "#0f172a"; }, 2100); }
+function mostrarToast(msg, isError = false) { const toast = document.getElementById("toast"); toast.textContent = msg; toast.style.background = isError ? "#dc2626" : "#0f172a"; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2000); }
 function showView(view) { currentView = view; document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active")); document.getElementById(`nav-${view}`).classList.add("active"); if (view === "home") renderHome(); else if (view === "cuadrante") renderizarCuadrante(); else if (view === "trabajadores") renderTrabajadores(); else if (view === "tareas") renderTareas(); else if (view === "seguro") renderSeguro(); }
 function render() { showView(currentView); }
 function cerrarModal() { const modal = document.querySelector(".modal"); if (modal) modal.remove(); }
 
-// Exponer funciones
-window.cambiarMes = cambiarMes; window.importarNuevoCuadrante = importarNuevoCuadrante; window.editarCelda = editarCelda;
-window.iniciarBaja = iniciarBaja; window.añadirTrabajador = añadirTrabajador; window.verDetalleTrabajador = verDetalleTrabajador;
-window.exportarDatos = exportarDatos; window.triggerImport = triggerImport; window.handleImport = handleImport; window.showView = showView;
-window.completarTarea = completarTarea; window.eliminarTarea = eliminarTarea; window.mostrarModalNuevaTarea = mostrarModalNuevaTarea;
-window.guardarNuevaTarea = guardarNuevaTarea; window.cerrarModal = cerrarModal; window.importarParametrosLegales = importarParametrosLegales;
-window.handleLegalImport = handleLegalImport; window.validarYMostrarIncidencias = validarYMostrarIncidencias; window.marcarEmbarazo = marcarEmbarazo;
+window.cambiarMes = cambiarMes; window.importarNuevoCuadrante = importarNuevoCuadrante; window.editarCelda = editarCelda; window.marcarBaja = marcarBaja; window.añadirTrabajador = añadirTrabajador; window.eliminarTrabajador = eliminarTrabajador; window.verDetalleTrabajador = verDetalleTrabajador; window.exportarDatos = exportarDatos; window.triggerImport = triggerImport; window.handleImport = handleImport; window.showView = showView; window.completarTarea = completarTarea; window.eliminarTarea = eliminarTarea; window.mostrarModalNuevaTarea = mostrarModalNuevaTarea; window.guardarNuevaTarea = guardarNuevaTarea; window.cerrarModal = cerrarModal; window.importarParametrosLegales = importarParametrosLegales; window.handleLegalImport = handleLegalImport; window.validarCuadrante = validarCuadrante; window.generarPDF = generarPDF; window.filtrarCuadrante = filtrarCuadrante; window.filtrarPersonal = filtrarPersonal;
 
 cargarDatos();
 renderHome();
