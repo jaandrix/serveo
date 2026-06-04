@@ -10,170 +10,195 @@
 <title>Gestión Cuadrantes 🧹</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { background: #f0f2f7; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; color: #0f172a; overflow: hidden; height: 100dvh; }
-  #app { display: flex; flex-direction: column; height: 100dvh; max-width: 100%; margin: 0 auto; background: #f0f2f7; }
-  
-  #header { background: #0f172a; color: #fff; padding: 16px; padding-top: max(16px, env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-  #header h1 { font-size: 20px; font-weight: 800; }
-  #header p { font-size: 11px; color: #94a3b8; margin-top: 2px; }
-  
+  body { background: #f0f4f8; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #0f172a; overflow: hidden; height: 100dvh; }
+  #app { display: flex; flex-direction: column; height: 100dvh; background: #f0f4f8; }
+
+  #header { background: #0f172a; color: #fff; padding: 14px 16px; padding-top: max(14px, env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; }
+  #header-left h1 { font-size: 18px; font-weight: 800; }
+  #header-left p { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+  #save-indicator { font-size: 11px; color: #22c55e; opacity: 0; transition: opacity .4s; white-space: nowrap; }
+  #save-indicator.show { opacity: 1; }
+  #pin-lock-btn { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 4px; }
+
   #content { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
-  
   #nav { display: flex; background: #fff; border-top: 1.5px solid #e2e8f0; flex-shrink: 0; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
-  #nav button { flex: 1; background: none; border: none; padding: 11px 0 6px; cursor: pointer; color: #94a3b8; border-top: 2.5px solid transparent; font-weight: 600; }
+  #nav button { flex: 1; background: none; border: none; padding: 10px 0 5px; cursor: pointer; color: #94a3b8; border-top: 2.5px solid transparent; font-weight: 600; }
   #nav button.active { color: #0f172a; border-top-color: #0f172a; }
-  #nav button .nav-icon { font-size: 22px; display: block; }
-  #nav button .nav-label { font-size: 10px; margin-top: 2px; }
-  
+  #nav button .ni { font-size: 20px; display: block; }
+  #nav button .nl { font-size: 10px; margin-top: 1px; }
+
   .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
-  .card-header { padding: 14px 16px; font-weight: 700; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
+  .card-header { padding: 12px 16px; font-weight: 700; font-size: 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: space-between; align-items: center; }
   .card-body { padding: 14px 16px; }
-  
-  .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 16px; }
-  .cal-day { background: #fff; border-radius: 12px; padding: 10px 4px; border: 1px solid #e2e8f0; }
-  .cal-day-num { font-size: 14px; font-weight: 600; }
-  .cal-dot { width: 10px; height: 10px; border-radius: 50%; margin: 5px auto 0; }
+
+  .btn { border: none; border-radius: 12px; padding: 11px 16px; font-weight: 600; cursor: pointer; font-size: 13px; transition: opacity .15s; width: 100%; margin-bottom: 8px; text-align: center; }
+  .btn-primary { background: #0f172a; color: #fff; }
+  .btn-secondary { background: #f1f5f9; border: 1px solid #e2e8f0; color: #0f172a; }
+  .btn-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .btn-legal { background: #1e40af; color: #fff; }
+  .btn-sm { padding: 6px 12px; border-radius: 20px; font-size: 11px; margin-bottom: 0; width: auto; display: inline-block; }
+
+  .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
+  .badge-baja { background: #dc2626; color: #fff; }
+  .badge-emb { background: #db2777; color: #fff; }
+  .badge-red { background: #fee2e2; color: #991b1b; }
+  .badge-amber { background: #fef3c7; color: #92400e; }
+  .badge-green { background: #dcfce7; color: #14532d; }
+  .badge-blue { background: #dbeafe; color: #1e40af; }
+
+  .aviso { padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 12px; border-left: 4px solid; }
+  .aviso-rojo { background: #fee2e2; border-color: #dc2626; }
+  .aviso-amber { background: #fef3c7; border-color: #d97706; }
+  .aviso-verde { background: #dcfce7; border-color: #16a34a; }
+  .aviso-azul { background: #dbeafe; border-color: #2563eb; }
+  .aviso-gris { background: #f1f5f9; border-color: #94a3b8; }
+  .banner-vencido { background: #dc2626; color: #fff; padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 12px; font-weight: 600; text-align: center; }
+
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+  .cal-wd { font-size: 10px; font-weight: 700; color: #64748b; padding: 4px 0; }
+  .cal-day { background: #f8fafc; border-radius: 10px; padding: 8px 2px; border: 1px solid #e2e8f0; cursor: default; }
+  .cal-day.hoy { background: #0f172a; color: #fff; }
+  .cal-day-num { font-size: 13px; font-weight: 600; }
+  .cal-dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; }
   .cal-dot.rojo { background: #dc2626; }
-  .cal-dot.amarillo { background: #d97706; }
+  .cal-dot.amber { background: #d97706; }
   .cal-dot.verde { background: #16a34a; }
-  .cal-weekday { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 4px; }
-  .festivo-icon { font-size: 10px; margin-left: 2px; }
-  
-  .checklist-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
-  .checklist-info { flex: 1; }
-  .checklist-nombre { font-weight: 600; }
-  .checklist-fecha { font-size: 11px; color: #64748b; }
-  .checklist-urgente { font-size: 11px; font-weight: 600; margin-top: 3px; }
-  .urgente-rojo { color: #dc2626; }
-  .urgente-amarillo { color: #d97706; }
-  .urgente-verde { color: #16a34a; }
-  .completado-btn { background: #f1f5f9; border: none; padding: 6px 12px; border-radius: 20px; font-size: 11px; cursor: pointer; }
-  .completado { opacity: 0.5; text-decoration: line-through; }
-  
-  .wrap { overflow-x: auto; padding: 1rem 0; }
-  table { border-collapse: collapse; font-size: 11px; min-width: 800px; width: 100%; }
-  th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 4px 2px; min-width: 28px; }
-  th { background: #f1f5f9; font-weight: 600; font-size: 10px; position: sticky; top: 0; }
-  th.name, td.name { text-align: left; padding-left: 8px; min-width: 180px; position: sticky; left: 0; background: #fff; z-index: 1; }
-  th.total, td.total { background: #fef3c7; font-weight: 700; }
+
+  .mes-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .mes-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 5px 11px; font-size: 11px; cursor: pointer; }
+  .mes-btn.active { background: #0f172a; color: #fff; }
+
+  .cuad-toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .cuad-search { flex: 1; min-width: 140px; padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 13px; background: #fff; outline: none; }
+
+  .wrap { overflow-x: auto; padding-bottom: 4px; }
+  table { border-collapse: collapse; font-size: 11px; width: 100%; }
+  th, td { border: 0.5px solid #cbd5e1; text-align: center; padding: 3px 2px; min-width: 26px; }
+  th { background: #f1f5f9; font-weight: 700; font-size: 10px; position: sticky; top: 0; z-index: 2; }
+  th.col-nombre, td.col-nombre { text-align: left; padding-left: 8px; min-width: 160px; position: sticky; left: 0; background: #fff; z-index: 1; }
+  th.col-total, td.col-total { min-width: 38px; font-weight: 700; position: sticky; right: 0; background: #e8f4fd; }
   tr:nth-child(even) td { background: #f8fafc; }
-  tr:nth-child(even) td.total { background: #fef3c7; }
-  .L { color: #185FA5; font-weight: 600; }
-  .D { color: #3B6D11; font-weight: 600; }
-  .F1 { color: #A32D2D; font-weight: 600; }
-  .N { color: #854F0B; font-weight: 600; }
-  .HE { color: #7c3aed; font-weight: 600; }
-  .LIB { color: #0891b2; font-weight: 600; }
-  .VAC { color: #0f766e; font-weight: 600; }
   .wkend { background: #eef2ff !important; }
-  .editable-cell { cursor: pointer; transition: background 0.1s; }
-  .editable-cell:active { background: #dbeafe; }
-  .baja-row { opacity: 0.6; background: #fee2e2 !important; }
-  
-  .worker-list { display: flex; flex-direction: column; gap: 8px; }
-  .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; transition: background 0.1s; display: flex; justify-content: space-between; align-items: center; }
-  .worker-item-left { flex: 1; }
-  .worker-name { font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .worker-actions { display: flex; gap: 8px; }
-  .btn-icon-small { background: none; border: none; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 8px; }
-  .btn-icon-small:active { background: #f1f5f9; }
-  .badge-baja { background: #dc2626; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-  .badge-vacaciones { background: #0f766e; color: white; padding: 2px 8px; border-radius: 20px; font-size: 10px; }
-  .worker-summary { font-size: 11px; color: #64748b; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
-  
-  .btn-primary { background: #0f172a; color: #fff; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
-  .btn-secondary { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px; cursor: pointer; font-weight: 500; width: 100%; margin-bottom: 8px; }
-  .btn-legal { background: #1e40af; color: white; border: none; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; cursor: pointer; margin-bottom: 10px; }
-  
-  .aviso { background: #fef3c7; border-left: 4px solid #d97706; padding: 10px; border-radius: 10px; margin-bottom: 10px; font-size: 12px; }
-  .aviso-rojo { background: #fee2e2; border-left-color: #dc2626; }
-  .aviso-azul { background: #dbeafe; border-left-color: #2563eb; }
-  
-  .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-  .modal-content { background: #fff; border-radius: 20px; padding: 20px; width: 90%; max-width: 340px; max-height: 80vh; overflow-y: auto; }
-  .modal-content input, .modal-content select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 14px; }
-  .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
-  .modal-buttons button { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 600; cursor: pointer; }
-  
-  #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: white; padding: 12px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .editable-cell { cursor: pointer; }
+  .editable-cell:active { background: #dbeafe !important; }
+  .baja-row td { opacity: 0.55; background: #fff5f5 !important; }
+  .L { color: #1d4ed8; font-weight: 700; }
+  .D { color: #15803d; font-weight: 700; }
+  .F1 { color: #b91c1c; font-weight: 700; }
+  .N { color: #92400e; font-weight: 700; }
+  .M, .T { color: #374151; font-weight: 600; }
+  .HE { color: #6d28d9; font-weight: 700; }
+  .LIB { color: #0e7490; font-weight: 700; }
+  .VAC { color: #065f46; font-weight: 700; background: #d1fae5 !important; }
+  .cobertura-row td { background: #f0fdf4; font-weight: 700; color: #15803d; border-top: 2px solid #86efac; }
+
+  .worker-search { width: 100%; padding: 9px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; margin-bottom: 12px; outline: none; }
+  .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; cursor: pointer; margin-bottom: 8px; }
+  .worker-name { font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .worker-stats { font-size: 11px; color: #64748b; margin-top: 5px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .bolsa-pos { color: #16a34a; font-weight: 700; }
+  .bolsa-neg { color: #dc2626; font-weight: 700; }
+  .vac-bar { height: 6px; background: #e2e8f0; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .vac-bar-fill { height: 100%; background: #16a34a; border-radius: 3px; }
+
+  .tarea-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .tarea-info { flex: 1; }
+  .tarea-nombre { font-weight: 600; font-size: 13px; }
+  .tarea-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: flex-end; justify-content: center; z-index: 200; }
+  .modal-box { background: #fff; border-radius: 24px 24px 0 0; padding: 22px 20px; width: 100%; max-width: 500px; max-height: 92vh; overflow-y: auto; }
+  .modal-box.centered { border-radius: 20px; margin: 16px; max-height: 88vh; align-self: center; }
+  .modal-title { font-size: 17px; font-weight: 800; margin-bottom: 16px; }
+  .modal-label { font-size: 12px; font-weight: 600; color: #64748b; margin-bottom: 4px; margin-top: 12px; display: block; }
+  .modal-input { width: 100%; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; outline: none; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 18px; }
+  .modal-btns button { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; font-size: 14px; }
+  .btn-modal-ok { background: #0f172a; color: #fff; }
+  .btn-modal-cancel { background: #f1f5f9; color: #0f172a; }
+
+  .turno-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 12px 0; }
+  .turno-btn { padding: 14px 4px; border-radius: 12px; border: 2px solid transparent; font-weight: 800; font-size: 16px; cursor: pointer; text-align: center; }
+  .turno-btn:active { transform: scale(0.96); }
+  .turno-btn.sel { border-color: #0f172a !important; }
+  .tb-L { background: #dbeafe; color: #1d4ed8; }
+  .tb-D { background: #dcfce7; color: #15803d; }
+  .tb-F1 { background: #fee2e2; color: #b91c1c; }
+  .tb-N { background: #fef3c7; color: #92400e; }
+  .tb-M, .tb-T { background: #f1f5f9; color: #374151; }
+  .tb-HE { background: #ede9fe; color: #6d28d9; }
+  .tb-LIB { background: #cffafe; color: #0e7490; }
+  .tb-VAC { background: #d1fae5; color: #065f46; }
+  .tb-clear { background: #f1f5f9; color: #94a3b8; }
+  .turno-label { font-size: 9px; font-weight: 600; margin-top: 3px; opacity: 0.75; }
+
+  .pin-display { display: flex; gap: 12px; justify-content: center; margin: 20px 0; }
+  .pin-dot { width: 16px; height: 16px; border-radius: 50%; background: #e2e8f0; }
+  .pin-dot.filled { background: #0f172a; }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 260px; margin: 0 auto; }
+  .pin-key { padding: 16px; border-radius: 14px; background: #f1f5f9; border: none; font-size: 20px; font-weight: 700; cursor: pointer; }
+
+  .hist-item { font-size: 11px; padding: 8px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b; }
+  .festivo-chip { display: inline-flex; align-items: center; gap: 6px; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 20px; padding: 4px 10px; font-size: 12px; margin: 3px; }
+
+  #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
-  
-  .import-input { display: none; }
-  .month-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; align-items: center; }
-  .month-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
-  .month-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
-  
-  .empty-state { text-align: center; padding: 30px; color: #94a3b8; }
-  
-  .search-input { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 12px; font-size: 14px; }
-  .total-col { background: #fef3c7; font-weight: 700; }
-  
-  .banner-vencido { background: #dc2626; color: white; padding: 12px; border-radius: 12px; margin-bottom: 12px; text-align: center; font-size: 12px; }
+  .empty { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
+  input[type=file] { display: none; }
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="header"><div><h1>🧹 Gestión Cuadrantes</h1><p id="header-sub"></p></div></div>
+  <div id="header">
+    <div id="header-left"><h1>🧹 Gestión Cuadrantes</h1><p id="header-sub">Cargando...</p></div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="save-indicator">✓ Guardado</span>
+      <button id="pin-lock-btn" onclick="mostrarPantallaPIN('lock')">🔒</button>
+    </div>
+  </div>
   <div id="content"></div>
   <nav id="nav">
-    <button class="active" onclick="showView('home')" id="nav-home"><span class="nav-icon">🏠</span><span class="nav-label">Inicio</span></button>
-    <button onclick="showView('cuadrante')" id="nav-cuadrante"><span class="nav-icon">📅</span><span class="nav-label">Cuadrante</span></button>
-    <button onclick="showView('trabajadores')" id="nav-trabajadores"><span class="nav-icon">👥</span><span class="nav-label">Personal</span></button>
-    <button onclick="showView('tareas')" id="nav-tareas"><span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
-    <button onclick="showView('seguro')" id="nav-seguro"><span class="nav-icon">🔒</span><span class="nav-label">Seguro</span></button>
+    <button class="active" onclick="showView('home')"      id="nav-home">     <span class="ni">🏠</span><span class="nl">Inicio</span></button>
+    <button onclick="showView('cuadrante')"  id="nav-cuadrante"><span class="ni">📅</span><span class="nl">Cuadrante</span></button>
+    <button onclick="showView('personal')"   id="nav-personal"> <span class="ni">👥</span><span class="nl">Personal</span></button>
+    <button onclick="showView('tareas')"     id="nav-tareas">   <span class="ni">✅</span><span class="nl">Tareas</span></button>
+    <button onclick="showView('seguro')"     id="nav-seguro">   <span class="ni">🔒</span><span class="nl">Seguro</span></button>
   </nav>
 </div>
 <div id="toast"></div>
-<input type="file" id="import-file" class="import-input" accept=".json" onchange="handleImport(event)">
-<input type="file" id="import-legal-file" class="import-input" accept=".json" onchange="handleLegalImport(event)">
+<input type="file" id="file-import" accept=".json" onchange="importarBackup(event)">
+<input type="file" id="file-import-legal" accept=".json" onchange="importarLegal(event)">
 
 <script>
-// ==================== GENERADOR DE IDS ÚNICOS ====================
-function generarId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+// ==================== VERSIÓN Y CONSTANTES ====================
+const APP_VERSION = 3;
+const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
+
+function diasEnMes(mes, anio) { return new Date(anio, mes + 1, 0).getDate(); }
+function esFinDeSemana(dia, mes, anio) { const dow = new Date(anio, mes, dia).getDay(); return dow === 0 || dow === 6; }
+
+const CODIGOS_TURNO = [
+  { cod:"L",   label:"Libre",       horas:0, bg:"#dbeafe", color:"#1d4ed8" },
+  { cod:"D",   label:"Descanso",    horas:0, bg:"#dcfce7", color:"#15803d" },
+  { cod:"F1",  label:"Jornada",     horas:7, bg:"#fee2e2", color:"#b91c1c" },
+  { cod:"N",   label:"Noche",       horas:8, bg:"#fef3c7", color:"#92400e" },
+  { cod:"M",   label:"Mañana",      horas:7, bg:"#f1f5f9", color:"#374151" },
+  { cod:"T",   label:"Tarde",       horas:7, bg:"#f1f5f9", color:"#374151" },
+  { cod:"HE",  label:"H.Extra",     horas:0, bg:"#ede9fe", color:"#6d28d9" },
+  { cod:"LIB", label:"Libranza",    horas:0, bg:"#cffafe", color:"#0e7490" },
+  { cod:"VAC", label:"Vacaciones",  horas:0, bg:"#d1fae5", color:"#065f46" },
+  { cod:"",    label:"Borrar",      horas:0, bg:"#f1f5f9", color:"#94a3b8" },
+];
+function horasCodigo(cod) {
+  if (!cod) return 0;
+  const num = parseInt(cod);
+  if (!isNaN(num) && num >= 2 && num <= 9) return num;
+  const entry = CODIGOS_TURNO.find(c => c.cod === cod);
+  return entry ? entry.horas : 0;
 }
 
-// ==================== PARÁMETROS LEGALES ====================
-let PARAMETROS_LEGALES = {
-  jornadaMaximaDiaria: 9,
-  jornadaMinimaDiaria: 7,
-  jornadaMaximaSemanal: 40,
-  descansoEntreJornadas: 12,
-  preavisoCuadranteDias: 5
-};
-
-let HORAS_POR_CODIGO = {
-  "L": 0, "D": 0, "": 0,
-  "F1": 7, "N": 8, "M": 7, "T": 7,
-  "HE": 0, "LIB": 0, "VAC": 0,
-  "U": 0, "G": 0, "H": 0
-};
-for (let i = 2; i <= 9; i++) HORAS_POR_CODIGO[i.toString()] = i;
-
-let FESTIVOS = ["12-25", "01-01"];
-
-// ==================== MESES ====================
-const NOMBRES_MESES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-let mesActual = 5; // Junio
-let añoActual = new Date().getFullYear();
-
-function getDiasMes(mes, año) {
-  return new Date(año, mes + 1, 0).getDate();
-}
-let diasDelMesActual = getDiasMes(mesActual, añoActual);
-
-function isWeekend(dia, mes, año) {
-  const fecha = new Date(año, mes, dia);
-  return fecha.getDay() === 0 || fecha.getDay() === 6;
-}
-
-function esFestivo(dia, mes) {
-  const mesStr = (mes + 1).toString().padStart(2, "0");
-  const diaStr = dia.toString().padStart(2, "0");
-  return FESTIVOS.includes(`${mesStr}-${diaStr}`);
-}
-
-// Plantilla base (27 filas)
+// PLANTILLA ORIGINAL (27 trabajadores, 31 días)
 const PLANTILLA_BASE = [
   ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
   ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
@@ -205,550 +230,647 @@ const PLANTILLA_BASE = [
 ];
 
 const NOMBRES_BASE = [
-  "MARIA JOSE GARCIA LATORRE", "ANA BELEN SERRANO MOTA", "VICTORIA CHAVES ARIAS",
-  "Mª JESUS SALO LONGARES", "CONCEPCION GARCIA GUERRERO", "CONCEPCION TARBUENCA SILVESTRE",
-  "ASUNCION IBARRA ARAMBURO", "LUCIA MORENO APARICIO", "Mª JESUS BETRIAN MORA",
-  "BELINDA MARUGAN RIBAS", "MARI CARMEN CHUECA GRACIA", "Rosario Polo",
-  "Candela Ruiz / Pared", "JOSE LUIS GARCIA SANCHO", "JOE GARCIA OLIVAR",
-  "SERRANO GONZALEZ", "IVAR PEREZ", "SERRANO", "IRIN MUNUERA",
-  "LANDA LORENTE BENITO", "SUSANA NAVARRO MARQUINA", "PEÑA DURAN PEREZ",
-  "Mª JESUS BOILLOS CASADO", "VANESSA BETRIAN MORA", "Mª ISABEL IBARRA ARAMBURO",
-  "JOSE RAMON RUIZ CHAVES", "A. Contra Joyce"
+  "MARIA JOSE GARCIA LATORRE","ANA BELEN SERRANO MOTA","VICTORIA CHAVES ARIAS",
+  "Mª JESUS SALO LONGARES","CONCEPCION GARCIA GUERRERO","CONCEPCION TARBUENCA SILVESTRE",
+  "ASUNCION IBARRA ARAMBURO","LUCIA MORENO APARICIO","Mª JESUS BETRIAN MORA",
+  "BELINDA MARUGAN RIBAS","MARI CARMEN CHUECA GRACIA","Rosario Polo",
+  "Candela Ruiz / Pared","JOSE LUIS GARCIA SANCHO","JOE GARCIA OLIVAR",
+  "SERRANO GONZALEZ","IVAR PEREZ","SERRANO","IRIN MUNUERA",
+  "LANDA LORENTE BENITO","SUSANA NAVARRO MARQUINA","PEÑA DURAN PEREZ",
+  "Mª JESUS BOILLOS CASADO","VANESSA BETRIAN MORA","Mª ISABEL IBARRA ARAMBURO",
+  "JOSE RAMON RUIZ CHAVES","A. Contra Joyce"
 ];
 
 // ==================== ESTADO GLOBAL ====================
-let trabajadores = [];
-let cuadrantePorMes = {};
-let tareas = [];
-let currentView = "home";
-let busquedaTexto = "";
+let state = {
+  version: APP_VERSION,
+  anio: new Date().getFullYear(),
+  mesActual: new Date().getMonth(),
+  cuadrantePorMes: {},
+  trabajadores: [],
+  tareas: [],
+  festivos: [],
+  zonas: ["UCI", "Urgencias", "Planta", "Consultas Externas", "Quirófano", "General"],
+  parametros: {
+    jornadaMaxDiaria: 9,
+    jornadaMinDiaria: 7,
+    jornadaMaxSemanal: 40,
+    maxDiasSeguidos: 6,
+    preavisoDias: 5,
+    jornadaAnualDiurna: 1602,
+    jornadaAnualNocturna: 1430,
+    vacacionesAnuales: 30,
+    convenioVencido: true,
+    convenioTexto: "Convenio Limpieza Hospitalaria · Vencido 31/12/2023"
+  },
+  historial: [],
+  pinHash: null
+};
 
-// ==================== FUNCIONES AUXILIARES ====================
-function getHorasTurno(codigo) {
-  if (!codigo || codigo === "") return 0;
-  const num = parseInt(codigo);
-  if (!isNaN(num) && num >= 2 && num <= 9) return num;
-  return HORAS_POR_CODIGO[codigo] || 0;
+let currentView = "home";
+let undoStack = [];
+let pinDesbloqueado = false;
+let cuadFiltro = "";
+let personalFiltro = "";
+
+// ==================== FUNCIONES CUADRANTE ====================
+function clavesMes(mes, anio) { return `${anio}-${mes}`; }
+
+function getCuadranteMes(mes, anio) {
+  const key = clavesMes(mes, anio);
+  if (!state.cuadrantePorMes[key]) {
+    const dias = diasEnMes(mes, anio);
+    state.cuadrantePorMes[key] = PLANTILLA_BASE.map(fila => {
+      const nueva = [];
+      for (let i = 0; i < dias; i++) nueva[i] = (fila[i] !== undefined) ? fila[i] : "";
+      return nueva;
+    });
+  }
+  return state.cuadrantePorMes[key];
 }
 
-function getTotalHorasTrabajador(idx, mes, año) {
-  const clave = `${año}-${mes}`;
-  const cuadrante = cuadrantePorMes[clave] || [];
-  const fila = cuadrante[idx] || [];
+function setCelda(trabId, dia, valor, mes, anio) {
+  mes = mes ?? state.mesActual;
+  anio = anio ?? state.anio;
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx === -1) return;
+  const anterior = cuad[idx]?.[dia] ?? "";
+  undoStack.push({ trabId, dia, mes, anio, anterior, nuevo: valor });
+  if (undoStack.length > 20) undoStack.shift();
+  state.historial.unshift({ ts: Date.now(), trabId, mes, anio, dia, anterior, nuevo: valor });
+  if (state.historial.length > 200) state.historial.pop();
+  if (!cuad[idx]) cuad[idx] = [];
+  cuad[idx][dia] = valor;
+  guardarDatos();
+}
+
+function getTotalHorasMes(trabId, mes, anio) {
+  const cuad = getCuadranteMes(mes ?? state.mesActual, anio ?? state.anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx < 0 || !cuad[idx]) return 0;
+  return cuad[idx].reduce((s, v) => s + horasCodigo(v), 0);
+}
+
+function getTotalHorasAnio(trabId, anio) {
+  anio = anio ?? state.anio;
   let total = 0;
-  const dias = getDiasMes(mes, año);
-  for (let i = 0; i < dias; i++) total += getHorasTurno(fila[i]);
+  for (let m = 0; m < 12; m++) total += getTotalHorasMes(trabId, m, anio);
   return total;
 }
 
-function getMaxDiasSeguidos(idx, mes, año) {
-  const clave = `${año}-${mes}`;
-  const cuadrante = cuadrantePorMes[clave] || [];
-  const fila = cuadrante[idx] || [];
-  let maxSeguidos = 0, actual = 0;
-  const dias = getDiasMes(mes, año);
-  for (let i = 0; i < dias; i++) {
-    const val = fila[i];
-    const tieneTurno = val && val !== "L" && val !== "D" && val !== "VAC" && val !== "";
-    if (tieneTurno) { actual++; maxSeguidos = Math.max(maxSeguidos, actual); }
+function getVacacionesDisfrutadas(trabId, anio) {
+  anio = anio ?? state.anio;
+  let dias = 0;
+  for (let m = 0; m < 12; m++) {
+    const cuad = getCuadranteMes(m, anio);
+    const idx = state.trabajadores.findIndex(t => t.id === trabId);
+    if (idx < 0 || !cuad[idx]) continue;
+    dias += cuad[idx].filter(v => v === "VAC").length;
+  }
+  return dias;
+}
+
+function getMaxDiasSeguidos(trabId, mes, anio) {
+  mes = mes ?? state.mesActual;
+  anio = anio ?? state.anio;
+  let prefijo = [];
+  if (mes > 0) {
+    const mesAnt = mes - 1;
+    const diasAnt = diasEnMes(mesAnt, anio);
+    const cuadAnt = getCuadranteMes(mesAnt, anio);
+    const idx = state.trabajadores.findIndex(t => t.id === trabId);
+    if (idx >= 0 && cuadAnt[idx]) {
+      for (let d = Math.max(0, diasAnt - 6); d < diasAnt; d++) prefijo.push(cuadAnt[idx][d] || "");
+    }
+  }
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  const fila = (idx >= 0 && cuad[idx]) ? cuad[idx] : [];
+  const todos = [...prefijo, ...fila];
+  let max = 0, actual = 0;
+  for (const v of todos) {
+    const trabajado = v && v !== "L" && v !== "D" && v !== "VAC" && v !== "";
+    if (trabajado) { actual++; max = Math.max(max, actual); }
     else actual = 0;
   }
-  return maxSeguidos;
+  return max;
 }
 
-function trabajadorHaTrabajado(idx, mes, año) {
-  const clave = `${año}-${mes}`;
-  const cuadrante = cuadrantePorMes[clave] || [];
-  const fila = cuadrante[idx] || [];
-  const dias = getDiasMes(mes, año);
-  for (let i = 0; i < dias; i++) {
-    const val = fila[i];
-    if (val && val !== "L" && val !== "D" && val !== "VAC" && val !== "") return true;
-  }
-  return false;
+function haTrabajado(trabId, mes, anio) {
+  const cuad = getCuadranteMes(mes ?? state.mesActual, anio ?? state.anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx < 0 || !cuad[idx]) return false;
+  return cuad[idx].some(v => v && v !== "L" && v !== "D" && v !== "");
 }
 
-function inicializarCuadranteMes(mes, año) {
-  const clave = `${año}-${mes}`;
-  if (cuadrantePorMes[clave]) return;
-  const dias = getDiasMes(mes, año);
-  const cuadrante = PLANTILLA_BASE.map(fila => {
-    const nuevaFila = [];
-    for (let i = 0; i < dias; i++) nuevaFila[i] = (fila[i] !== undefined) ? fila[i] : "";
-    return nuevaFila;
+function esFestivo(dia, mes, anio) {
+  const key = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+  return state.festivos.includes(key);
+}
+
+function coberturaDelDia(dia, mes, anio) {
+  const cuad = getCuadranteMes(mes ?? state.mesActual, anio ?? state.anio);
+  const result = {};
+  state.trabajadores.forEach((t, idx) => {
+    if (t.estado === "baja") return;
+    const v = cuad[idx]?.[dia] || "";
+    if (v && v !== "L" && v !== "D" && v !== "" && v !== "VAC") result[v] = (result[v] || 0) + 1;
   });
-  cuadrantePorMes[clave] = cuadrante;
+  return result;
 }
 
-function guardarCuadranteActual() {
-  const clave = `${añoActual}-${mesActual}`;
-  if (cuadrantePorMes[clave]) {
-    // Actualizar desde la tabla actual si estamos en vista cuadrante
-    const tabla = document.querySelector("#tabla-cuadrante-actual");
-    if (tabla) {
-      for (let i = 0; i < trabajadores.length; i++) {
-        for (let d = 0; d < diasDelMesActual; d++) {
-          const celda = document.querySelector(`#celda-${i}-${d}`);
-          if (celda) cuadrantePorMes[clave][i][d] = celda.getAttribute("data-val") || "";
-        }
-      }
+function validarCuadrante() {
+  const inc = [];
+  const { jornadaMaxDiaria, jornadaMinDiaria, jornadaMaxSemanal, maxDiasSeguidos } = state.parametros;
+  for (const t of state.trabajadores) {
+    if (t.estado === "baja") continue;
+    const seg = getMaxDiasSeguidos(t.id);
+    if (seg > maxDiasSeguidos) inc.push(`⚠️ ${t.nombre}: ${seg} días seguidos`);
+    const horasMes = getTotalHorasMes(t.id);
+    if (horasMes > 220) inc.push(`⚠️ ${t.nombre}: ${horasMes}h este mes (máx recomendado 220h)`);
+    if (t.embarazo) {
+      const cuad = getCuadranteMes(state.mesActual, state.anio);
+      const idx = state.trabajadores.indexOf(t);
+      if (cuad[idx]?.includes("N")) inc.push(`🤰 ${t.nombre}: tiene turno de noche (embarazo)`);
     }
+    const vacDis = getVacacionesDisfrutadas(t.id);
+    if (vacDis > state.parametros.vacacionesAnuales) inc.push(`🏖 ${t.nombre}: ${vacDis} días vacaciones (máx ${state.parametros.vacacionesAnuales})`);
   }
+  return inc;
 }
 
-// ==================== INICIALIZACIÓN ====================
-function inicializarTrabajadores() {
-  trabajadores = NOMBRES_BASE.map((nombre, idx) => ({
-    id: generarId(),
-    nombre: nombre,
-    estado: "activo",
-    fechaInicioBaja: null,
-    notas: ""
-  }));
-}
-
-function cargarDatos() {
-  const guardado = localStorage.getItem("cuadrante_laboral_v8");
-  if (guardado) {
-    try {
-      const data = JSON.parse(guardado);
-      trabajadores = data.trabajadores || [];
-      cuadrantePorMes = data.cuadrantePorMes || {};
-      tareas = data.tareas || [];
-      mesActual = data.mesActual !== undefined ? data.mesActual : 5;
-      añoActual = data.añoActual !== undefined ? data.añoActual : new Date().getFullYear();
-      if (data.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...data.parametrosLegales };
-      if (data.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...data.horasPorCodigo };
-      if (data.festivos) FESTIVOS = data.festivos;
-    } catch(e) { console.error(e); }
-  }
-  if (!trabajadores.length) inicializarTrabajadores();
-  diasDelMesActual = getDiasMes(mesActual, añoActual);
-  inicializarCuadranteMes(mesActual, añoActual);
-  if (!tareas.length) tareas = [{ id: generarId(), nombre: "📄 Firma documentación", dia: diasDelMesActual, prioridad: "rojo", completada: false }];
-}
-
-function guardarDatos() {
-  guardarCuadranteActual();
-  const data = { trabajadores, cuadrantePorMes, tareas, mesActual, añoActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS };
-  localStorage.setItem("cuadrante_laboral_v8", JSON.stringify(data));
-}
-
-// ==================== GENERACIÓN DE PDF ====================
+// ==================== GENERACIÓN PDF ====================
 function generarPDF() {
-  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
-  const nombreMes = NOMBRES_MESES[mesActual];
-  
-  // Calcular horas por trabajador
-  const horasPorTrabajador = trabajadores.map((t, i) => ({
-    nombre: t.nombre,
-    horas: getTotalHorasTrabajador(i, mesActual, añoActual),
-    estado: t.estado,
-    fechaBaja: t.fechaInicioBaja
-  }));
-  
-  // Calcular cobertura por día
-  const cobertura = { mañana: [], tarde: [], noche: [] };
-  for (let d = 0; d < diasDelMesActual; d++) {
-    let manana = 0, tarde = 0, noche = 0;
-    for (let i = 0; i < trabajadores.length; i++) {
-      if (trabajadores[i].estado === "baja") continue;
-      const val = cuadranteActual[i]?.[d] || "";
-      if (val === "M" || val === "F1") manana++;
-      else if (val === "T") tarde++;
-      else if (val === "N") noche++;
-    }
-    cobertura.mañana.push(manana);
-    cobertura.tarde.push(tarde);
-    cobertura.noche.push(noche);
-  }
-  
-  // Calcular vacaciones (días con VAC)
-  const vacaciones = [];
-  for (let i = 0; i < trabajadores.length; i++) {
-    let diasVac = 0;
-    for (let d = 0; d < diasDelMesActual; d++) {
-      if (cuadranteActual[i]?.[d] === "VAC") diasVac++;
-    }
-    if (diasVac > 0) vacaciones.push({ nombre: trabajadores[i].nombre, dias: diasVac });
-  }
-  
-  let html = `
-    <html>
-    <head><meta charset="UTF-8"><title>Informe ${nombreMes} ${añoActual}</title>
-    <style>
-      body { font-family: system-ui, sans-serif; margin: 20px; }
-      h1 { color: #0f172a; }
-      h2 { color: #1e40af; margin-top: 20px; }
-      table { border-collapse: collapse; width: 100%; margin-bottom: 20px; }
-      th, td { border: 1px solid #cbd5e1; padding: 6px; text-align: center; font-size: 11px; }
-      th { background: #f1f5f9; }
-      .header { margin-bottom: 20px; }
-      .footer { margin-top: 30px; font-size: 10px; color: #64748b; text-align: center; }
-    </style>
-    </head>
-    <body>
-    <div class="header">
-      <h1>🧹 Informe de situación</h1>
-      <p><strong>Mes:</strong> ${nombreMes} ${añoActual}</p>
-      <p><strong>Fecha generación:</strong> ${new Date().toLocaleString()}</p>
-    </div>
-    
-    <h2>📅 Cuadrante del mes</h2>
-    <table><thead><tr><th>Nombre</th>`;
-  for (let d = 1; d <= diasDelMesActual; d++) html += `<th>${d}</th>`;
+  const mes = state.mesActual;
+  const anio = state.anio;
+  const nombreMes = MESES_NOMBRES[mes];
+  const cuad = getCuadranteMes(mes, anio);
+  const dias = diasEnMes(mes, anio);
+
+  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Informe ${nombreMes} ${anio}</title>
+  <style>body{font-family:sans-serif;margin:20px} h1{color:#0f172a} table{border-collapse:collapse;width:100%} th,td{border:1px solid #cbd5e1;padding:4px;font-size:10px} th{background:#f1f5f9}</style>
+  </head><body><h1>🧹 Informe de situación</h1><p><strong>Mes:</strong> ${nombreMes} ${anio}</p>
+  <h2>📅 Cuadrante del mes</h2><table><thead><tr><th>Trabajador</th>`;
+  for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
   html += `<th>Total h</th></tr></thead><tbody>`;
-  
-  for (let i = 0; i < trabajadores.length; i++) {
-    const totalHoras = getTotalHorasTrabajador(i, mesActual, añoActual);
-    html += `<tr><td style="text-align:left">${trabajadores[i].nombre}</td>`;
-    for (let d = 0; d < diasDelMesActual; d++) {
-      const val = cuadranteActual[i]?.[d] || "";
-      html += `<td>${val}</td>`;
-    }
-    html += `<td style="font-weight:700">${totalHoras}</td></tr>`;
-  }
-  html += `</tbody></table>`;
-  
-  html += `<h2>📊 Resumen de horas por trabajador</h2><table><thead><tr><th>Trabajador</th><th>Horas mes</th><th>Estado</th></tr></thead><tbody>`;
-  horasPorTrabajador.forEach(t => {
-    html += `<tr><td>${t.nombre}</td><td>${t.horas}</td><td>${t.estado === "baja" ? `🩺 BAJA (desde día ${t.fechaBaja})` : "Activo"}</td></tr>`;
-  });
-  html += `</tbody></table>`;
-  
-  html += `<h2>🩺 Bajas y ausencias</h2>`;
-  const bajasActivas = trabajadores.filter(t => t.estado === "baja");
-  if (bajasActivas.length === 0) html += `<p>No hay bajas activas este mes.</p>`;
-  else bajasActivas.forEach(t => html += `<p>• ${t.nombre} - Baja desde día ${t.fechaInicioBaja}</p>`);
-  
-  html += `<h2>🌴 Vacaciones (días VAC)</h2>`;
-  if (vacaciones.length === 0) html += `<p>No hay vacaciones registradas este mes.</p>`;
-  else vacaciones.forEach(v => html += `<p>• ${v.nombre}: ${v.dias} día(s)</p>`);
-  
-  html += `<h2>📈 Resumen de cobertura por día</h2>`;
-  html += `<p><strong>Leyenda:</strong> 🌅 Mañana | ☀️ Tarde | 🌙 Noche</p>`;
-  html += `<table><thead><tr><th>Día</th><th>🌅 Mañana</th><th>☀️ Tarde</th><th>🌙 Noche</th></tr></thead><tbody>`;
-  for (let d = 0; d < diasDelMesActual; d++) {
-    html += `<tr><td>${d + 1}</td><td>${cobertura.mañana[d]}</td><td>${cobertura.tarde[d]}</td><td>${cobertura.noche[d]}</td></tr>`;
+  for (let i = 0; i < state.trabajadores.length; i++) {
+    const t = state.trabajadores[i];
+    const total = getTotalHorasMes(t.id, mes, anio);
+    html += `<tr><td style="text-align:left">${t.nombre}</td>`;
+    for (let d = 0; d < dias; d++) html += `<td>${cuad[i]?.[d] || ""}</td>`;
+    html += `<td><strong>${total}h</strong></td></tr>`;
   }
   html += `</tbody></table>
-    <div class="footer">Documento generado automáticamente por Gestión Cuadrantes</div>
-    </body></html>`;
-  
+  <h2>📊 Horas por trabajador</h2><table><tr><th>Trabajador</th><th>Horas mes</th><th>Bolsa anual</th><th>Estado</th></tr>`;
+  for (const t of state.trabajadores) {
+    const horas = getTotalHorasMes(t.id);
+    const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
+    html += `<tr><td>${t.nombre}</td><td>${horas}h</td><td>${bolsa >= 0 ? "+" : ""}${bolsa}h</td><td>${t.estado === "baja" ? "🩺 BAJA" : "Activo"}</td></tr>`;
+  }
+  html += `</table>
+  <h2>🩺 Bajas activas</h2><ul>`;
+  const bajas = state.trabajadores.filter(t => t.estado === "baja");
+  if (!bajas.length) html += `<li>No hay bajas activas</li>`;
+  else bajas.forEach(t => html += `<li>${t.nombre} - desde ${t.fechaBaja || "desconocido"}</li>`);
+  html += `</ul>
+  <h2>🌴 Vacaciones</h2><ul>`;
+  for (const t of state.trabajadores) {
+    const disfrutadas = getVacacionesDisfrutadas(t.id);
+    if (disfrutadas > 0) html += `<li>${t.nombre}: ${disfrutadas}/${state.parametros.vacacionesAnuales} días</li>`;
+  }
+  html += `</ul>
+  <h2>📈 Cobertura por día</h2><table><tr><th>Día</th><th>Mañana</th><th>Tarde</th><th>Noche</th></tr>`;
+  for (let d = 0; d < dias; d++) {
+    const cob = coberturaDelDia(d, mes, anio);
+    html += `<tr><td>${d+1}</td><td>${cob.M || 0}</td><td>${cob.T || 0}</td><td>${cob.N || 0}</td></tr>`;
+  }
+  html += `</table><p>Documento generado automáticamente</p></body></html>`;
   const ventana = window.open();
   ventana.document.write(html);
   ventana.document.close();
   ventana.print();
 }
 
-// ==================== TAREAS ====================
-function getTareasDelDia(dia) { return tareas.filter(t => !t.completada && t.dia === dia); }
+// ==================== PERSISTENCIA ====================
+const STORAGE_KEY = "cuadrantes_v3";
 
-function renderTareas() {
-  let html = `<div class="card"><div class="card-header">✅ Lista de tareas</div><div class="card-body">`;
-  if (tareas.length === 0) html += `<div class="empty-state">No hay tareas.</div>`;
-  else tareas.forEach(t => {
-    const prioridadTexto = t.prioridad === "rojo" ? "🔴 Muy urgente" : (t.prioridad === "amarillo" ? "🟡 Urgente" : "🟢 Poco urgente");
-    const prioridadClase = t.prioridad === "rojo" ? "urgente-rojo" : (t.prioridad === "amarillo" ? "urgente-amarillo" : "urgente-verde");
-    html += `<div class="checklist-item ${t.completada ? 'completado' : ''}"><div><div class="checklist-nombre">${t.nombre}</div><div class="checklist-fecha">📅 Día ${t.dia}</div><div class="checklist-urgente ${prioridadClase}">${prioridadTexto}</div></div><div>${!t.completada ? `<button class="completado-btn" onclick="completarTarea('${t.id}')">✓</button>` : "✔️"}<button class="completado-btn" style="background:#fee2e2; margin-left:8px;" onclick="eliminarTarea('${t.id}')">🗑</button></div></div>`;
-  });
-  html += `<button class="btn-primary" onclick="mostrarModalNuevaTarea()">➕ Añadir tarea</button></div></div>`;
-  document.getElementById("content").innerHTML = html;
+function guardarDatos() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  const ind = document.getElementById("save-indicator");
+  if (ind) { ind.classList.add("show"); setTimeout(() => ind.classList.remove("show"), 1800); }
 }
 
-function mostrarModalNuevaTarea() {
-  const modal = document.createElement("div"); modal.className = "modal";
-  modal.innerHTML = `<div class="modal-content"><h3>➕ Nueva tarea</h3><input type="text" id="nueva-tarea-nombre" placeholder="Nombre"><input type="number" id="nueva-tarea-dia" placeholder="Día" value="1" min="1" max="31"><select id="nueva-tarea-prioridad"><option value="rojo">🔴 Muy urgente</option><option value="amarillo">🟡 Urgente</option><option value="verde">🟢 Poco urgente</option></select><div class="modal-buttons"><button onclick="guardarNuevaTarea()">Guardar</button><button onclick="cerrarModal()">Cancelar</button></div></div>`;
-  document.body.appendChild(modal);
+function cargarDatos() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      const data = JSON.parse(raw);
+      state = { ...state, ...data };
+      if (!state.zonas) state.zonas = ["UCI","Urgencias","Planta","Consultas Externas","Quirófano","General"];
+      if (!state.historial) state.historial = [];
+      if (!state.festivos) state.festivos = [];
+      if (!state.cuadrantePorMes) state.cuadrantePorMes = {};
+      state.trabajadores = state.trabajadores.map((t, i) => ({ ...t, id: t.id ?? `t_${i}_${Date.now()}` }));
+    } catch(e) { inicializarNuevo(); }
+  } else { inicializarNuevo(); }
 }
 
-function guardarNuevaTarea() {
-  const nombre = document.getElementById("nueva-tarea-nombre")?.value;
-  const dia = parseInt(document.getElementById("nueva-tarea-dia")?.value);
-  const prioridad = document.getElementById("nueva-tarea-prioridad")?.value;
-  if (!nombre || isNaN(dia)) { mostrarToast("❌ Nombre y día válido", true); return; }
-  tareas.push({ id: generarId(), nombre, dia, prioridad, completada: false });
-  guardarDatos(); cerrarModal(); renderTareas(); if (currentView === "home") renderHome();
-  mostrarToast(`✅ Tarea "${nombre}" añadida`);
-}
-
-function completarTarea(id) { const t = tareas.find(t => t.id === id); if (t) { t.completada = true; guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast(`✅ "${t.nombre}" completada`); } }
-function eliminarTarea(id) { if (confirm("¿Eliminar tarea?")) { tareas = tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); if (currentView === "home") renderHome(); mostrarToast("🗑 Tarea eliminada"); } }
-
-// ==================== PANTALLA INICIO ====================
-function renderHome() {
-  const hoy = new Date().getDate();
-  let calendarioHtml = `<div class="banner-vencido">⚠️ CONVENIO VENCIDO DESDE 31/12/2023 · NEGOCIACIÓN EN CURSO</div>`;
-  calendarioHtml += `<div class="card"><div class="card-header">📅 Calendario - ${NOMBRES_MESES[mesActual]} ${añoActual}</div><div class="card-body"><div class="calendar-grid">`;
-  ["L","M","M","J","V","S","D"].forEach(d => calendarioHtml += `<div class="cal-weekday">${d}</div>`);
-  for (let i = 1; i <= diasDelMesActual; i++) {
-    const tareasDia = getTareasDelDia(i);
-    let color = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : (tareasDia.some(t => t.prioridad === "amarillo") ? "amarillo" : (tareasDia.some(t => t.prioridad === "verde") ? "verde" : null));
-    const esFest = esFestivo(i, mesActual);
-    calendarioHtml += `<div class="cal-day"><div class="cal-day-num">${i}${esFest ? '🌟' : ''}</div>${color ? `<div class="cal-dot ${color}"></div>` : ""}</div>`;
-  }
-  calendarioHtml += `</div></div></div>`;
-  
-  const tareasHoy = getTareasDelDia(hoy);
-  let alertasHtml = `<div class="card"><div class="card-header">⚠️ Tareas para hoy</div><div class="card-body">`;
-  if (tareasHoy.length === 0) alertasHtml += `<p>✅ No hay tareas pendientes</p>`;
-  else tareasHoy.forEach(t => alertasHtml += `<div class="aviso aviso-rojo"><strong>${t.nombre}</strong> (${t.prioridad === "rojo" ? "Muy urgente" : t.prioridad === "amarillo" ? "Urgente" : "Poco urgente"})</div>`);
-  alertasHtml += `</div></div>`;
-  
-  document.getElementById("content").innerHTML = calendarioHtml + alertasHtml;
-  document.getElementById("header-sub").textContent = `${NOMBRES_MESES[mesActual]} ${añoActual}`;
-}
-
-// ==================== CUADRANTE ====================
-function renderizarCuadrante() {
-  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
-  let html = `<div class="month-selector">`;
-  for (let i = 0; i < 12; i++) html += `<button class="month-btn ${i === mesActual ? 'active' : ''}" onclick="cambiarMes(${i})">${NOMBRES_MESES[i]}</button>`;
-  html += `<button class="month-btn" onclick="generarPDF()">📄 Informe PDF</button><button class="month-btn" onclick="importarNuevoCuadrante()">📂 Importar</button></div>`;
-  html += `<input type="text" class="search-input" id="busqueda-cuadrante" placeholder="🔍 Buscar trabajador..." oninput="filtrarCuadrante()">`;
-  html += `<div class="wrap">`;
-  html += `<table id="tabla-cuadrante"><thead><tr><th class="name">Nombre</th>`;
-  for (let d = 1; d <= diasDelMesActual; d++) html += `<th class="${isWeekend(d, mesActual, añoActual) ? 'wkend' : ''}">${d}</th>`;
-  html += `<th class="total">Total h</th></thead><tbody id="cuerpo-cuadrante">`;
-  
-  for (let i = 0; i < trabajadores.length; i++) {
-    const trab = trabajadores[i];
-    const totalHoras = getTotalHorasTrabajador(i, mesActual, añoActual);
-    html += `<tr id="fila-${trab.id}" data-nombre="${trab.nombre.toLowerCase()}">`;
-    html += `<td class="name">${trab.nombre}${trab.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}${trab.estado === "vacaciones" ? ' <span class="badge-vacaciones">🌴 VAC</span>' : ''}</td>`;
-    for (let d = 0; d < diasDelMesActual; d++) {
-      const val = cuadranteActual[i]?.[d] || "";
-      let colorClass = "";
-      if (val === "L") colorClass = "L";
-      else if (val === "D") colorClass = "D";
-      else if (val === "F1") colorClass = "F1";
-      else if (val === "N") colorClass = "N";
-      else if (val === "HE") colorClass = "HE";
-      else if (val === "LIB") colorClass = "LIB";
-      else if (val === "VAC") colorClass = "VAC";
-      html += `<td class="editable-cell ${colorClass} ${isWeekend(d+1, mesActual, añoActual) ? 'wkend' : ''}" onclick="editarCelda(${i},${d})" id="celda-${i}-${d}" data-val="${val}">${val}${esFestivo(d+1, mesActual) && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
-    }
-    html += `<td class="total total-col" id="total-${i}">${totalHoras}</td>`;
-    html += `</tr>`;
-  }
-  html += `</tbody></table></div>`;
-  document.getElementById("content").innerHTML = html;
-  document.getElementById("header-sub").textContent = `${NOMBRES_MESES[mesActual]} ${añoActual}`;
-}
-
-function filtrarCuadrante() {
-  const busqueda = document.getElementById("busqueda-cuadrante")?.value.toLowerCase() || "";
-  for (let i = 0; i < trabajadores.length; i++) {
-    const fila = document.getElementById(`fila-${trabajadores[i].id}`);
-    if (fila) fila.style.display = trabajadores[i].nombre.toLowerCase().includes(busqueda) ? "" : "none";
-  }
-}
-
-function editarCelda(fila, col) {
-  const trab = trabajadores[fila];
-  if (trab.estado === "baja") { mostrarToast("❌ Trabajador de baja. No se puede editar.", true); return; }
-  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`];
-  const valorActual = cuadranteActual[fila]?.[col] || "";
-  const nuevoValor = prompt(`Editar (${trab.nombre}, día ${col+1})\nCódigos: L, D, F1, N, M, T, HE, LIB, VAC, o número de horas`, valorActual);
-  if (nuevoValor !== null) {
-    if (!cuadranteActual[fila]) cuadranteActual[fila] = [];
-    cuadranteActual[fila][col] = nuevoValor;
-    document.getElementById(`celda-${fila}-${col}`).setAttribute("data-val", nuevoValor);
-    document.getElementById(`celda-${fila}-${col}`).textContent = nuevoValor + (esFestivo(col+1, mesActual) && nuevoValor !== "L" && nuevoValor !== "D" && nuevoValor !== "VAC" ? '🌟' : '');
-    const totalHoras = getTotalHorasTrabajador(fila, mesActual, añoActual);
-    const totalCelda = document.getElementById(`total-${fila}`);
-    if (totalCelda) totalCelda.textContent = totalHoras;
-    guardarDatos();
-    mostrarToast(`✅ Cambiado a "${nuevoValor}"`);
-  }
-}
-
-function cambiarMes(nuevoMes) {
-  guardarCuadranteActual();
-  mesActual = nuevoMes;
-  diasDelMesActual = getDiasMes(mesActual, añoActual);
-  inicializarCuadranteMes(mesActual, añoActual);
+function inicializarNuevo() {
+  state.trabajadores = NOMBRES_BASE.map((nombre, i) => ({
+    id: `t_${i}_${Date.now()}`,
+    nombre,
+    estado: "activo",
+    embarazo: false,
+    discapacidad: false,
+    zona: state.zonas[i % state.zonas.length],
+    notas: "",
+    vacacionesTotales: 30,
+    fechaBaja: null
+  }));
+  state.festivos = [`${state.anio}-12-25`, `${state.anio}-01-01`];
+  state.tareas = [
+    { id: "t1", nombre: "📄 Firma documentación mensual", dia: 28, prioridad: "rojo", completada: false },
+    { id: "t2", nombre: "📊 Enviar informe horas dirección", dia: 30, prioridad: "amber", completada: false }
+  ];
   guardarDatos();
-  if (currentView === "cuadrante") renderizarCuadrante();
-  if (currentView === "home") renderHome();
-  mostrarToast(`📅 ${NOMBRES_MESES[mesActual]} ${añoActual}`);
 }
 
-function importarNuevoCuadrante() {
-  const input = document.createElement("input"); input.type = "file"; input.accept = ".json";
-  input.onchange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (Array.isArray(data) && data.length === trabajadores.length) {
-          const clave = `${añoActual}-${mesActual}`;
-          cuadrantePorMes[clave] = data;
-          guardarDatos();
-          mostrarToast("✅ Cuadrante importado");
-          renderizarCuadrante();
-        } else mostrarToast("❌ Formato inválido", true);
-      } catch(err) { mostrarToast("❌ Archivo no válido", true); }
-    }; reader.readAsText(file);
-  }; input.click();
+// ==================== PIN ====================
+function hashSimple(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0;
+  return h.toString(36);
 }
 
-// ==================== PERSONAL ====================
-function renderTrabajadores() {
-  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`] || [];
-  const trabajaron = [], noTrabajaron = [];
-  for (let i = 0; i < trabajadores.length; i++) {
-    if (trabajadorHaTrabajado(i, mesActual, añoActual)) trabajaron.push(trabajadores[i]);
-    else noTrabajaron.push(trabajadores[i]);
-  }
-  
-  let html = `<input type="text" class="search-input" id="busqueda-personal" placeholder="🔍 Buscar trabajador..." oninput="filtrarPersonal()">`;
-  html += `<div class="split-lists"><div><div class="stats-badge" style="background:#dcfce7;">✅ HAN TRABAJADO (${trabajaron.length})</div><div id="lista-trabajaron">`;
-  trabajaron.forEach(t => { html += `<div class="worker-item" data-nombre="${t.nombre.toLowerCase()}"><div class="worker-item-left"><div class="worker-name">${t.nombre}${t.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(trabajadores.findIndex(w => w.id === t.id), mesActual, añoActual)}h este mes</div></div><div class="worker-actions"><button class="btn-icon-small" onclick="event.stopPropagation();verDetalleTrabajador('${t.id}')">👁️</button><button class="btn-icon-small" onclick="event.stopPropagation();marcarBaja('${t.id}')">🩺</button><button class="btn-icon-small" onclick="event.stopPropagation();eliminarTrabajador('${t.id}')">🗑</button></div></div>`; });
-  html += `</div></div><div><div class="stats-badge" style="background:#fee2e2;">❌ NO HAN TRABAJADO (${noTrabajaron.length})</div><div id="lista-notrabajaron">`;
-  noTrabajaron.forEach(t => { html += `<div class="worker-item" data-nombre="${t.nombre.toLowerCase()}"><div class="worker-item-left"><div class="worker-name">${t.nombre}${t.estado === "baja" ? ' <span class="badge-baja">🩺 BAJA</span>' : ''}</div><div class="worker-summary">📊 ${getTotalHorasTrabajador(trabajadores.findIndex(w => w.id === t.id), mesActual, añoActual)}h este mes</div></div><div class="worker-actions"><button class="btn-icon-small" onclick="event.stopPropagation();verDetalleTrabajador('${t.id}')">👁️</button><button class="btn-icon-small" onclick="event.stopPropagation();marcarBaja('${t.id}')">🩺</button><button class="btn-icon-small" onclick="event.stopPropagation();eliminarTrabajador('${t.id}')">🗑</button></div></div>`; });
-  html += `</div></div></div><button class="btn-primary" onclick="añadirTrabajador()">➕ Añadir trabajador</button>`;
-  document.getElementById("content").innerHTML = html;
-}
-
-function filtrarPersonal() {
-  const busqueda = document.getElementById("busqueda-personal")?.value.toLowerCase() || "";
-  document.querySelectorAll("#lista-trabajaron .worker-item, #lista-notrabajaron .worker-item").forEach(el => {
-    el.style.display = el.getAttribute("data-nombre").includes(busqueda) ? "" : "none";
-  });
-}
-
-function añadirTrabajador() {
-  const nombre = prompt("Nombre del nuevo trabajador:");
-  if (!nombre) return;
-  const nuevoId = generarId();
-  trabajadores.push({ id: nuevoId, nombre, estado: "activo", fechaInicioBaja: null, notas: "" });
-  const clave = `${añoActual}-${mesActual}`;
-  const cuadranteActual = cuadrantePorMes[clave] || [];
-  cuadranteActual.push(Array(diasDelMesActual).fill(""));
-  cuadrantePorMes[clave] = cuadranteActual;
-  guardarDatos();
-  renderTrabajadores();
-  if (currentView === "cuadrante") renderizarCuadrante();
-  mostrarToast(`✅ "${nombre}" añadido`);
-}
-
-function eliminarTrabajador(id) {
-  if (!confirm("¿Eliminar este trabajador? Se borrará del cuadrante actual.")) return;
-  const index = trabajadores.findIndex(t => t.id === id);
-  if (index === -1) return;
-  trabajadores.splice(index, 1);
-  const clave = `${añoActual}-${mesActual}`;
-  if (cuadrantePorMes[clave]) cuadrantePorMes[clave].splice(index, 1);
-  guardarDatos();
-  renderTrabajadores();
-  if (currentView === "cuadrante") renderizarCuadrante();
-  mostrarToast(`🗑️ Trabajador eliminado`);
-}
-
-function marcarBaja(id) {
-  const trabajador = trabajadores.find(t => t.id === id);
-  if (!trabajador) return;
-  if (trabajador.estado === "baja") {
-    if (confirm(`¿Reactivar a ${trabajador.nombre}?`)) {
-      trabajador.estado = "activo";
-      trabajador.fechaInicioBaja = null;
-      mostrarToast(`✅ ${trabajador.nombre} reactivado`);
-    }
-    guardarDatos();
-    renderTrabajadores();
-    if (currentView === "cuadrante") renderizarCuadrante();
-    return;
-  }
-  const fechaInicio = prompt("📅 Día de inicio de la baja (1-31):");
-  if (!fechaInicio) return;
-  const diaInicio = parseInt(fechaInicio);
-  if (isNaN(diaInicio) || diaInicio < 1 || diaInicio > diasDelMesActual) { mostrarToast("❌ Fecha inválida", true); return; }
-  const opcion = confirm("¿Cubrir con trabajador nuevo? (Aceptar = Sí, Cancelar = Redistribuir entre activos)");
-  const cuadranteActual = cuadrantePorMes[`${añoActual}-${mesActual}`];
-  const idx = trabajadores.findIndex(t => t.id === id);
-  
-  if (opcion) {
-    const nuevoId = generarId();
-    const nuevoNombre = prompt("Nombre del sustituto:", `SUSTITUTO_${trabajador.nombre}`);
-    if (!nuevoNombre) return;
-    trabajadores.push({ id: nuevoId, nombre: nuevoNombre, estado: "activo", fechaInicioBaja: null, notas: `Sustituye a ${trabajador.nombre} desde día ${diaInicio}` });
-    const nuevaFila = [...(cuadranteActual[idx] || [])];
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) nuevaFila[i] = cuadranteActual[idx][i] || "";
-    cuadranteActual.push(nuevaFila);
-    trabajador.estado = "baja";
-    trabajador.fechaInicioBaja = diaInicio;
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) cuadranteActual[idx][i] = "L";
-    mostrarToast(`✅ Baja cubierta por ${nuevoNombre}`);
-  } else {
-    const turnos = [];
-    for (let i = diaInicio - 1; i < diasDelMesActual; i++) {
-      const turno = cuadranteActual[idx]?.[i];
-      if (turno && turno !== "L" && turno !== "D" && turno !== "VAC" && turno !== "") turnos.push({ dia: i, turno });
-    }
-    if (turnos.length === 0) { mostrarToast("No hay turnos que redistribuir"); trabajador.estado = "baja"; trabajador.fechaInicioBaja = diaInicio; }
-    else {
-      const activos = trabajadores.filter(t => t.id !== id && t.estado === "activo");
-      for (const turno of turnos) {
-        let mejor = null, menorCarga = Infinity;
-        for (const candidato of activos) {
-          const idxCand = trabajadores.findIndex(t => t.id === candidato.id);
-          let carga = 0;
-          for (let i = 0; i < diasDelMesActual; i++) carga += getHorasTurno(cuadranteActual[idxCand]?.[i] || "");
-          const seg = getMaxDiasSeguidos(idxCand, mesActual, añoActual) + 1;
-          if (seg <= 6 && carga < menorCarga) { menorCarga = carga; mejor = candidato; }
+function mostrarPantallaPIN(modo) {
+  if (modo === "lock") { pinDesbloqueado = false; mostrarPantallaPIN("unlock"); return; }
+  if (!state.pinHash && modo === "unlock") { pinDesbloqueado = true; return; }
+  let entrada = "";
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box centered" style="max-width:320px;text-align:center">
+      <div class="modal-title">${modo === "setup" ? "Crear PIN" : "🔒 Introduce tu PIN"}</div>
+      <div class="pin-display" id="pd">${[0,1,2,3].map(() => '<div class="pin-dot"></div>').join("")}</div>
+      <div class="pin-keypad">
+        ${[1,2,3,4,5,6,7,8,9,"","0","⌫"].map(k => k === "" ? `<div></div>` : `<button class="pin-key" onclick="pinTecla('${k}')">${k}</button>`).join("")}
+      </div>
+      <button onclick="cerrarModal()" style="margin-top:14px;background:none;border:none;color:#94a3b8">Cancelar</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.dataset.pinModo = modo;
+  overlay.dataset.pinEtapa = "1";
+  overlay.dataset.pinPrimero = "";
+  window.pinTecla = function(k) {
+    if (k === "⌫") entrada = entrada.slice(0, -1);
+    else if (entrada.length < 4) entrada += k;
+    const dots = document.querySelectorAll(".pin-dot");
+    dots.forEach((d, i) => d.classList.toggle("filled", i < entrada.length));
+    if (entrada.length !== 4) return;
+    setTimeout(() => {
+      if (modo === "unlock") {
+        if (hashSimple(entrada) === state.pinHash) { pinDesbloqueado = true; cerrarModal(); mostrarToast("✅ Desbloqueada"); render(); }
+        else { entrada = ""; dots.forEach(d => d.classList.remove("filled")); mostrarToast("❌ PIN incorrecto", true); }
+      } else if (modo === "setup") {
+        if (overlay.dataset.pinEtapa === "1") {
+          overlay.dataset.pinPrimero = entrada;
+          overlay.dataset.pinEtapa = "2";
+          entrada = "";
+          dots.forEach(d => d.classList.remove("filled"));
+          overlay.querySelector(".modal-title").textContent = "Confirma el PIN";
+        } else {
+          if (entrada === overlay.dataset.pinPrimero) {
+            state.pinHash = hashSimple(entrada);
+            pinDesbloqueado = true;
+            guardarDatos(); cerrarModal(); mostrarToast("✅ PIN configurado");
+          } else {
+            overlay.dataset.pinEtapa = "1";
+            entrada = "";
+            dots.forEach(d => d.classList.remove("filled"));
+            overlay.querySelector(".modal-title").textContent = "Crear PIN";
+            mostrarToast("❌ Los PIN no coinciden", true);
+          }
         }
-        if (mejor) {
-          const idxMejor = trabajadores.findIndex(t => t.id === mejor.id);
-          if (!cuadranteActual[idxMejor]) cuadranteActual[idxMejor] = [];
-          cuadranteActual[idxMejor][turno.dia] = turno.turno;
-          mostrarToast(`📌 Turno día ${turno.dia+1} → ${mejor.nombre}`);
-        } else mostrarToast(`⚠️ No se pudo asignar turno día ${turno.dia+1}`, true);
       }
-      trabajador.estado = "baja";
-      trabajador.fechaInicioBaja = diaInicio;
-      for (let i = diaInicio - 1; i < diasDelMesActual; i++) cuadranteActual[idx][i] = "L";
-      mostrarToast(`✅ Baja de ${trabajador.nombre} procesada`);
+    }, 120);
+  };
+}
+
+// ==================== VISTA INICIO ====================
+function renderHome() {
+  const mes = state.mesActual;
+  const anio = state.anio;
+  const dias = diasEnMes(mes, anio);
+  const hoy = new Date();
+  const diaHoy = hoy.getDate();
+  const esHoyMes = hoy.getMonth() === mes && hoy.getFullYear() === anio;
+
+  let html = "";
+  if (state.parametros.convenioVencido) html += `<div class="banner-vencido">⚠️ ${state.parametros.convenioTexto}</div>`;
+  html += `<div class="card"><div class="card-header">📅 ${MESES_NOMBRES[mes]} ${anio}</div><div class="card-body"><div class="cal-grid">`;
+  DIAS_SEMANA.forEach(d => html += `<div class="cal-wd">${d}</div>`);
+  const primerDia = new Date(anio, mes, 1).getDay();
+  for (let i = 0; i < primerDia; i++) html += `<div></div>`;
+  for (let d = 1; d <= dias; d++) {
+    const tareasDia = state.tareas.filter(t => !t.completada && t.dia === d);
+    let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : tareasDia.some(t => t.prioridad === "verde") ? "verde" : null;
+    const esHoyDia = esHoyMes && diaHoy === d;
+    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
+  }
+  html += `</div></div></div>`;
+
+  const tareasHoy = state.tareas.filter(t => !t.completada && t.dia === diaHoy && esHoyMes);
+  html += `<div class="card"><div class="card-header">⚠️ Tareas de hoy (${tareasHoy.length})</div><div class="card-body">`;
+  if (!tareasHoy.length) html += `<p style="color:#94a3b8">Sin tareas pendientes hoy</p>`;
+  tareasHoy.forEach(t => html += `<div class="aviso aviso-rojo"><strong>${t.nombre}</strong><br>${t.prioridad === "rojo" ? "🔴 Muy urgente" : t.prioridad === "amber" ? "🟡 Urgente" : "🟢 Poco urgente"}</div>`);
+  html += `</div></div>`;
+
+  html += `<div class="card"><div class="card-header">👥 Alertas de personal</div><div class="card-body">`;
+  let hayAlerta = false;
+  for (const t of state.trabajadores) {
+    if (t.estado !== "activo") continue;
+    const seg = getMaxDiasSeguidos(t.id);
+    if (seg > state.parametros.maxDiasSeguidos) {
+      html += `<div class="aviso aviso-rojo">⚠️ ${t.nombre}: ${seg} días seguidos</div>`;
+      hayAlerta = true;
+    }
+    const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
+    if (bolsa < -40) {
+      html += `<div class="aviso aviso-gris">📊 ${t.nombre}: bolsa ${bolsa}h (déficit)</div>`;
+      hayAlerta = true;
+    }
+    if (t.embarazo && getCuadranteMes(state.mesActual, state.anio)[state.trabajadores.indexOf(t)]?.includes("N")) {
+      html += `<div class="aviso aviso-amber">🤰 ${t.nombre}: tiene turno de noche (LPRL)</div>`;
+      hayAlerta = true;
     }
   }
+  if (!hayAlerta) html += `<p style="color:#94a3b8">✅ Sin alertas de personal</p>`;
+  html += `</div></div>`;
+
+  if (esHoyMes) {
+    const cob = coberturaDelDia(diaHoy - 1, mes, anio);
+    html += `<div class="card"><div class="card-header">📊 Cobertura hoy</div><div class="card-body">`;
+    html += `<span>🌅 Mañana: ${cob.M || 0} | ☀️ Tarde: ${cob.T || 0} | 🌙 Noche: ${cob.N || 0}</span>`;
+    html += `</div></div>`;
+  }
+  document.getElementById("content").innerHTML = html;
+  document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
+}
+
+// ==================== VISTA CUADRANTE ====================
+function renderCuadrante() {
+  const mes = state.mesActual;
+  const anio = state.anio;
+  const dias = diasEnMes(mes, anio);
+  const cuad = getCuadranteMes(mes, anio);
+
+  let html = `<div class="mes-selector">`;
+  MESES_NOMBRES.forEach((n, i) => html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`);
+  html += `</div><div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="search" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" oninput="cuadFiltroChange(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button></div>`;
+  html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días</div>`;
+
+  const filtrados = state.trabajadores.filter(t => !cuadFiltro || t.nombre.toLowerCase().includes(cuadFiltro.toLowerCase()));
+  html += `<div class="wrap"><table><thead><th class="col-nombre">Trabajador</th>`;
+  for (let d = 1; d <= dias; d++) {
+    const fds = esFinDeSemana(d, mes, anio);
+    html += `<th class="${fds ? "wkend" : ""}">${d}</th>`;
+  }
+  html += `<th class="col-total">Total h</th></thead><tbody>`;
+
+  for (const t of filtrados) {
+    const idx = state.trabajadores.indexOf(t);
+    const total = getTotalHorasMes(t.id, mes, anio);
+    const seg = getMaxDiasSeguidos(t.id, mes, anio);
+    html += `<tr class="${t.estado === "baja" ? "baja-row" : ""}"><td class="col-nombre">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? "🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? "⚠️" : ""}${t.zona ? `<span style="color:#94a3b8;font-size:9px;margin-left:4px">(${t.zona})</span>` : ""}</td>`;
+    for (let d = 0; d < dias; d++) {
+      const val = cuad[idx]?.[d] || "";
+      const fds = esFinDeSemana(d + 1, mes, anio);
+      const fechaCelda = new Date(anio, mes, d + 1);
+      const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
+      const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
+      html += `<td class="editable-cell ${val} ${fds ? "wkend" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}</td>`;
+    }
+    html += `<td class="col-total">${total}h</td></tr>`;
+  }
+
+  html += `<tr class="cobertura-row"><td class="col-nombre">Cobertura</td>`;
+  for (let d = 0; d < dias; d++) {
+    const cob = coberturaDelDia(d, mes, anio);
+    html += `<td>${cob.M || 0}/${cob.T || 0}/${cob.N || 0}</td>`;
+  }
+  html += `<td class="col-total"></td></tr></tbody></table></div>`;
+  document.getElementById("content").innerHTML = html;
+}
+
+function cuadFiltroChange(val) { cuadFiltro = val; renderCuadrante(); }
+
+function cambiarMes(mes) { state.mesActual = mes; guardarDatos(); if (currentView === "cuadrante") renderCuadrante(); if (currentView === "home") renderHome(); mostrarToast(`📅 ${MESES_NOMBRES[mes]} ${state.anio}`); }
+
+function abrirSelectorTurno(trabId, dia) {
+  const t = state.trabajadores.find(t => t.id === trabId);
+  const valorActual = getCuadranteMes(state.mesActual, state.anio)[state.trabajadores.indexOf(t)]?.[dia] || "";
+  const fechaCelda = new Date(state.anio, state.mesActual, dia + 1);
+  const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
+  if (diff > 0 && diff <= state.parametros.preavisoDias && !confirm(`⚠️ Preaviso legal (${state.parametros.preavisoDias} días). ¿Modificar igualmente?`)) return;
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}</div><div class="turno-grid" id="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod || "clear"}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2, G…" style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div><button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
+  document.body.appendChild(overlay);
+}
+
+function seleccionarTurno(trabId, dia, valor) {
+  const t = state.trabajadores.find(t => t.id === trabId);
+  if (t?.embarazo && valor === "N") { mostrarToast("❌ Trabajadora embarazada: no puede tener turno de noche", true); return; }
+  setCelda(trabId, dia, valor);
+  cerrarModal();
+  if (currentView === "cuadrante") renderCuadrante();
+  mostrarToast(`✓ ${t?.nombre.split(" ")[0]}: día ${dia+1} → ${valor || "vacío"}`);
+}
+
+function seleccionarTurnoManual(trabId, dia) {
+  const valor = document.getElementById("turno-manual")?.value?.trim() || "";
+  seleccionarTurno(trabId, dia, valor);
+}
+
+function undoUltimoCambio() {
+  if (!undoStack.length) { mostrarToast("No hay cambios que deshacer"); return; }
+  const { trabId, dia, mes, anio, anterior } = undoStack.pop();
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx >= 0 && cuad[idx]) cuad[idx][dia] = anterior;
   guardarDatos();
-  renderTrabajadores();
-  if (currentView === "cuadrante") renderizarCuadrante();
+  if (currentView === "cuadrante") renderCuadrante();
+  mostrarToast("↩ Cambio deshecho");
 }
 
-function verDetalleTrabajador(id) {
-  const t = trabajadores.find(t => t.id === id);
+// ==================== VISTA PERSONAL ====================
+function renderPersonal() {
+  const mes = state.mesActual, anio = state.anio;
+  let html = `<input class="worker-search" id="worker-search" type="search" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" oninput="personalFiltroChange(this.value)">`;
+  const filtrados = state.trabajadores.filter(t => !personalFiltro || t.nombre.toLowerCase().includes(personalFiltro.toLowerCase()));
+  const trabajan = filtrados.filter(t => haTrabajado(t.id, mes, anio));
+  const noTrabajan = filtrados.filter(t => !haTrabajado(t.id, mes, anio));
+  html += `<div class="card"><div class="card-header">✅ Han trabajado (${trabajan.length})</div><div class="card-body">`;
+  trabajan.forEach(t => html += cardWorkerHtml(t, mes, anio));
+  html += `</div></div><div class="card"><div class="card-header">⬜ No han trabajado (${noTrabajan.length})</div><div class="card-body">`;
+  noTrabajan.forEach(t => html += cardWorkerHtml(t, mes, anio));
+  html += `</div></div><button class="btn btn-primary" onclick="modalNuevoTrabajador()">➕ Añadir trabajador</button><button class="btn btn-secondary" onclick="modalGestionZonas()">🏥 Gestionar zonas</button>`;
+  document.getElementById("content").innerHTML = html;
+}
+
+function cardWorkerHtml(t, mes, anio) {
+  const horas = getTotalHorasMes(t.id, mes, anio);
+  const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
+  const seg = getMaxDiasSeguidos(t.id, mes, anio);
+  const vacDis = getVacacionesDisfrutadas(t.id);
+  const vacTot = t.vacacionesTotales || 30;
+  const vacPct = Math.min(100, Math.round(vacDis / vacTot * 100));
+  return `<div class="worker-item" onclick="modalDetalleWorker('${t.id}')"><div class="worker-name">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? '<span class="badge badge-emb">🤰</span>' : ""}</div><div class="worker-stats"><span>📅 ${horas}h mes</span><span class="${bolsa >= 0 ? "bolsa-pos" : "bolsa-neg"}">${bolsa >= 0 ? "+" : ""}${bolsa}h bolsa</span><span>🔄 ${seg} días</span><span>🏖 ${vacDis}/${vacTot}</span><span style="color:#94a3b8">${t.zona || ""}</span></div><div class="vac-bar"><div class="vac-bar-fill" style="width:${vacPct}%"></div></div></div>`;
+}
+
+function personalFiltroChange(val) { personalFiltro = val; renderPersonal(); }
+
+function modalDetalleWorker(id) {
+  const t = state.trabajadores.find(t => t.id === id);
   if (!t) return;
-  const idx = trabajadores.findIndex(w => w.id === id);
-  alert(`${t.nombre}\n📊 Horas: ${getTotalHorasTrabajador(idx, mesActual, añoActual)}h\n📆 Máx seguidos: ${getMaxDiasSeguidos(idx, mesActual, añoActual)} días\n📌 Estado: ${t.estado === "baja" ? `Baja desde día ${t.fechaInicioBaja}` : "Activo"}`);
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">${t.nombre}</div>
+    <label class="modal-label">Estado</label><select class="modal-input" id="dw-estado"><option value="activo" ${t.estado === "activo" ? "selected" : ""}>Activo</option><option value="baja" ${t.estado === "baja" ? "selected" : ""}>Baja</option></select>
+    <label class="modal-label">Zona</label><select class="modal-input" id="dw-zona">${state.zonas.map(z => `<option ${t.zona === z ? "selected" : ""}>${z}</option>`).join("")}</select>
+    <label class="modal-label">Notas</label><input class="modal-input" id="dw-notas" value="${t.notas || ""}">
+    <div style="display:flex;gap:12px;margin-top:12px"><label><input type="checkbox" id="dw-emb" ${t.embarazo ? "checked" : ""}> 🤰 Embarazo</label></div>
+    <div class="modal-btns"><button class="btn-modal-ok" onclick="guardarWorker('${id}')">Guardar</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
+    <button class="btn btn-danger" style="margin-top:8px" onclick="iniciarBajaWorker('${id}')">🚑 Registrar baja</button></div>`;
+  document.body.appendChild(overlay);
 }
 
-// ==================== SEGURO ====================
+function guardarWorker(id) {
+  const t = state.trabajadores.find(t => t.id === id);
+  if (!t) return;
+  t.estado = document.getElementById("dw-estado")?.value || t.estado;
+  t.zona = document.getElementById("dw-zona")?.value || t.zona;
+  t.notas = document.getElementById("dw-notas")?.value || "";
+  t.embarazo = document.getElementById("dw-emb")?.checked || false;
+  guardarDatos(); cerrarModal(); renderPersonal();
+  mostrarToast(`✅ ${t.nombre.split(" ")[0]} actualizado`);
+}
+
+function modalNuevoTrabajador() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">➕ Nuevo trabajador</div><label class="modal-label">Nombre</label><input class="modal-input" id="nt-nombre"><label class="modal-label">Zona</label><select class="modal-input" id="nt-zona">${state.zonas.map(z => `<option>${z}</option>`).join("")}</select><div class="modal-btns"><button class="btn-modal-ok" onclick="crearWorker()">Añadir</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div></div>`;
+  document.body.appendChild(overlay);
+}
+
+function crearWorker() {
+  const nombre = document.getElementById("nt-nombre")?.value?.trim();
+  const zona = document.getElementById("nt-zona")?.value || state.zonas[0];
+  if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
+  const id = `t_${Date.now()}`;
+  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zona, notas: "", vacacionesTotales: 30, fechaBaja: null });
+  Object.keys(state.cuadrantePorMes).forEach(k => {
+    const [anio, mes] = k.split("-").map(Number);
+    state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill(""));
+  });
+  guardarDatos(); cerrarModal(); renderPersonal();
+  mostrarToast(`✅ ${nombre.split(" ")[0]} añadido`);
+}
+
+function iniciarBajaWorker(id) {
+  const t = state.trabajadores.find(t => t.id === id);
+  if (!t) return;
+  const diaStr = prompt(`Día de inicio de la baja (1-${diasEnMes(state.mesActual, state.anio)}):`);
+  if (!diaStr) return;
+  const diaInicio = parseInt(diaStr) - 1;
+  if (isNaN(diaInicio) || diaInicio < 0) { mostrarToast("❌ Día inválido", true); return; }
+  t.estado = "baja";
+  t.fechaBaja = `${state.anio}-${String(state.mesActual+1).padStart(2,"0")}-${String(diaInicio+1).padStart(2,"0")}`;
+  const cuad = getCuadranteMes(state.mesActual, state.anio);
+  const idx = state.trabajadores.indexOf(t);
+  for (let d = diaInicio; d < diasEnMes(state.mesActual, state.anio); d++) {
+    if (cuad[idx]) cuad[idx][d] = "L";
+  }
+  guardarDatos(); cerrarModal(); renderPersonal();
+  mostrarToast(`✅ Baja registrada`);
+}
+
+function modalGestionZonas() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">🏥 Zonas</div><div id="zonas-lista">${state.zonas.map(z => `<span class="festivo-chip">${z}<button onclick="eliminarZona('${z}')">×</button></span>`).join("")}</div><div style="display:flex;gap:8px;margin-top:12px"><input class="modal-input" id="z-nueva" placeholder="Nueva zona"><button class="btn btn-primary btn-sm" onclick="añadirZona()">Añadir</button></div><div class="modal-btns"><button class="btn-modal-cancel" onclick="cerrarModal()">Cerrar</button></div></div>`;
+  document.body.appendChild(overlay);
+  window.eliminarZona = (z) => { state.zonas = state.zonas.filter(x => x !== z); document.getElementById("zonas-lista").innerHTML = state.zonas.map(z => `<span class="festivo-chip">${z}<button onclick="eliminarZona('${z}')">×</button></span>`).join(""); guardarDatos(); };
+  window.añadirZona = () => { const z = document.getElementById("z-nueva")?.value?.trim(); if (z && !state.zonas.includes(z)) { state.zonas.push(z); document.getElementById("zonas-lista").innerHTML = state.zonas.map(z => `<span class="festivo-chip">${z}<button onclick="eliminarZona('${z}')">×</button></span>`).join(""); guardarDatos(); } };
+}
+
+// ==================== VISTA TAREAS ====================
+function renderTareas() {
+  let html = `<div class="card"><div class="card-header">✅ Tareas pendientes</div><div class="card-body">`;
+  const pendientes = state.tareas.filter(t => !t.completada);
+  if (!pendientes.length) html += `<div class="empty">Sin tareas pendientes</div>`;
+  pendientes.forEach(t => html += `<div class="tarea-item"><div class="tarea-info"><div class="tarea-nombre">${t.nombre}</div><div class="tarea-meta">📅 Día ${t.dia} · <span class="badge ${t.prioridad === "rojo" ? "badge-red" : t.prioridad === "amber" ? "badge-amber" : "badge-green"}">${t.prioridad === "rojo" ? "🔴 Muy urgente" : t.prioridad === "amber" ? "🟡 Urgente" : "🟢 Poco urgente"}</span></div></div><div class="tarea-btns"><button class="btn btn-success btn-sm" onclick="completarTarea('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="eliminarTarea('${t.id}')">🗑</button></div></div>`);
+  html += `<button class="btn btn-primary" style="margin-top:10px" onclick="modalNuevaTarea()">➕ Nueva tarea</button></div></div>`;
+  document.getElementById("content").innerHTML = html;
+}
+
+function modalNuevaTarea() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">➕ Nueva tarea</div><label class="modal-label">Nombre</label><input class="modal-input" id="nt-nombre"><label class="modal-label">Día del mes</label><input type="number" class="modal-input" id="nt-dia" value="1" min="1" max="31"><label class="modal-label">Prioridad</label><select class="modal-input" id="nt-prio"><option value="rojo">🔴 Muy urgente</option><option value="amber">🟡 Urgente</option><option value="verde">🟢 Poco urgente</option></select><div class="modal-btns"><button class="btn-modal-ok" onclick="crearTarea()">Añadir</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div></div>`;
+  document.body.appendChild(overlay);
+}
+
+function crearTarea() {
+  const nombre = document.getElementById("nt-nombre")?.value?.trim();
+  const dia = parseInt(document.getElementById("nt-dia")?.value);
+  const prioridad = document.getElementById("nt-prio")?.value;
+  if (!nombre || isNaN(dia)) { mostrarToast("❌ Nombre y día válidos", true); return; }
+  state.tareas.push({ id: `t_${Date.now()}`, nombre, dia, prioridad, completada: false });
+  guardarDatos(); cerrarModal(); renderTareas();
+  mostrarToast(`✅ Tarea añadida`);
+}
+
+function completarTarea(id) { const t = state.tareas.find(t => t.id === id); if (t) { t.completada = true; guardarDatos(); renderTareas(); mostrarToast(`✔ Tarea completada`); } }
+function eliminarTarea(id) { if (confirm("¿Eliminar tarea?")) { state.tareas = state.tareas.filter(t => t.id !== id); guardarDatos(); renderTareas(); mostrarToast("🗑 Tarea eliminada"); } }
+
+// ==================== VISTA SEGURO ====================
 function renderSeguro() {
   document.getElementById("content").innerHTML = `
-    <div class="card"><div class="card-header">🔒 Copia de seguridad</div><div class="card-body"><button class="btn-primary" onclick="exportarDatos()">💾 Exportar copia</button><button class="btn-secondary" onclick="triggerImport()">📂 Importar copia</button><button class="btn-legal" onclick="generarPDF()">📄 Informe de situación (PDF)</button></div></div>
-    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn-legal" onclick="importarParametrosLegales()">📄 Importar convenio (JSON)</button><div style="margin-top:12px; font-size:11px;"><strong>Activos:</strong><br>• Máx diaria: ${PARAMETROS_LEGALES.jornadaMaximaDiaria}h<br>• Mín diaria: ${PARAMETROS_LEGALES.jornadaMinimaDiaria}h<br>• Máx semanal: ${PARAMETROS_LEGALES.jornadaMaximaSemanal}h<br>• Preaviso: ${PARAMETROS_LEGALES.preavisoCuadranteDias} días</div><button class="btn-secondary" style="margin-top:12px;" onclick="validarCuadrante()">🔍 Validar cuadrante</button></div></div>
-  `;
+    <div class="card"><div class="card-header">💾 Copia de seguridad</div><div class="card-body"><button class="btn btn-primary" onclick="exportarBackup()">⬇ Exportar backup</button><button class="btn btn-secondary" onclick="document.getElementById('file-import').click()">⬆ Importar backup</button><button class="btn btn-legal" onclick="generarPDF()">📄 Informe PDF</button></div></div>
+    <div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn btn-legal" onclick="document.getElementById('file-import-legal').click()">📄 Importar convenio (JSON)</button><div style="font-size:12px;margin-top:8px"><strong>Activos:</strong><br>Jornada máx: ${state.parametros.jornadaMaxDiaria}h · Mín: ${state.parametros.jornadaMinDiaria}h<br>Máx semanal: ${state.parametros.jornadaMaxSemanal}h<br>Máx días seguidos: ${state.parametros.maxDiasSeguidos}<br>Preaviso: ${state.parametros.preavisoDias} días</div><button class="btn btn-secondary" style="margin-top:10px" onclick="validarYMostrar()">🔍 Validar cuadrante</button></div></div>
+    <div class="card"><div class="card-header">🔒 Seguridad</div><div class="card-body"><button class="btn btn-secondary" onclick="mostrarPantallaPIN('setup')">${state.pinHash ? "🔑 Cambiar PIN" : "🔑 Configurar PIN"}</button>${state.pinHash ? `<button class="btn btn-danger" style="margin-top:8px" onclick="quitarPIN()">🗑 Eliminar PIN</button>` : ""}</div></div>
+    <div class="card"><div class="card-header">📋 Historial de cambios (últimos ${Math.min(state.historial.length, 20)})</div><div class="card-body nop">${state.historial.slice(0,20).map(h => { const t = state.trabajadores.find(w => w.id === h.trabId); return `<div class="hist-item"><strong>${t?.nombre?.split(" ")[0] || "?"}</strong> · día ${h.dia+1}/${h.mes+1}: <span style="color:#dc2626">${h.anterior || "—"}</span> → <span style="color:#16a34a">${h.nuevo || "—"}</span> <span style="float:right;font-size:10px">${new Date(h.ts).toLocaleTimeString()}</span></div>`; }).join("") || '<div class="empty">Sin cambios registrados</div>'}</div></div>`;
 }
 
-function exportarDatos() { const data = { trabajadores, cuadrantePorMes, tareas, mesActual, añoActual, parametrosLegales: PARAMETROS_LEGALES, horasPorCodigo: HORAS_POR_CODIGO, festivos: FESTIVOS }; const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,19).replace(/:/g, "-")}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Copia exportada"); }
-function triggerImport() { document.getElementById("import-file").click(); }
-function handleImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const imported = JSON.parse(e.target.result); if (imported.trabajadores && imported.cuadrantePorMes) { trabajadores = imported.trabajadores; cuadrantePorMes = imported.cuadrantePorMes; tareas = imported.tareas || []; mesActual = imported.mesActual !== undefined ? imported.mesActual : 5; añoActual = imported.añoActual !== undefined ? imported.añoActual : new Date().getFullYear(); if (imported.parametrosLegales) PARAMETROS_LEGALES = { ...PARAMETROS_LEGALES, ...imported.parametrosLegales }; if (imported.horasPorCodigo) HORAS_POR_CODIGO = { ...HORAS_POR_CODIGO, ...imported.horasPorCodigo }; if (imported.festivos) FESTIVOS = imported.festivos; diasDelMesActual = getDiasMes(mesActual, añoActual); guardarDatos(); mostrarToast(`✅ Importado: ${trabajadores.length} trabajadores`); render(); } else throw new Error("Formato inválido"); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
-function importarParametrosLegales() { document.getElementById("import-legal-file").click(); }
-function handleLegalImport(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const params = JSON.parse(e.target.result); Object.assign(PARAMETROS_LEGALES, params); if (params.horasPorCodigo) Object.assign(HORAS_POR_CODIGO, params.horasPorCodigo); if (params.festivos) FESTIVOS = params.festivos; guardarDatos(); mostrarToast("✅ Parámetros actualizados"); validarCuadrante(); } catch(err) { mostrarToast("❌ Archivo no válido", true); } }; reader.readAsText(file); event.target.value = ""; }
-function validarCuadrante() { mostrarToast("✅ Validación completada. Sin incidencias."); }
+function quitarPIN() { if (confirm("¿Eliminar PIN?")) { state.pinHash = null; guardarDatos(); mostrarToast("PIN eliminado"); renderSeguro(); } }
+function exportarBackup() { const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,10)}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Backup exportado"); }
+function importarBackup(event) { const file = event.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = e => { try { const data = JSON.parse(e.target.result); state = { ...state, ...data }; guardarDatos(); mostrarToast("✅ Backup importado"); render(); } catch { mostrarToast("❌ Archivo inválido", true); } }; r.readAsText(file); event.target.value = ""; }
+function importarLegal(event) { const file = event.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = e => { try { const p = JSON.parse(e.target.result); state.parametros = { ...state.parametros, ...p }; guardarDatos(); mostrarToast("✅ Convenio importado"); renderSeguro(); } catch { mostrarToast("❌ Archivo inválido", true); } }; r.readAsText(file); event.target.value = ""; }
+function validarYMostrar() { const inc = validarCuadrante(); if (!inc.length) { alert("✅ Sin incidencias"); return; } alert("⚠️ Incidencias encontradas:\n\n" + inc.join("\n")); }
 
-function mostrarToast(msg, isError = false) { const toast = document.getElementById("toast"); toast.textContent = msg; toast.style.background = isError ? "#dc2626" : "#0f172a"; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2000); }
-function showView(view) { currentView = view; document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active")); document.getElementById(`nav-${view}`).classList.add("active"); if (view === "home") renderHome(); else if (view === "cuadrante") renderizarCuadrante(); else if (view === "trabajadores") renderTrabajadores(); else if (view === "tareas") renderTareas(); else if (view === "seguro") renderSeguro(); }
+function mostrarToast(msg, isError = false) { const t = document.getElementById("toast"); t.textContent = msg; t.style.background = isError ? "#dc2626" : "#0f172a"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2200); }
+function cerrarModal() { document.querySelectorAll(".modal-overlay").forEach(m => m.remove()); }
+
+function showView(view) {
+  if (state.pinHash && !pinDesbloqueado && view !== "home") { mostrarPantallaPIN("unlock"); return; }
+  currentView = view;
+  document.querySelectorAll("#nav button").forEach(b => b.classList.remove("active"));
+  document.getElementById(`nav-${view}`)?.classList.add("active");
+  if (view === "home") renderHome();
+  else if (view === "cuadrante") renderCuadrante();
+  else if (view === "personal") renderPersonal();
+  else if (view === "tareas") renderTareas();
+  else if (view === "seguro") renderSeguro();
+}
 function render() { showView(currentView); }
-function cerrarModal() { const modal = document.querySelector(".modal"); if (modal) modal.remove(); }
 
-window.cambiarMes = cambiarMes; window.importarNuevoCuadrante = importarNuevoCuadrante; window.editarCelda = editarCelda; window.marcarBaja = marcarBaja; window.añadirTrabajador = añadirTrabajador; window.eliminarTrabajador = eliminarTrabajador; window.verDetalleTrabajador = verDetalleTrabajador; window.exportarDatos = exportarDatos; window.triggerImport = triggerImport; window.handleImport = handleImport; window.showView = showView; window.completarTarea = completarTarea; window.eliminarTarea = eliminarTarea; window.mostrarModalNuevaTarea = mostrarModalNuevaTarea; window.guardarNuevaTarea = guardarNuevaTarea; window.cerrarModal = cerrarModal; window.importarParametrosLegales = importarParametrosLegales; window.handleLegalImport = handleLegalImport; window.validarCuadrante = validarCuadrante; window.generarPDF = generarPDF; window.filtrarCuadrante = filtrarCuadrante; window.filtrarPersonal = filtrarPersonal;
+document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undoUltimoCambio(); } });
+document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) cerrarModal(); });
 
 cargarDatos();
-renderHome();
+if (state.pinHash) { pinDesbloqueado = false; renderHome(); mostrarPantallaPIN("unlock"); } else { pinDesbloqueado = true; renderHome(); }
 </script>
 </body>
 </html>
