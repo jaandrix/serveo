@@ -189,6 +189,9 @@
   .evento-desc { font-size: 11px; color: #64748b; margin-top: 2px; }
   .evento-badge { display: inline-block; padding: 2px 6px; border-radius: 12px; font-size: 9px; font-weight: 600; }
 
+  .text-area-import { width: 100%; height: 200px; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; resize: vertical; }
+  .text-area-import:focus { outline: none; border-color: #0f172a; }
+
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
   .empty { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
@@ -221,7 +224,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -488,41 +491,71 @@ function moverTrabajador(idx, direccion) {
   mostrarToast(`${direccion === 'up' ? '⬆️' : '⬇️'} ${state.trabajadores[nuevoIdx].nombre} movido ${direccion === 'up' ? 'arriba' : 'abajo'}`);
 }
 
-// Función para importar cuadrante del mes actual
-function importarCuadrante(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const datos = JSON.parse(e.target.result);
-      // Validar que es un array
-      if (!Array.isArray(datos)) throw new Error("El archivo debe ser una matriz");
-      // Validar que tiene el mismo número de filas que trabajadores
-      if (datos.length !== state.trabajadores.length) {
-        throw new Error(`Número de filas incorrecto. Se esperaban ${state.trabajadores.length} filas (trabajadores) y el archivo tiene ${datos.length}.`);
-      }
-      const dias = diasEnMes(state.mesActual, state.anio);
-      // Validar que cada fila tiene el número correcto de columnas
-      for (let i = 0; i < datos.length; i++) {
-        if (!Array.isArray(datos[i])) throw new Error(`La fila ${i+1} no es un array válido`);
-        if (datos[i].length !== dias) {
-          throw new Error(`La fila ${i+1} (${state.trabajadores[i]?.nombre || '?'}) tiene ${datos[i].length} columnas. Se esperaban ${dias} (días del mes).`);
-        }
-      }
-      // Guardar el cuadrante
-      const key = clavesMes(state.mesActual, state.anio);
-      state.cuadrantePorMes[key] = datos;
-      guardarDatos();
-      mostrarToast(`✅ Cuadrante de ${MESES_NOMBRES[state.mesActual]} importado correctamente`);
-      if (currentView === "cuadrante") renderCuadrante();
-    } catch(err) {
-      mostrarToast(`❌ Error al importar: ${err.message}`, true);
+function importarCuadranteDesdeTexto(texto) {
+  // Dividir por líneas
+  const lineas = texto.trim().split(/\r?\n/);
+  const datos = [];
+  
+  for (let linea of lineas) {
+    // Dividir por tabulaciones
+    const celdas = linea.split(/\t/);
+    // Limpiar celdas vacías o con espacios
+    const celdasLimpias = celdas.map(c => c.trim());
+    if (celdasLimpias.length > 0 && !(celdasLimpias.length === 1 && celdasLimpias[0] === "")) {
+      datos.push(celdasLimpias);
     }
-  };
-  reader.onerror = () => mostrarToast("❌ Error al leer el archivo", true);
-  reader.readAsText(file);
-  event.target.value = ""; // reset para permitir importar el mismo archivo de nuevo
+  }
+  
+  // Validar dimensiones
+  const filasEsperadas = state.trabajadores.length;
+  const columnasEsperadas = diasEnMes(state.mesActual, state.anio);
+  
+  if (datos.length !== filasEsperadas) {
+    mostrarToast(`❌ Error: Número de filas incorrecto. Tiene ${datos.length}, se esperaban ${filasEsperadas}`, true);
+    return false;
+  }
+  
+  for (let i = 0; i < datos.length; i++) {
+    if (datos[i].length !== columnasEsperadas) {
+      mostrarToast(`❌ Error: La fila ${i+1} tiene ${datos[i].length} columnas. Se esperaban ${columnasEsperadas}`, true);
+      return false;
+    }
+  }
+  
+  const key = clavesMes(state.mesActual, state.anio);
+  state.cuadrantePorMes[key] = datos;
+  guardarDatos();
+  if (currentView === "cuadrante") renderCuadrante();
+  mostrarToast(`✅ Cuadrante de ${MESES_NOMBRES[state.mesActual]} importado correctamente`);
+  return true;
+}
+
+function mostrarModalPegarExcel() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">📋 Pegar desde Excel</div>
+      <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Copia los datos desde Excel (${state.trabajadores.length} filas × ${diasEnMes(state.mesActual, state.anio)} columnas) y pégalos aquí:</p>
+      <textarea id="excel-data" class="text-area-import" placeholder="Pega aquí los datos copiados desde Excel..."></textarea>
+      <p style="font-size:11px; color:#94a3b8; margin-bottom:12px;">📌 El formato debe ser: filas separadas por saltos de línea, columnas separadas por tabulaciones.</p>
+      <div class="modal-btns">
+        <button class="btn-modal-ok" onclick="procesarPegadoExcel()">Importar</button>
+        <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function procesarPegadoExcel() {
+  const texto = document.getElementById("excel-data")?.value || "";
+  if (!texto.trim()) {
+    mostrarToast("❌ No hay datos para importar", true);
+    return;
+  }
+  cerrarModal();
+  importarCuadranteDesdeTexto(texto);
 }
 
 function getTotalHorasMes(trabId, mes, anio) {
@@ -660,7 +693,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v17";
+const STORAGE_KEY = "cuadrantes_v18";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -857,7 +890,7 @@ function renderCuadrante() {
   let html = `<div class="mes-selector">`;
   MESES_NOMBRES.forEach((n, i) => { html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`; });
   html += `</div>`;
-  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-primary btn-sm" onclick="document.getElementById('file-import-cuadrante').click()" style="background:#0f172a;">📂 Importar cuadrante</button></div>`;
+  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-primary btn-sm" onclick="document.getElementById('file-import-cuadrante').click()" style="background:#0f172a;">📂 Importar JSON</button><button class="btn btn-primary btn-sm" onclick="mostrarModalPegarExcel()" style="background:#1e40af;">📋 Pegar desde Excel</button></div>`;
   html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días · Usa las flechas ↑↓ para reordenar</div>`;
   html += `<div class="wrap"><table style="border-collapse:collapse;width:100%;min-width:850px;"><thead><tr><th style="border:0.5px solid #cbd5e1;padding:6px 4px;text-align:left;position:sticky;left:0;background:#f1f5f9;min-width:180px;">Trabajador</th>`;
   for (let d = 1; d <= dias; d++) {
@@ -905,11 +938,11 @@ function renderCuadrante() {
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
-      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
+      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}<tr>`;
     }
-    html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}<td>`;
+    html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;"><div style="display:flex;flex-direction:column;gap:2px;"><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'up')" ${f === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'down')" ${f === filtrados.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button></div></td>`;
-    html += `</tr>`;
+    html += `<tr>`;
   }
   html += `<tr style="background:#f0fdf4;font-weight:700;"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:#f0fdf4;">Cobertura M/T/N</td>`;
   for (let d = 0; d < dias; d++) {
@@ -921,7 +954,7 @@ function renderCuadrante() {
     html += `<td style="${deficit ? "border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#fee2e2;color:#dc2626;" : "border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;"}">${cob.M}/${cob.T}/${cob.N}</td>`;
   }
   html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f0fdf4;"></td><td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f0fdf4;"></td></tr>`;
-  html += `</tbody><table></div>`;
+  html += `</tbody></table></div>`;
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
@@ -986,7 +1019,98 @@ function undoUltimoCambio() {
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== VISTA PERSONAL (resumida) ====================
+// ==================== FUNCIONES IMPORTACIÓN ====================
+function importarCuadrante(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const datos = JSON.parse(e.target.result);
+      if (!Array.isArray(datos)) throw new Error("El archivo debe ser una matriz");
+      if (datos.length !== state.trabajadores.length) {
+        throw new Error(`Número de filas incorrecto. Se esperaban ${state.trabajadores.length} filas (trabajadores) y el archivo tiene ${datos.length}.`);
+      }
+      const dias = diasEnMes(state.mesActual, state.anio);
+      for (let i = 0; i < datos.length; i++) {
+        if (!Array.isArray(datos[i])) throw new Error(`La fila ${i+1} no es un array válido`);
+        if (datos[i].length !== dias) {
+          throw new Error(`La fila ${i+1} (${state.trabajadores[i]?.nombre || '?'}) tiene ${datos[i].length} columnas. Se esperaban ${dias} (días del mes).`);
+        }
+      }
+      const key = clavesMes(state.mesActual, state.anio);
+      state.cuadrantePorMes[key] = datos;
+      guardarDatos();
+      mostrarToast(`✅ Cuadrante de ${MESES_NOMBRES[state.mesActual]} importado correctamente`);
+      if (currentView === "cuadrante") renderCuadrante();
+    } catch(err) {
+      mostrarToast(`❌ Error al importar: ${err.message}`, true);
+    }
+  };
+  reader.onerror = () => mostrarToast("❌ Error al leer el archivo", true);
+  reader.readAsText(file);
+  event.target.value = "";
+}
+
+function importarCuadranteDesdeTexto(texto) {
+  const lineas = texto.trim().split(/\r?\n/);
+  const datos = [];
+  for (let linea of lineas) {
+    const celdas = linea.split(/\t/);
+    const celdasLimpias = celdas.map(c => c.trim());
+    if (celdasLimpias.length > 0 && !(celdasLimpias.length === 1 && celdasLimpias[0] === "")) {
+      datos.push(celdasLimpias);
+    }
+  }
+  const filasEsperadas = state.trabajadores.length;
+  const columnasEsperadas = diasEnMes(state.mesActual, state.anio);
+  if (datos.length !== filasEsperadas) {
+    mostrarToast(`❌ Error: Número de filas incorrecto. Tiene ${datos.length}, se esperaban ${filasEsperadas}`, true);
+    return false;
+  }
+  for (let i = 0; i < datos.length; i++) {
+    if (datos[i].length !== columnasEsperadas) {
+      mostrarToast(`❌ Error: La fila ${i+1} tiene ${datos[i].length} columnas. Se esperaban ${columnasEsperadas}`, true);
+      return false;
+    }
+  }
+  const key = clavesMes(state.mesActual, state.anio);
+  state.cuadrantePorMes[key] = datos;
+  guardarDatos();
+  if (currentView === "cuadrante") renderCuadrante();
+  mostrarToast(`✅ Cuadrante de ${MESES_NOMBRES[state.mesActual]} importado correctamente`);
+  return true;
+}
+
+function mostrarModalPegarExcel() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">📋 Pegar desde Excel</div>
+      <p style="font-size:12px; color:#64748b; margin-bottom:12px;">Copia los datos desde Excel (${state.trabajadores.length} filas × ${diasEnMes(state.mesActual, state.anio)} columnas) y pégalos aquí:</p>
+      <textarea id="excel-data" class="text-area-import" placeholder="Pega aquí los datos copiados desde Excel..."></textarea>
+      <p style="font-size:11px; color:#94a3b8; margin-bottom:12px;">📌 El formato debe ser: filas separadas por saltos de línea, columnas separadas por tabulaciones.</p>
+      <div class="modal-btns">
+        <button class="btn-modal-ok" onclick="procesarPegadoExcel()">Importar</button>
+        <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
+function procesarPegadoExcel() {
+  const texto = document.getElementById("excel-data")?.value || "";
+  if (!texto.trim()) {
+    mostrarToast("❌ No hay datos para importar", true);
+    return;
+  }
+  cerrarModal();
+  importarCuadranteDesdeTexto(texto);
+}
+
+// ==================== VISTAS RESTANTES (resumidas para mantener funcionalidad) ====================
 function renderPersonal() {
   const mes = state.mesActual, anio = state.anio;
   let html = `<input class="worker-search" id="worker-search" type="text" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" onkeyup="personalFiltroChange(this.value)">`;
