@@ -43,12 +43,11 @@
   .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
   .badge-baja { background: #dc2626; color: #fff; }
   .badge-emb { background: #db2777; color: #fff; }
+  .badge-sustituto { background: #dc2626; color: #fff; }
   .badge-red { background: #fee2e2; color: #991b1b; }
   .badge-amber { background: #fef3c7; color: #92400e; }
   .badge-green { background: #dcfce7; color: #14532d; }
   .badge-blue { background: #dbeafe; color: #1e40af; }
-  .badge-purple { background: #ede9fe; color: #6d28d9; }
-  .badge-gray { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
   .aviso { padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 12px; border-left: 4px solid; }
   .aviso-rojo { background: #fee2e2; border-color: #dc2626; }
@@ -93,14 +92,20 @@
   .editable-cell { cursor: pointer; }
   .editable-cell:active { background: #dbeafe !important; }
   .baja-row td { opacity: 0.55; background: #fff5f5 !important; }
+  .sustituto-row td { color: #dc2626; font-weight: 500; }
   .L { color: #1d4ed8; font-weight: 700; }
   .D { color: #15803d; font-weight: 700; }
-  .F1 { color: #b91c1c; font-weight: 700; }
+  .F1, .F2, .F3, .F4, .F5, .F6, .F7, .F8, .F9, .F10, .F11, .F12, .F13, .F14, .F15, .F16, .F17, .F18, .F19, .F20, .F21, .F22, .F23, .F24, .F25, .F26, .F27, .F28, .F29, .F30, .F31 { color: #ea580c; font-weight: 700; }
   .N { color: #92400e; font-weight: 700; }
   .M, .T { color: #374151; font-weight: 600; }
   .HE { color: #6d28d9; font-weight: 700; }
   .LIB { color: #0e7490; font-weight: 700; }
-  .VAC { color: #065f46; font-weight: 700; background: #d1fae5 !important; }
+  .VAC, .V { color: #065f46; font-weight: 700; background: #d1fae5 !important; }
+  .VA { color: #065f46; font-weight: 700; background: #d1fae5 !important; }
+  .PR { color: #7c3aed; font-weight: 700; background: #ede9fe !important; }
+  .CF { color: #0891b2; font-weight: 700; background: #cffafe !important; }
+  .IT { color: #991b1b; font-weight: 700; background: #fee2e2 !important; }
+  .LD, .LDA, .LD25, .LD26 { color: #b45309; font-weight: 700; background: #fffbeb !important; }
   .cobertura-row td { background: #f0fdf4; font-weight: 700; color: #15803d; border-top: 2px solid #86efac; }
 
   .worker-search { width: 100%; padding: 9px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; margin-bottom: 12px; outline: none; }
@@ -134,12 +139,16 @@
   .turno-btn.sel { border-color: #0f172a !important; }
   .tb-L { background: #dbeafe; color: #1d4ed8; }
   .tb-D { background: #dcfce7; color: #15803d; }
-  .tb-F1 { background: #fee2e2; color: #b91c1c; }
+  .tb-F1 { background: #ffedd5; color: #ea580c; }
   .tb-N { background: #fef3c7; color: #92400e; }
   .tb-M, .tb-T { background: #f1f5f9; color: #374151; }
   .tb-HE { background: #ede9fe; color: #6d28d9; }
   .tb-LIB { background: #cffafe; color: #0e7490; }
-  .tb-VAC { background: #d1fae5; color: #065f46; }
+  .tb-VAC, .tb-V, .tb-VA { background: #d1fae5; color: #065f46; }
+  .tb-PR { background: #ede9fe; color: #7c3aed; }
+  .tb-CF { background: #cffafe; color: #0891b2; }
+  .tb-IT { background: #fee2e2; color: #991b1b; }
+  .tb-LD, .tb-LDA { background: #fffbeb; color: #b45309; }
   .tb-clear { background: #f1f5f9; color: #94a3b8; }
   .turno-label { font-size: 9px; font-weight: 600; margin-top: 3px; opacity: 0.75; }
 
@@ -211,7 +220,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 13;
+const APP_VERSION = 15;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -257,63 +266,74 @@ function getNombreFestivo(anio, mes, dia) {
 const CODIGOS_TURNO = [
   { cod:"L",   label:"Libre",       horas:0 },
   { cod:"D",   label:"Descanso",    horas:0 },
-  { cod:"F1",  label:"Jornada",     horas:7 },
-  { cod:"N",   label:"Noche",       horas:8 },
-  { cod:"M",   label:"Mañana",      horas:7 },
+  { cod:"M",   label:"Mañana (en blanco)", horas:7 },
   { cod:"T",   label:"Tarde",       horas:7 },
-  { cod:"HE",  label:"H.Extra",     horas:0 },
+  { cod:"N",   label:"Noche",       horas:10 },
+  { cod:"F1",  label:"Festivo trabajado", horas:0 },
+  { cod:"PR",  label:"Permiso Retribuido", horas:0 },
+  { cod:"V",   label:"Vacaciones",  horas:0 },
+  { cod:"VA",  label:"Vacaciones Antigüedad", horas:0 },
+  { cod:"CF",  label:"Conciliación Familiar", horas:0 },
+  { cod:"IT",  label:"Incapacidad Temporal", horas:0 },
+  { cod:"LD",  label:"Libre Disposición (moscoso)", horas:0 },
+  { cod:"LDA", label:"Libre Disposición Antigüedad", horas:0 },
   { cod:"LIB", label:"Libranza",    horas:0 },
-  { cod:"VAC", label:"Vacaciones",  horas:0 },
+  { cod:"HE",  label:"Hora Extra",  horas:0 },
 ];
 function horasCodigo(cod) {
   if (!cod) return 0;
   const num = parseInt(cod);
   if (!isNaN(num) && num >= 2 && num <= 9) return num;
   const entry = CODIGOS_TURNO.find(c => c.cod === cod);
-  return entry ? entry.horas : 0;
+  if (entry) return entry.horas;
+  if (cod.startsWith("F")) return 0;
+  if (cod === "LD25" || cod === "LD26" || cod === "V25") return 0;
+  return 0;
 }
 
-// ==================== PLANTILLA BASE ====================
-const PLANTILLA_BASE = [
-  ["L","L","L","L","","L","L","L","","","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","",""],
-  ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
-  ["","","","","","L","L","L","","","","","","","","","","","L","L","","","","","","","","L","L","",""],
-  ["","","","","","L","L","","","","","","L","L","","","","","L","L","","","","","","","","L","L","",""],
-  ["F1","F1","","F1","","L","L","","F1","F1","","F1","F1","","","","F1","F1","","L","L","","","","F1","F1","","F1","F1","",""],
-  ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
-  ["L","L","L","L","","L","L","L","L","L","L","L","","L","L","","L","L","L","L","","L","L","","L","L","","L","L","","L"],
-  ["","","","","","","","D","","","","","","","","D","","","","","","","","D","","","","","","D",""],
-  ["L","L","","L","","L","L","L","L","","L","L","","L","","L","L","","L","L","","L","L","","L","L","","L","L","",""],
-  ["D","D","","D","","D","D","D","","","D","D","","D","D","","D","D","","D","D","","D","D","","D","D","","D","D",""],
-  ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
-  ["","9","","","5","L","L","9","9","5","","8","9","9","5","","","9","9","4","L","L","","9","5","","8","9","","","5"],
-  ["","","","4","","L","L","","","4","","","","4","8","8","4","","","","L","L","","","4","8","8","","","","4"],
-  ["F1","F1","H","F1","F1","L","L","F1","F1","","","F1","","F1","F1","F1","F1","F1","","F1","L","L","F1","F1","F1","F1","F1","F1","F1","F1",""],
-  ["D","D","D","D","","D","D","D","D","","D","D","","D","D","","D","D","","D","D","","D","D","","D","D","","D","D",""],
-  ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
-  ["F1","F1","","F1","","L","L","F1","F1","","F1","F1","F1","F1","","F1","F1","","F1","F1","","L","L","F1","F1","","F1","F1","","F1",""],
-  ["","","","","","","","","","","","","","","","","","","","","","","","","","","","","","",""],
-  ["L","","L","","L","L","L","","L","L","","L","L","","L","L","","L","L","","L","L","","L","L","","L","L","","L",""],
-  ["F1","F1","","","L","L","L","","","","","L","","","L","","","","","L","L","L","","G","G","G","G","G","","",""],
-  ["F1","F1","","","","L","L","","","","D","","","","","","","","","","L","L","","","","","","","","",""],
-  ["","2","6","6","2","L","L","2","2","","","","2","2","","","2","6","6","2","L","L","2","","","6","6","2","","",""],
-  ["L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L","L"],
-  ["","L","L","M","","L","L","L","L","M","","","L","L","M","","L","L","L","L","","L","L","","L","L","M","L","","","M"],
-  ["U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U","U"],
-  ["L","N","L","L","","L","L","L","","L","L","L","L","L","L","L","L","L","L","L","","L","L","L","L","L","L","L","L","L",""],
-  ["L","L","M","N","","L","L","L","M","N","","L","L","M","N","","L","M","N","N","","L","L","M","N","","L","L","M","N",""]
+// ==================== LISTA REAL DE TRABAJADORES ====================
+const TRABAJADORES_FIJOS = [
+  { id: 0, nombre: "MARIA JOSE GARCIA LATORRE", tipo: "fijo", turnoBase: "M", fechaIngreso: "1985-06-17", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 1, nombre: "ANA BELEN SERRANO MOTA", tipo: "fijo", turnoBase: "M", fechaIngreso: "1985-06-17", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 2, nombre: "VICTORIA CHAVES ARIAS", tipo: "fijo", turnoBase: "M", fechaIngreso: "2000-07-14", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 3, nombre: "Mª JESUS SALO LONGARES", tipo: "fijo", turnoBase: "M", fechaIngreso: "1995-02-20", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 4, nombre: "CONCEPCION GARCIA GUERRERO", tipo: "fijo", turnoBase: "M", fechaIngreso: "2017-11-01", antiguedadAnios: 8, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 5, nombre: "CONCEPCION TARBUENCA SILVESTRE", tipo: "fijo", turnoBase: "M", fechaIngreso: "2005-11-14", antiguedadAnios: 20, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 6, nombre: "ASUNCION IBARRA ARAMBURO", tipo: "fijo", turnoBase: "M", fechaIngreso: "2020-03-04", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 7, nombre: "LUCIA MORENO APARICIO", tipo: "fijo", turnoBase: "M", fechaIngreso: "1988-03-01", antiguedadAnios: 37, moscososAntiguedad: 7, vacacionesAntiguedad: 4 },
+  { id: 8, nombre: "Mª JESUS BETRIAN MORA", tipo: "fijo", turnoBase: "M", fechaIngreso: "1995-12-08", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 9, nombre: "BELINDA MARUGAN RIBAS", tipo: "fijo", turnoBase: "M", fechaIngreso: "1993-04-19", antiguedadAnios: 32, moscososAntiguedad: 6, vacacionesAntiguedad: 4 },
+  { id: 10, nombre: "MARI CARMEN CHUECA GRACIA", tipo: "fijo", turnoBase: "M", fechaIngreso: "2021-07-10", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  // PEONES ESPECIALISTAS (turnos rotativos M/T)
+  { id: 11, nombre: "JOSE LUIS GARCIA SANCHO", tipo: "peon", turnoBase: "Rotativo", fechaIngreso: "1985-06-17", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 12, nombre: "JORGE GARCIA OLIVAR", tipo: "peon", turnoBase: "Rotativo", fechaIngreso: "2016-04-18", antiguedadAnios: 9, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 13, nombre: "LUIS MIGUEL SERRANO GONZALEZ", tipo: "peon", turnoBase: "Rotativo", fechaIngreso: "2009-02-02", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
+  // TARDES
+  { id: 14, nombre: "ANTONIO GARCIA", tipo: "fijo", turnoBase: "T", fechaIngreso: "1985-09-02", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 15, nombre: "MISABEL OLIVAR PEREZ", tipo: "fijo", turnoBase: "T", fechaIngreso: "2003-04-28", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 16, nombre: "AURELIA MIR SERRANO", tipo: "fijo", turnoBase: "T", fechaIngreso: "2000-08-12", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 17, nombre: "MANUELA MARIN MUNUERA", tipo: "fijo", turnoBase: "T", fechaIngreso: "2001-09-01", antiguedadAnios: 24, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 18, nombre: "INMACULADA LORENTE BENITO", tipo: "fijo", turnoBase: "T", fechaIngreso: "2009-08-04", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
+  { id: 19, nombre: "YOLANDA GRIMAL BLAS", tipo: "fijo", turnoBase: "T", fechaIngreso: "2022-04-07", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 20, nombre: "SUSANA NAVARRO MARQUINA", tipo: "fijo", turnoBase: "T", fechaIngreso: "2022-06-01", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  // NOCHE
+  { id: 21, nombre: "PEÑA DURAN PEREZ", tipo: "fijo", turnoBase: "N", fechaIngreso: "2003-04-28", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 22, nombre: "M JESUS BOILLOS CASADO", tipo: "fijo", turnoBase: "N", fechaIngreso: "2021-07-11", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 23, nombre: "VANESSA BETRIAN MORA", tipo: "fijo", turnoBase: "N", fechaIngreso: "1999-12-04", antiguedadAnios: 26, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 24, nombre: "MISABEL IBARRA", tipo: "fijo", turnoBase: "N", fechaIngreso: "2020-01-01", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  // Puesto especial
+  { id: 25, nombre: "JOSE RAMON RUIZ CHAVES", tipo: "fijo", turnoBase: "M", fechaIngreso: "2022-11-02", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0, nota: "Limpia el 061 - Sustituye peones" },
 ];
 
-const NOMBRES_BASE = [
-  "MARIA JOSE GARCIA LATORRE","ANA BELEN SERRANO MOTA","VICTORIA CHAVES ARIAS",
-  "Mª JESUS SALO LONGARES","CONCEPCION GARCIA GUERRERO","CONCEPCION TARBUENCA SILVESTRE",
-  "ASUNCION IBARRA ARAMBURO","LUCIA MORENO APARICIO","Mª JESUS BETRIAN MORA",
-  "BELINDA MARUGAN RIBAS","MARI CARMEN CHUECA GRACIA","Rosario Polo",
-  "Candela Ruiz / Pared","JOSE LUIS GARCIA SANCHO","JOE GARCIA OLIVAR",
-  "SERRANO GONZALEZ","IVAR PEREZ","SERRANO","IRIN MUNUERA",
-  "LANDA LORENTE BENITO","SUSANA NAVARRO MARQUINA","PEÑA DURAN PEREZ",
-  "Mª JESUS BOILLOS CASADO","VANESSA BETRIAN MORA","Mª ISABEL IBARRA ARAMBURO",
-  "JOSE RAMON RUIZ CHAVES","A. Contra Joyce"
+const SUSTITUTOS = [
+  { id: 26, nombre: "Rosario Polo", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 27, nombre: "Carmela Aramburu", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 28, nombre: "Victoria Remacha", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 29, nombre: "Susagny Mendoza", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 30, nombre: "Angel Monteagudo", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 31, nombre: "M Carmen Joven Trasovares", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 32, nombre: "M Carmen Lopez Langa", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 33, nombre: "Esther Blas", tipo: "sustituto", turnoBase: "M", activo: false },
 ];
 
 // ==================== ESTADO GLOBAL ====================
@@ -341,7 +361,6 @@ let personalFiltro = "";
 let personalFiltroZona = "todas";
 let personalFiltroTurno = "todos";
 let homeMes = new Date().getMonth();
-let tablaCuadranteCache = null; // Cache para no recargar la tabla innecesariamente
 
 // ==================== FUNCIONES EVENTOS TRABAJADOR ====================
 function getEventosDelDia(anio, mes, dia) {
@@ -422,14 +441,7 @@ function getCuadranteMes(mes, anio) {
   const key = clavesMes(mes, anio);
   if (!state.cuadrantePorMes[key]) {
     const dias = diasEnMes(mes, anio);
-    state.cuadrantePorMes[key] = PLANTILLA_BASE.map(fila => {
-      const nueva = [];
-      for (let i = 0; i < dias; i++) nueva[i] = (fila[i] !== undefined) ? fila[i] : "";
-      return nueva;
-    });
-    while (state.cuadrantePorMes[key].length < state.trabajadores.length) {
-      state.cuadrantePorMes[key].push(Array(dias).fill(""));
-    }
+    state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(""));
   }
   return state.cuadrantePorMes[key];
 }
@@ -448,32 +460,31 @@ function setCelda(trabId, dia, valor, mes, anio) {
   if (!cuad[idx]) cuad[idx] = [];
   cuad[idx][dia] = valor;
   guardarDatos();
-  // Actualizar la tabla si está visible sin recargar todo
   if (currentView === "cuadrante") {
     actualizarCeldaEnTabla(idx, dia, valor);
   }
 }
 
-// Función para actualizar solo la celda modificada sin recargar toda la tabla
 function actualizarCeldaEnTabla(fila, columna, valor) {
   const celda = document.getElementById(`celda-${fila}-${columna}`);
   if (celda) {
     celda.textContent = valor;
-    celda.setAttribute("data-val", valor);
-    // Actualizar clase de color
     let colorClass = "";
     if (valor === "L") colorClass = "L";
     else if (valor === "D") colorClass = "D";
-    else if (valor === "F1") colorClass = "F1";
-    else if (valor === "N") colorClass = "N";
     else if (valor === "M") colorClass = "M";
     else if (valor === "T") colorClass = "T";
+    else if (valor === "N") colorClass = "N";
     else if (valor === "HE") colorClass = "HE";
     else if (valor === "LIB") colorClass = "LIB";
-    else if (valor === "VAC") colorClass = "VAC";
+    else if (valor === "VAC" || valor === "V") colorClass = "V";
+    else if (valor === "VA") colorClass = "VA";
+    else if (valor === "PR") colorClass = "PR";
+    else if (valor === "CF") colorClass = "CF";
+    else if (valor === "IT") colorClass = "IT";
+    else if (valor === "LD" || valor === "LDA") colorClass = "LD";
+    else if (valor && valor.startsWith("F")) colorClass = "F1";
     celda.className = `editable-cell ${colorClass} ${celda.classList.contains("wkend") ? "wkend" : ""} ${celda.classList.contains("festivo-cell") ? "festivo-cell" : ""}`;
-    
-    // Actualizar total de horas para ese trabajador
     const totalCelda = document.getElementById(`total-${fila}`);
     if (totalCelda) {
       const nuevaTotal = getTotalHorasMes(state.trabajadores[fila].id, state.mesActual, state.anio);
@@ -503,7 +514,7 @@ function getVacacionesDisfrutadas(trabId, anio) {
     const cuad = getCuadranteMes(m, anio);
     const idx = state.trabajadores.findIndex(t => t.id === trabId);
     if (idx < 0 || !cuad[idx]) continue;
-    dias += cuad[idx].filter(v => v === "VAC").length;
+    dias += cuad[idx].filter(v => v === "V" || v === "VAC" || v === "VA").length;
   }
   return dias;
 }
@@ -527,7 +538,7 @@ function getMaxDiasSeguidos(trabId, mes, anio) {
   const todos = [...prefijo, ...fila];
   let max = 0, actual = 0;
   for (const v of todos) {
-    const trabajado = v && v !== "L" && v !== "D" && v !== "VAC" && v !== "";
+    const trabajado = v && v !== "L" && v !== "D" && v !== "V" && v !== "VAC" && v !== "VA" && v !== "";
     if (trabajado) { actual++; max = Math.max(max, actual); }
     else actual = 0;
   }
@@ -547,7 +558,7 @@ function coberturaDelDia(dia, mes, anio) {
   state.trabajadores.forEach((t, idx) => {
     if (t.estado === "baja") return;
     const v = cuad[idx]?.[dia] || "";
-    if (v === "M") result.M++;
+    if (v === "M" || v === "") result.M++;
     else if (v === "T") result.T++;
     else if (v === "N") result.N++;
   });
@@ -557,7 +568,7 @@ function coberturaDelDia(dia, mes, anio) {
 function validarCuadrante() {
   const inc = [];
   for (const t of state.trabajadores) {
-    if (t.estado === "baja") continue;
+    if (t.estado !== "activo") continue;
     const seg = getMaxDiasSeguidos(t.id);
     if (seg > state.parametros.maxDiasSeguidos) inc.push(`⚠️ ${t.nombre}: ${seg} días seguidos`);
     const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
@@ -569,38 +580,99 @@ function validarCuadrante() {
   return inc;
 }
 
-// ==================== GENERACIÓN PDF ====================
+// ==================== GENERACIÓN PDF (CORREGIDA) ====================
 function generarPDF() {
   const mes = state.mesActual;
   const anio = state.anio;
+  const nombreMes = MESES_NOMBRES[mes];
   const dias = diasEnMes(mes, anio);
   const cuad = getCuadranteMes(mes, anio);
-
-  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</title>
-  <style>body{font-family:Arial;margin:20px} table{border-collapse:collapse;width:100%;font-size:8px} th,td{border:1px solid #ccc;padding:4px} th{background:#f1f5f9}</style>
-  </head><body><h2>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</h2>`;
-  html += `</td><thead><tr><th>Nombre</th>`;
-  for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
-  html += `<th>H</th></tr></thead><tbody>`;
+  
+  let tablaHtml = `
+    <table style="width:100%; border-collapse: collapse; font-size: 7px;">
+      <thead>
+        <tr>
+          <th style="border: 0.5px solid #000; padding: 4px; text-align: left; background: #f1f5f9;">Trabajador</th>`;
+  
+  for (let d = 1; d <= dias; d++) {
+    const dow = new Date(anio, mes, d).getDay();
+    const dowName = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][dow];
+    tablaHtml += `<th style="border: 0.5px solid #000; padding: 4px; text-align: center; background: #f1f5f9;">${d}<br><span style="font-size:6px; font-weight:normal">${dowName}</span></th>`;
+  }
+  tablaHtml += `<th style="border: 0.5px solid #000; padding: 4px; text-align: center; background: #f1f5f9;">H</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  
   for (let i = 0; i < state.trabajadores.length; i++) {
     const t = state.trabajadores[i];
+    if (t.estado !== "activo") continue;
     const total = getTotalHorasMes(t.id, mes, anio);
-    html += `<tr><td style="text-align:left">${t.nombre}${t.estado==="baja"?" [B]":""}</td>`;
-    for (let d = 0; d < dias; d++) html += `<td>${cuad[i]?.[d] || ""}</td>`;
-    html += `<td style="font-weight:700">${total}<\/td>`;
-    html += `<\/tr>`;
+    tablaHtml += `<tr>
+      <td style="border: 0.5px solid #000; padding: 4px; text-align: left; font-weight: 600;">${t.nombre}${t.tipo === "sustituto" ? " [S]" : ""}${t.estado === "baja" ? " [B]" : ""}</td>`;
+    
+    for (let d = 0; d < dias; d++) {
+      let val = cuad[i]?.[d] || "";
+      if (val === "" && t.turnoBase === "M") val = "";
+      let estilo = "border: 0.5px solid #000; padding: 4px; text-align: center;";
+      if (val === "L") estilo += " color: #1d4ed8; font-weight: 700;";
+      else if (val === "D") estilo += " color: #15803d; font-weight: 700;";
+      else if (val === "M") estilo += " color: #374151; font-weight: 600;";
+      else if (val === "T") estilo += " color: #374151; font-weight: 600;";
+      else if (val === "N") estilo += " color: #92400e; font-weight: 700;";
+      else if (val === "V" || val === "VAC" || val === "VA") estilo += " color: #065f46; font-weight: 700; background: #d1fae5;";
+      else if (val === "PR") estilo += " color: #7c3aed; font-weight: 700; background: #ede9fe;";
+      else if (val === "CF") estilo += " color: #0891b2; font-weight: 700; background: #cffafe;";
+      else if (val === "IT") estilo += " color: #991b1b; font-weight: 700; background: #fee2e2;";
+      else if (val === "LD" || val === "LDA") estilo += " color: #b45309; font-weight: 700; background: #fffbeb;";
+      else if (val && val.startsWith("F")) estilo += " color: #ea580c; font-weight: 700;";
+      else if (val === "") estilo += " color: #374151;";
+      tablaHtml += `<td style="${estilo}">${val === "" ? "M" : val}</td>`;
+    }
+    
+    tablaHtml += `<td style="border: 0.5px solid #000; padding: 4px; text-align: center; font-weight: 700; background: #e8f4fd;">${total}</td>
+    </tr>`;
   }
-  html += `</tbody>`;
-  html += `<\/table>`;
-  html += `</body></html>`;
+  
+  tablaHtml += `</tbody>
+    </table>`;
+  
+  const contenidoHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Cuadrante ${nombreMes} ${anio}</title>
+      <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 10px; font-size: 10px; }
+        h2 { color: #0f172a; margin-bottom: 5px; }
+        p { color: #64748b; font-size: 8px; margin-top: 0; margin-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 7px; }
+        th, td { border: 0.5px solid #999; padding: 3px 2px; text-align: center; vertical-align: top; }
+        th { background: #f1f5f9; font-weight: 700; }
+        td:first-child { text-align: left; font-weight: 600; background: white; }
+        @media print { body { margin: 0; padding: 0; } }
+      </style>
+    </head>
+    <body>
+      <h2>🧹 Cuadrante de trabajo</h2>
+      <p><strong>Centro:</strong> Hospital Calatayud Limpieza · <strong>Mes:</strong> ${nombreMes} ${anio} · <strong>Generado:</strong> ${new Date().toLocaleString("es-ES")}</p>
+      ${tablaHtml}
+      <p style="margin-top: 12px; font-size: 6px; color: #999;">Documento generado automáticamente por Gestión Cuadrantes. Códigos: M=Mañana (en blanco), T=Tarde, N=Noche, L=Libre, D=Descanso, V=Vacaciones, VA=Vacaciones Antigüedad, PR=Permiso, CF=Conciliación, IT=Baja, LD=Moscoso, LDA=Moscoso Antigüedad, F#=Festivo trabajado.</p>
+    </body>
+    </html>
+  `;
+  
   const ventana = window.open();
-  ventana.document.write(html);
+  ventana.document.write(contenidoHtml);
   ventana.document.close();
-  setTimeout(() => ventana.print(), 400);
+  ventana.focus();
+  setTimeout(() => ventana.print(), 500);
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v13";
+const STORAGE_KEY = "cuadrantes_v15";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -652,19 +724,49 @@ function inicializarNuevo() {
     { id: "z7", nombre: "Pasillos", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fce7f3", notas: "" },
     { id: "z8", nombre: "Vestuarios", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fff7ed", notas: "" }
   ];
-  state.trabajadores = NOMBRES_BASE.map((nombre, i) => ({
-    id: `t_${i}_${Date.now()}`,
-    nombre,
+  
+  // Crear trabajadores fijos
+  state.trabajadores = TRABAJADORES_FIJOS.map((t, idx) => ({
+    id: `t_${idx}_${Date.now()}`,
+    nombre: t.nombre,
+    tipo: t.tipo,
+    turnoBase: t.turnoBase,
     estado: "activo",
     embarazo: false,
-    zonaPrincipalId: state.zonas[i % state.zonas.length]?.id || "",
+    zonaPrincipalId: "",
     zonasRotacionIds: [],
-    turnoHabitual: "Sin asignar",
-    notas: "",
+    turnoHabitual: t.turnoBase === "Rotativo" ? "Rotativo" : (t.turnoBase === "M" ? "M" : (t.turnoBase === "T" ? "T" : "N")),
+    notas: t.nota || "",
     vacacionesTotales: 22,
     fechaBaja: null,
-    eventos: []
+    eventos: [],
+    antiguedadAnios: t.antiguedadAnios,
+    moscososAntiguedad: t.moscososAntiguedad,
+    vacacionesAntiguedad: t.vacacionesAntiguedad
   }));
+  
+  // Añadir sustitutos (inactivos por defecto)
+  SUSTITUTOS.forEach((s, idx) => {
+    state.trabajadores.push({
+      id: `s_${idx}_${Date.now()}`,
+      nombre: s.nombre,
+      tipo: "sustituto",
+      turnoBase: "M",
+      estado: "inactivo",
+      embarazo: false,
+      zonaPrincipalId: "",
+      zonasRotacionIds: [],
+      turnoHabitual: "M",
+      notas: "Sustituto de la bolsa",
+      vacacionesTotales: 22,
+      fechaBaja: null,
+      eventos: [],
+      antiguedadAnios: 0,
+      moscososAntiguedad: 0,
+      vacacionesAntiguedad: 0
+    });
+  });
+  
   state.tareas = [
     { id: "t1", nombre: "📄 Firma documentación mensual", dia: 28, prioridad: "rojo", completada: false },
     { id: "t2", nombre: "📊 Enviar informe horas dirección", dia: 30, prioridad: "amber", completada: false }
@@ -809,7 +911,7 @@ function renderHome() {
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[state.mesActual]} ${state.anio}`;
 }
 
-// ==================== VISTA CUADRANTE (CORREGIDA - SIN RECARGA COMPLETA) ====================
+// ==================== VISTA CUADRANTE ====================
 let cuadranteFiltroTimeout = null;
 
 function renderCuadrante() {
@@ -818,7 +920,6 @@ function renderCuadrante() {
   const dias = diasEnMes(mes, anio);
   const cuad = getCuadranteMes(mes, anio);
   
-  // Obtener el valor actual del filtro sin recargar
   const searchInput = document.getElementById("cuad-search");
   const searchTerm = searchInput ? searchInput.value : cuadFiltro;
   cuadFiltro = searchTerm;
@@ -836,7 +937,7 @@ function renderCuadrante() {
   </div>`;
   html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días</div>`;
   html += `<div class="wrap">`;
-  html += `<table>`;
+  html += `<tr>`;
   html += `<thead>`;
   html += `<tr>`;
   html += `<th class="nombre-col">Trabajador</th>`;
@@ -855,50 +956,55 @@ function renderCuadrante() {
     const total = getTotalHorasMes(t.id, mes, anio);
     const seg = getMaxDiasSeguidos(t.id, mes, anio);
     const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
-    const zona = state.zonas.find(z => z.id === t.zonaPrincipalId);
-    html += `<tr class="${t.estado === "baja" ? "baja-row" : ""}">`;
-    html += `<td class="nombre-col">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ""}${t.embarazo ? "🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? "⚠️" : ""}${bolsa < -40 ? "📉" : ""}${zona ? `<span style="color:#94a3b8;font-size:9px;margin-left:4px">${zona.nombre}</span>` : ""}</td>`;
+    const esSustituto = t.tipo === "sustituto";
+    const esInactivo = t.estado === "inactivo";
+    html += `<tr class="${t.estado === "baja" ? "baja-row" : ""} ${esSustituto ? "sustituto-row" : ""} ${esInactivo ? "baja-row" : ""}">`;
+    html += `<td class="nombre-col">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ""}${t.tipo === "sustituto" ? '<span class="badge badge-sustituto" style="margin-left:4px">SUSTITUTO</span>' : ""}${t.embarazo ? "🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? "⚠️" : ""}${bolsa < -40 ? "📉" : ""}</td>`;
     for (let d = 0; d < dias; d++) {
-      const val = cuad[idx]?.[d] || "";
+      let val = cuad[idx]?.[d] || "";
+      if (val === "" && t.turnoBase === "M" && t.estado === "activo") val = "";
       let colorClass = "";
       if (val === "L") colorClass = "L";
       else if (val === "D") colorClass = "D";
-      else if (val === "F1") colorClass = "F1";
-      else if (val === "N") colorClass = "N";
       else if (val === "M") colorClass = "M";
       else if (val === "T") colorClass = "T";
+      else if (val === "N") colorClass = "N";
       else if (val === "HE") colorClass = "HE";
       else if (val === "LIB") colorClass = "LIB";
-      else if (val === "VAC") colorClass = "VAC";
+      else if (val === "V" || val === "VAC") colorClass = "V";
+      else if (val === "VA") colorClass = "VA";
+      else if (val === "PR") colorClass = "PR";
+      else if (val === "CF") colorClass = "CF";
+      else if (val === "IT") colorClass = "IT";
+      else if (val === "LD" || val === "LDA") colorClass = "LD";
+      else if (val && val.startsWith("F")) colorClass = "F1";
       const fds = esFinDeSemana(d + 1, mes, anio);
       const fest = esFestivo(anio, mes, d + 1);
       const fechaCelda = new Date(anio, mes, d + 1);
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
-      html += `<td id="celda-${idx}-${d}" class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}${fest && val && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
+      html += `<td id="celda-${idx}-${d}" class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
     html += `<td id="total-${idx}" class="total-col">${total}</td>`;
     html += `</tr>`;
   }
-  html += `<tr class="cobertura-row"><td class="nombre-col">Cobertura M/T/N</td>`;
+  html += `<tr class="cobertura-row"><td class="nombre-col">Cobertura M/T/N<\/td>`;
   for (let d = 0; d < dias; d++) {
     const cob = coberturaDelDia(d, mes, anio);
-    html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}</td>`;
+    html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}<\/td>`;
   }
-  html += `<td class="total-col"></td>`;
-  html += `</tr>`;
+  html += `<td class="total-col"><\/td>`;
+  html += `<\/tr>`;
   html += `</tbody>`;
-  html += `</table>`;
+  html += `<\/table>`;
   html += `</div>`;
   
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
 
-// Función para filtrar sin recargar toda la tabla (usando el DOM existente)
 function filtrarCuadrante(valor) {
   cuadFiltro = valor;
-  // En lugar de recargar toda la tabla, filtramos las filas
   const searchTerm = valor.toLowerCase();
   const filas = document.querySelectorAll("#content tbody tr");
   filas.forEach(fila => {
@@ -917,7 +1023,6 @@ function filtrarCuadrante(valor) {
 function cambiarMes(mes) {
   state.mesActual = mes;
   guardarDatos();
-  // No llamar a renderHome() aquí, solo recargar cuadrante
   if (currentView === "cuadrante") {
     renderCuadrante();
   }
@@ -938,7 +1043,7 @@ function abrirSelectorTurno(trabId, dia) {
   }
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod || "clear"}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2, G…" style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod === "F1" ? "F1" : (c.cod === "V" ? "V" : c.cod === "VA" ? "VA" : c.cod === "PR" ? "PR" : c.cod === "CF" ? "CF" : c.cod === "IT" ? "IT" : c.cod === "LD" ? "LD" : c.cod === "LDA" ? "LDA" : c.cod === "LIB" ? "LIB" : c.cod === "HE" ? "HE" : (c.cod || "clear"))}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2-F31, LD25, LD26, V25..." style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
   document.body.appendChild(overlay);
 }
 
@@ -968,7 +1073,7 @@ function undoUltimoCambio() {
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== VISTA PERSONAL (resumida por brevedad - igual que antes) ====================
+// ==================== VISTA PERSONAL (resumida - igual que antes) ====================
 function renderPersonal() {
   const mes = state.mesActual, anio = state.anio;
   let html = `<input class="worker-search" id="worker-search" type="text" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" onkeyup="personalFiltroChange(this.value)">`;
@@ -1005,10 +1110,9 @@ function cardWorkerHtml(t, mes, anio) {
   const vacDis = getVacacionesDisfrutadas(t.id);
   const vacTot = t.vacacionesTotales || 22;
   const vacPct = Math.min(100, Math.round(vacDis / vacTot * 100));
-  const zona = state.zonas.find(z => z.id === t.zonaPrincipalId);
   return `<div class="worker-item" onclick="modalDetalleWorker('${t.id}')">
-    <div class="worker-name">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? '<span class="badge badge-emb">🤰</span>' : ""}</div>
-    <div class="worker-stats"><span>📅 ${horas}h mes</span><span class="${bolsa >= 0 ? "bolsa-pos" : "bolsa-neg"}">${bolsa >= 0 ? "+" : ""}${bolsa}h bolsa</span><span>🔄 ${seg} días</span><span>🏖 ${vacDis}/${vacTot}</span>${zona ? `<span>🏥 ${zona.nombre}</span>` : ""}</div>
+    <div class="worker-name">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? '<span class="badge badge-emb">🤰</span>' : ""}${t.tipo === "sustituto" ? '<span class="badge badge-sustituto">SUSTITUTO</span>' : ""}</div>
+    <div class="worker-stats"><span>📅 ${horas}h mes</span><span class="${bolsa >= 0 ? "bolsa-pos" : "bolsa-neg"}">${bolsa >= 0 ? "+" : ""}${bolsa}h bolsa</span><span>🔄 ${seg} días</span><span>🏖 ${vacDis}/${vacTot}</span><span>📅 ${t.antiguedadAnios || 0} años</span></div>
     <div class="vac-bar"><div class="vac-bar-fill" style="width:${vacPct}%"></div></div>
   </div>`;
 }
@@ -1020,118 +1124,17 @@ function personalFiltroChange(val) { personalFiltro = val; renderPersonal(); }
 function modalDetalleWorker(id) {
   const t = state.trabajadores.find(t => t.id === id);
   if (!t) return;
-  const zonasRotHtml = state.zonas.map(z => {
-    const selected = (t.zonasRotacionIds || []).includes(z.id);
-    return `<div class="zona-check-item${selected ? " selected" : ""}" onclick="toggleZonaRot('${z.id}', this)"><div class="zona-check-dot"></div><span class="zona-check-label">${z.nombre}</span></div>`;
-  }).join("");
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">✏️ ${t.nombre}</div>
     <label class="modal-label">Nombre</label><input class="modal-input" id="dw-nombre" value="${t.nombre}">
-    <label class="modal-label">Estado</label><select class="modal-input" id="dw-estado"><option value="activo" ${t.estado==="activo"?"selected":""}>Activo</option><option value="baja" ${t.estado==="baja"?"selected":""}>Baja</option></select>
-    <label class="modal-label">Zona principal</label><select class="modal-input" id="dw-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.id}" ${t.zonaPrincipalId===z.id?"selected":""}>${z.nombre}</option>`).join("")}</select>
-    <label class="modal-label">Turno habitual</label><select class="modal-input" id="dw-turno">${TURNOS_HABITUALES.map(tur => `<option ${t.turnoHabitual===tur?"selected":""}>${tur}</option>`).join("")}</select>
-    <label class="modal-label">Zonas de rotación (puede cubrir)</label>
-    <div class="zona-check-grid" id="dw-zonas-rot">${zonasRotHtml}</div>
+    <label class="modal-label">Estado</label><select class="modal-input" id="dw-estado"><option value="activo" ${t.estado==="activo"?"selected":""}>Activo</option><option value="baja" ${t.estado==="baja"?"selected":""}>Baja</option><option value="inactivo" ${t.estado==="inactivo"?"selected":""}>Inactivo (sustituto)</option></select>
+    <label class="modal-label">Turno base</label><select class="modal-input" id="dw-turnoBase"><option value="M" ${t.turnoBase==="M"?"selected":""}>Mañanas (en blanco)</option><option value="T" ${t.turnoBase==="T"?"selected":""}>Tardes</option><option value="N" ${t.turnoBase==="N"?"selected":""}>Noches</option><option value="Rotativo" ${t.turnoBase==="Rotativo"?"selected":""}>Rotativo (peones)</option></select>
     <div style="margin-top:12px"><label><input type="checkbox" id="dw-emb" ${t.embarazo?"checked":""}> 🤰 Embarazo</label></div>
-    
-    <div class="modal-section" style="margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0">
-      <div class="modal-section-title" style="font-size:12px;font-weight:700;color:#64748b">📋 EVENTOS LABORALES</div>
-      <div id="eventos-lista" style="margin-bottom:10px">${renderEventosLista(t)}</div>
-      <button class="btn btn-secondary btn-sm" onclick="mostrarModalNuevoEvento('${id}')">➕ Añadir evento</button>
-    </div>
-
     <div class="modal-btns"><button class="btn-modal-ok" onclick="guardarWorker('${id}')">Guardar</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
     <button class="btn btn-danger" style="margin-top:8px" onclick="iniciarBajaWorker('${id}')">🩺 Registrar baja</button>
     <button class="btn btn-danger" style="margin-top:4px" onclick="eliminarTrabajador('${id}')">🗑 Eliminar</button></div>`;
   document.body.appendChild(overlay);
-  window.toggleZonaRot = (zonaId, el) => { el.classList.toggle("selected"); };
-}
-
-function renderEventosLista(t) {
-  if (!t.eventos || t.eventos.length === 0) return '<div class="empty" style="padding:12px">No hay eventos registrados</div>';
-  let html = '';
-  t.eventos.forEach((ev, idx) => {
-    let fechaInicio = ev.fecha || ev.fechaInicio || '';
-    let fechaFin = ev.fechaFin || '';
-    let rango = fechaInicio;
-    if (fechaFin) rango = `${fechaInicio} → ${fechaFin}`;
-    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9">
-      <div><span style="font-size:16px;margin-right:8px">${ev.emoji}</span><span style="font-size:12px"><strong>${ev.tipo}:</strong> ${rango}</span></div>
-      <button class="btn btn-danger btn-xs" onclick="eliminarEvento('${t.id}',${idx})" style="padding:2px 6px;font-size:10px">🗑</button>
-    </div>`;
-  });
-  return html;
-}
-
-function mostrarModalNuevoEvento(id) {
-  const t = state.trabajadores.find(t => t.id === id);
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.innerHTML = `<div class="modal-box">
-    <div class="modal-title">📋 Nuevo evento para ${t.nombre.split(" ")[0]}</div>
-    <label class="modal-label">Tipo de evento</label>
-    <select class="modal-input" id="ev-tipo">
-      <option value="inicio_contrato">📄 Inicio de contrato</option>
-      <option value="fin_contrato">📄 Fin de contrato</option>
-      <option value="inicio_baja">🩺 Inicio de baja</option>
-      <option value="fin_baja">❗ Fin de baja</option>
-      <option value="vacaciones">🏖️ Vacaciones</option>
-    </select>
-    <label class="modal-label">Fecha de inicio (obligatoria)</label>
-    <input type="date" class="modal-input" id="ev-fecha-inicio" value="${new Date().toISOString().slice(0,10)}">
-    <label class="modal-label">Fecha de fin (opcional, solo para vacaciones y contratos con fecha conocida)</label>
-    <input type="date" class="modal-input" id="ev-fecha-fin">
-    <div class="modal-btns">
-      <button class="btn-modal-ok" onclick="guardarEvento('${id}')">Guardar evento</button>
-      <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
-    </div>
-  </div>`;
-  document.body.appendChild(overlay);
-}
-
-function guardarEvento(id) {
-  const tipo = document.getElementById("ev-tipo")?.value;
-  const fechaInicio = document.getElementById("ev-fecha-inicio")?.value;
-  const fechaFin = document.getElementById("ev-fecha-fin")?.value || null;
-  if (!fechaInicio) { mostrarToast("❌ Fecha de inicio requerida", true); return; }
-  
-  let emoji = "📄";
-  let descripcion = "";
-  let color = "gris";
-  if (tipo === "inicio_contrato") { emoji = "📄"; descripcion = "Inicio de contrato"; color = "verde"; }
-  else if (tipo === "fin_contrato") { emoji = "📄"; descripcion = "Fin de contrato"; color = "rojo"; }
-  else if (tipo === "inicio_baja") { emoji = "🩺"; descripcion = "Inicio de baja"; color = "rojo"; }
-  else if (tipo === "fin_baja") { emoji = "❗"; descripcion = "Fin de baja"; color = "verde"; }
-  else if (tipo === "vacaciones") { emoji = "🏖️"; descripcion = "Vacaciones"; color = "azul"; }
-  
-  const t = state.trabajadores.find(t => t.id === id);
-  if (!t.eventos) t.eventos = [];
-  t.eventos.push({
-    tipo: tipo,
-    fecha: fechaInicio,
-    fechaInicio: fechaInicio,
-    fechaFin: fechaFin || null,
-    emoji: emoji,
-    descripcion: descripcion,
-    color: color
-  });
-  guardarDatos();
-  cerrarModal();
-  modalDetalleWorker(id);
-  if (currentView === "home") renderHome();
-  mostrarToast(`✅ Evento añadido`);
-}
-
-function eliminarEvento(id, idx) {
-  const t = state.trabajadores.find(t => t.id === id);
-  if (!t || !t.eventos || !t.eventos[idx]) return;
-  if (!confirm("¿Eliminar este evento?")) return;
-  t.eventos.splice(idx, 1);
-  guardarDatos();
-  modalDetalleWorker(id);
-  if (currentView === "home") renderHome();
-  mostrarToast("🗑 Evento eliminado");
 }
 
 function guardarWorker(id) {
@@ -1139,15 +1142,10 @@ function guardarWorker(id) {
   if (!t) return;
   t.nombre = document.getElementById("dw-nombre")?.value?.trim() || t.nombre;
   t.estado = document.getElementById("dw-estado")?.value || t.estado;
-  t.zonaPrincipalId = document.getElementById("dw-zona")?.value || "";
-  t.turnoHabitual = document.getElementById("dw-turno")?.value || "Sin asignar";
+  t.turnoBase = document.getElementById("dw-turnoBase")?.value || t.turnoBase;
   t.embarazo = document.getElementById("dw-emb")?.checked || false;
-  const zonaItems = document.querySelectorAll("#dw-zonas-rot .zona-check-item.selected");
-  t.zonasRotacionIds = [...zonaItems].map(el => {
-    const label = el.querySelector(".zona-check-label")?.textContent;
-    return state.zonas.find(z => z.nombre === label)?.id;
-  }).filter(Boolean);
   guardarDatos(); cerrarModal(); renderPersonal();
+  if (currentView === "cuadrante") renderCuadrante();
   mostrarToast(`✅ ${t.nombre.split(" ")[0]} actualizado`);
 }
 
@@ -1168,8 +1166,8 @@ function modalNuevoTrabajador() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">➕ Nuevo trabajador</div>
     <label class="modal-label">Nombre</label><input class="modal-input" id="nt-nombre">
-    <label class="modal-label">Zona principal</label><select class="modal-input" id="nt-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.id}">${z.nombre}</option>`).join("")}</select>
-    <label class="modal-label">Turno habitual</label><select class="modal-input" id="nt-turno">${TURNOS_HABITUALES.map(t => `<option>${t}</option>`).join("")}</select>
+    <label class="modal-label">Tipo</label><select class="modal-input" id="nt-tipo"><option value="fijo">Fijo</option><option value="sustituto">Sustituto</option></select>
+    <label class="modal-label">Turno base</label><select class="modal-input" id="nt-turnoBase"><option value="M">Mañanas</option><option value="T">Tardes</option><option value="N">Noches</option><option value="Rotativo">Rotativo</option></select>
     <div class="modal-btns"><button class="btn-modal-ok" onclick="crearWorker()">Añadir</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
   </div>`;
   document.body.appendChild(overlay);
@@ -1177,9 +1175,18 @@ function modalNuevoTrabajador() {
 
 function crearWorker() {
   const nombre = document.getElementById("nt-nombre")?.value?.trim();
+  const tipo = document.getElementById("nt-tipo")?.value || "fijo";
+  const turnoBase = document.getElementById("nt-turnoBase")?.value || "M";
   if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
   const id = `t_${Date.now()}`;
-  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zonaPrincipalId: document.getElementById("nt-zona")?.value || "", zonasRotacionIds: [], turnoHabitual: document.getElementById("nt-turno")?.value || "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null, eventos: [] });
+  state.trabajadores.push({
+    id, nombre, tipo, turnoBase,
+    estado: tipo === "sustituto" ? "inactivo" : "activo",
+    embarazo: false, zonaPrincipalId: "", zonasRotacionIds: [],
+    turnoHabitual: turnoBase === "Rotativo" ? "Rotativo" : turnoBase,
+    notas: "", vacacionesTotales: 22, fechaBaja: null, eventos: [],
+    antiguedadAnios: 0, moscososAntiguedad: 0, vacacionesAntiguedad: 0
+  });
   Object.keys(state.cuadrantePorMes).forEach(k => {
     const [anio, mes] = k.split("-").map(Number);
     state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill(""));
@@ -1199,12 +1206,12 @@ function iniciarBajaWorker(id) {
   t.fechaBaja = `${state.anio}-${String(state.mesActual+1).padStart(2,"0")}-${String(dia+1).padStart(2,"0")}`;
   const cuad = getCuadranteMes(state.mesActual, state.anio);
   const idx = state.trabajadores.indexOf(t);
-  for (let d = dia; d < diasEnMes(state.mesActual, state.anio); d++) { if (cuad[idx]) cuad[idx][d] = "L"; }
+  for (let d = dia; d < diasEnMes(state.mesActual, state.anio); d++) { if (cuad[idx]) cuad[idx][d] = "IT"; }
   guardarDatos(); cerrarModal(); renderPersonal(); renderCuadrante();
   mostrarToast(`✅ Baja registrada`);
 }
 
-// ==================== VISTA ZONAS ====================
+// ==================== VISTA ZONAS (simplificada) ====================
 function renderZonas() {
   let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
     <span style="font-size:13px;font-weight:700">${state.zonas.length} zonas configuradas</span>
@@ -1233,7 +1240,6 @@ function renderZonas() {
 }
 
 function modalNuevaZona() { modalEditarZona(null); }
-
 function modalEditarZona(id) {
   const z = id ? state.zonas.find(z => z.id === id) : null;
   const overlay = document.createElement("div");
@@ -1241,7 +1247,7 @@ function modalEditarZona(id) {
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">${z ? "✏️ Editar zona" : "➕ Nueva zona"}</div>
     <label class="modal-label">Nombre</label><input class="modal-input" id="z-nombre" value="${z?.nombre || ""}">
     <label class="modal-label">Cobertura mínima</label>
-    <div class="num-spinner" style="display:flex;gap:8px;margin:8px 0">
+    <div style="display:flex;gap:8px;margin:8px 0">
       <div><div style="font-size:11px;font-weight:700">🌅 MAÑANA</div><input type="number" id="z-cob-M" value="${z?.coberturaMin?.M ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
       <div><div style="font-size:11px;font-weight:700">☀️ TARDE</div><input type="number" id="z-cob-T" value="${z?.coberturaMin?.T ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
       <div><div style="font-size:11px;font-weight:700">🌙 NOCHE</div><input type="number" id="z-cob-N" value="${z?.coberturaMin?.N ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
