@@ -60,7 +60,7 @@
 
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
   .cal-wd { font-size: 10px; font-weight: 700; color: #64748b; padding: 4px 0; }
-  .cal-day { background: #f8fafc; border-radius: 10px; padding: 8px 2px; border: 1px solid #e2e8f0; cursor: default; }
+  .cal-day { background: #f8fafc; border-radius: 10px; padding: 8px 2px; border: 1px solid #e2e8f0; cursor: pointer; }
   .cal-day.hoy { background: #0f172a; color: #fff; }
   .cal-day-num { font-size: 13px; font-weight: 600; }
   .cal-dot { width: 8px; height: 8px; border-radius: 50%; margin: 4px auto 0; }
@@ -172,6 +172,14 @@
   .zona-check-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; }
   .zona-check-item.selected .zona-check-dot { background: #2563eb; }
 
+  .eventos-list { max-height: 300px; overflow-y: auto; }
+  .evento-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-bottom: 1px solid #f1f5f9; }
+  .evento-emoji { font-size: 20px; min-width: 40px; text-align: center; }
+  .evento-info { flex: 1; }
+  .evento-titulo { font-weight: 700; font-size: 13px; }
+  .evento-desc { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .evento-badge { display: inline-block; padding: 2px 6px; border-radius: 12px; font-size: 9px; font-weight: 600; }
+
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
   .empty { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
@@ -203,7 +211,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 10;
+const APP_VERSION = 11;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -316,6 +324,81 @@ let personalFiltro = "";
 let personalFiltroZona = "todas";
 let personalFiltroTurno = "todos";
 let homeMes = new Date().getMonth();
+
+// ==================== FUNCIONES EVENTOS TRABAJADOR ====================
+function getEventosDelDia(anio, mes, dia) {
+  const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+  const eventos = [];
+
+  // Tareas pendientes
+  state.tareas.forEach(t => {
+    if (!t.completada && t.dia === dia) {
+      let prioridad = t.prioridad === "rojo" ? "🔴 Muy urgente" : (t.prioridad === "amber" ? "🟡 Urgente" : "🟢 Poco urgente");
+      eventos.push({ tipo: "tarea", nombre: t.nombre, emoji: t.prioridad === "rojo" ? "🔴" : (t.prioridad === "amber" ? "🟡" : "🟢"), descripcion: prioridad, color: t.prioridad });
+    }
+  });
+
+  // Festivos
+  if (esFestivo(anio, mes, dia)) {
+    eventos.push({ tipo: "festivo", nombre: "Festivo", emoji: "🌟", descripcion: "Día festivo según calendario", color: "verde" });
+  }
+
+  // Eventos de trabajadores (contratos, bajas, vacaciones)
+  state.trabajadores.forEach(t => {
+    if (t.eventos) {
+      t.eventos.forEach(ev => {
+        if (ev.fecha === fechaStr) {
+          eventos.push({ tipo: ev.tipo, nombre: t.nombre, emoji: ev.emoji, descripcion: ev.descripcion, color: ev.color });
+        }
+        // Para vacaciones con rango
+        if (ev.tipo === "vacaciones" && ev.fechaInicio && ev.fechaFin) {
+          const fechaInicio = new Date(ev.fechaInicio);
+          const fechaFin = new Date(ev.fechaFin);
+          const fechaActual = new Date(fechaStr);
+          if (fechaActual >= fechaInicio && fechaActual <= fechaFin) {
+            eventos.push({ tipo: "vacaciones", nombre: t.nombre, emoji: "🏖️", descripcion: `Vacaciones (${ev.fechaInicio} al ${ev.fechaFin})`, color: "azul" });
+          }
+        }
+      });
+    }
+  });
+
+  return eventos;
+}
+
+function mostrarEventosDia(anio, mes, dia) {
+  const eventos = getEventosDelDia(anio, mes, dia);
+  if (eventos.length === 0) {
+    mostrarToast("No hay eventos este día");
+    return;
+  }
+
+  const fechaStr = `${dia} de ${MESES_NOMBRES[mes]} de ${anio}`;
+  let eventosHtml = `<div class="eventos-list">`;
+  eventos.forEach(ev => {
+    let bgColor = "";
+    if (ev.color === "rojo") bgColor = "background:#fee2e2;color:#991b1b";
+    else if (ev.color === "amber") bgColor = "background:#fef3c7;color:#92400e";
+    else if (ev.color === "verde") bgColor = "background:#dcfce7;color:#14532d";
+    else if (ev.color === "azul") bgColor = "background:#dbeafe;color:#1e40af";
+    else bgColor = "background:#f1f5f9;color:#64748b";
+    
+    eventosHtml += `<div class="evento-item">
+      <div class="evento-emoji">${ev.emoji}</div>
+      <div class="evento-info">
+        <div class="evento-titulo">${ev.nombre}</div>
+        <div class="evento-desc">${ev.descripcion}</div>
+      </div>
+      <div class="evento-badge" style="${bgColor}">${ev.tipo}</div>
+    </div>`;
+  });
+  eventosHtml += `</div>`;
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box centered"><div class="modal-title">📅 ${fechaStr}</div>${eventosHtml}<div class="modal-btns"><button class="btn-modal-cancel" onclick="cerrarModal()">Cerrar</button></div></div>`;
+  document.body.appendChild(overlay);
+}
 
 // ==================== FUNCIONES CUADRANTE ====================
 function clavesMes(mes, anio) { return `${anio}-${mes}`; }
@@ -451,13 +534,13 @@ function generarPDF() {
   </head><body><h2>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</h2>`;
   html += `<table><thead><tr><th>Nombre</th>`;
   for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
-  html += `<th>H</th></tr></thead><tbody>`;
+  html += `<th>H</th></table></thead><tbody>`;
   for (let i = 0; i < state.trabajadores.length; i++) {
     const t = state.trabajadores[i];
     const total = getTotalHorasMes(t.id, mes, anio);
     html += `<tr><td style="text-align:left">${t.nombre}${t.estado==="baja"?" [B]":""}</td>`;
     for (let d = 0; d < dias; d++) html += `<td>${cuad[i]?.[d] || ""}</td>`;
-    html += `<td style="font-weight:700">${total}</td></tr>`;
+    html += `<td style="font-weight:700">${total}</td></td>`;
   }
   html += `</tbody></table></body></html>`;
   const ventana = window.open();
@@ -467,7 +550,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v10";
+const STORAGE_KEY = "cuadrantes_v11";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -501,7 +584,8 @@ function cargarDatos() {
         zonaPrincipalId: t.zonaPrincipalId ?? (state.zonas[0]?.id || ""),
         zonasRotacionIds: t.zonasRotacionIds ?? [],
         turnoHabitual: t.turnoHabitual ?? "Sin asignar",
-        vacacionesTotales: t.vacacionesTotales ?? 22
+        vacacionesTotales: t.vacacionesTotales ?? 22,
+        eventos: t.eventos ?? []
       }));
     } catch(e) { inicializarNuevo(); }
   } else { inicializarNuevo(); }
@@ -528,7 +612,8 @@ function inicializarNuevo() {
     turnoHabitual: "Sin asignar",
     notas: "",
     vacacionesTotales: 22,
-    fechaBaja: null
+    fechaBaja: null,
+    eventos: []
   }));
   state.tareas = [
     { id: "t1", nombre: "📄 Firma documentación mensual", dia: 28, prioridad: "rojo", completada: false },
@@ -627,7 +712,9 @@ function renderHome() {
     let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : tareasDia.some(t => t.prioridad === "verde") ? "verde" : null;
     const esHoyDia = esHoyMes && diaHoy === d;
     const fest = esFestivo(anio, mes, d);
-    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}${fest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
+    const eventosDia = getEventosDelDia(anio, mes, d);
+    const tieneEvento = eventosDia.length > 0;
+    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}" onclick="mostrarEventosDia(${anio}, ${mes}, ${d})"><div class="cal-day-num">${d}${fest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}${tieneEvento && !dotColor && !fest ? `<div class="cal-dot" style="background:#94a3b8"></div>` : ""}</div>`;
   }
   html += `</div></div></div>`;
 
@@ -742,10 +829,11 @@ function renderCuadrante() {
     const cob = coberturaDelDia(d, mes, anio);
     html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}</td>`;
   }
-  html += `<td class="total-col"></td></tr>`;
+  html += `<td class="total-col"><\/td>`;
+  html += `<\/tr>`;
   html += `</tbody>`;
-  html += `</table>`;
-  html += `</div>`;
+  html += `<\/table>`;
+  html += `<\/div>`;
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
@@ -861,11 +949,104 @@ function modalDetalleWorker(id) {
     <label class="modal-label">Zonas de rotación (puede cubrir)</label>
     <div class="zona-check-grid" id="dw-zonas-rot">${zonasRotHtml}</div>
     <div style="margin-top:12px"><label><input type="checkbox" id="dw-emb" ${t.embarazo?"checked":""}> 🤰 Embarazo</label></div>
+    
+    <div class="modal-section" style="margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0">
+      <div class="modal-section-title" style="font-size:12px;font-weight:700;color:#64748b">📋 EVENTOS LABORALES</div>
+      <div id="eventos-lista" style="margin-bottom:10px">${renderEventosLista(t)}</div>
+      <button class="btn btn-secondary btn-sm" onclick="mostrarModalNuevoEvento('${id}')">➕ Añadir evento</button>
+    </div>
+
     <div class="modal-btns"><button class="btn-modal-ok" onclick="guardarWorker('${id}')">Guardar</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
     <button class="btn btn-danger" style="margin-top:8px" onclick="iniciarBajaWorker('${id}')">🩺 Registrar baja</button>
     <button class="btn btn-danger" style="margin-top:4px" onclick="eliminarTrabajador('${id}')">🗑 Eliminar</button></div>`;
   document.body.appendChild(overlay);
   window.toggleZonaRot = (zonaId, el) => { el.classList.toggle("selected"); };
+}
+
+function renderEventosLista(t) {
+  if (!t.eventos || t.eventos.length === 0) return '<div class="empty" style="padding:12px">No hay eventos registrados</div>';
+  let html = '';
+  t.eventos.forEach((ev, idx) => {
+    let fechaInicio = ev.fecha || ev.fechaInicio || '';
+    let fechaFin = ev.fechaFin || '';
+    let rango = fechaInicio;
+    if (fechaFin) rango = `${fechaInicio} → ${fechaFin}`;
+    html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9">
+      <div><span style="font-size:16px;margin-right:8px">${ev.emoji}</span><span style="font-size:12px"><strong>${ev.tipo}:</strong> ${rango}</span></div>
+      <button class="btn btn-danger btn-xs" onclick="eliminarEvento('${t.id}',${idx})" style="padding:2px 6px;font-size:10px">🗑</button>
+    </div>`;
+  });
+  return html;
+}
+
+function mostrarModalNuevoEvento(id) {
+  const t = state.trabajadores.find(t => t.id === id);
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box">
+    <div class="modal-title">📋 Nuevo evento para ${t.nombre.split(" ")[0]}</div>
+    <label class="modal-label">Tipo de evento</label>
+    <select class="modal-input" id="ev-tipo">
+      <option value="inicio_contrato">📄 Inicio de contrato</option>
+      <option value="fin_contrato">📄 Fin de contrato</option>
+      <option value="inicio_baja">🩺 Inicio de baja</option>
+      <option value="fin_baja">❗ Fin de baja</option>
+      <option value="vacaciones">🏖️ Vacaciones</option>
+    </select>
+    <label class="modal-label">Fecha de inicio (obligatoria)</label>
+    <input type="date" class="modal-input" id="ev-fecha-inicio" value="${new Date().toISOString().slice(0,10)}">
+    <label class="modal-label">Fecha de fin (opcional, solo para vacaciones y contratos con fecha conocida)</label>
+    <input type="date" class="modal-input" id="ev-fecha-fin">
+    <div class="modal-btns">
+      <button class="btn-modal-ok" onclick="guardarEvento('${id}')">Guardar evento</button>
+      <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function guardarEvento(id) {
+  const tipo = document.getElementById("ev-tipo")?.value;
+  const fechaInicio = document.getElementById("ev-fecha-inicio")?.value;
+  const fechaFin = document.getElementById("ev-fecha-fin")?.value || null;
+  if (!fechaInicio) { mostrarToast("❌ Fecha de inicio requerida", true); return; }
+  
+  let emoji = "📄";
+  let descripcion = "";
+  let color = "gris";
+  if (tipo === "inicio_contrato") { emoji = "📄"; descripcion = "Inicio de contrato"; color = "verde"; }
+  else if (tipo === "fin_contrato") { emoji = "📄"; descripcion = "Fin de contrato"; color = "rojo"; }
+  else if (tipo === "inicio_baja") { emoji = "🩺"; descripcion = "Inicio de baja"; color = "rojo"; }
+  else if (tipo === "fin_baja") { emoji = "❗"; descripcion = "Fin de baja"; color = "verde"; }
+  else if (tipo === "vacaciones") { emoji = "🏖️"; descripcion = "Vacaciones"; color = "azul"; }
+  
+  const t = state.trabajadores.find(t => t.id === id);
+  if (!t.eventos) t.eventos = [];
+  t.eventos.push({
+    tipo: tipo,
+    fecha: fechaInicio,
+    fechaInicio: fechaInicio,
+    fechaFin: fechaFin || null,
+    emoji: emoji,
+    descripcion: descripcion,
+    color: color
+  });
+  guardarDatos();
+  cerrarModal();
+  modalDetalleWorker(id);
+  if (currentView === "home") renderHome();
+  mostrarToast(`✅ Evento añadido`);
+}
+
+function eliminarEvento(id, idx) {
+  const t = state.trabajadores.find(t => t.id === id);
+  if (!t || !t.eventos || !t.eventos[idx]) return;
+  if (!confirm("¿Eliminar este evento?")) return;
+  t.eventos.splice(idx, 1);
+  guardarDatos();
+  modalDetalleWorker(id);
+  if (currentView === "home") renderHome();
+  mostrarToast("🗑 Evento eliminado");
 }
 
 function guardarWorker(id) {
@@ -913,7 +1094,7 @@ function crearWorker() {
   const nombre = document.getElementById("nt-nombre")?.value?.trim();
   if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
   const id = `t_${Date.now()}`;
-  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zonaPrincipalId: document.getElementById("nt-zona")?.value || "", zonasRotacionIds: [], turnoHabitual: document.getElementById("nt-turno")?.value || "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null });
+  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zonaPrincipalId: document.getElementById("nt-zona")?.value || "", zonasRotacionIds: [], turnoHabitual: document.getElementById("nt-turno")?.value || "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null, eventos: [] });
   Object.keys(state.cuadrantePorMes).forEach(k => {
     const [anio, mes] = k.split("-").map(Number);
     state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill(""));
