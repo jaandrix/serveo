@@ -69,6 +69,10 @@
   .cal-dot.verde { background: #16a34a; }
   .festivo-icon { font-size: 10px; margin-left: 2px; }
 
+  .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .cal-nav-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .cal-nav-title { font-size: 16px; font-weight: 700; }
+
   .mes-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .mes-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 5px 11px; font-size: 11px; cursor: pointer; }
   .mes-btn.active { background: #0f172a; color: #fff; }
@@ -146,9 +150,27 @@
   .pin-key { padding: 16px; border-radius: 14px; background: #f1f5f9; border: none; font-size: 20px; font-weight: 700; cursor: pointer; }
 
   .hist-item { font-size: 11px; padding: 8px 16px; border-bottom: 1px solid #f1f5f9; color: #64748b; }
+  
   .zona-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
   .zona-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .zona-nombre { font-weight: 800; font-size: 14px; }
+  .zona-turnos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; margin-bottom: 12px; }
+  .zona-turno-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; text-align: center; }
+  .zona-turno-label { font-size: 10px; color: #64748b; font-weight: 600; }
+  .zona-turno-num { font-size: 20px; font-weight: 800; color: #0f172a; }
+  .zona-workers { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .num-spinner { display: flex; align-items: center; gap: 6px; justify-content: center; }
+  
+  .filtro-tabs { display: flex; gap: 6px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px; }
+  .filtro-tab { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 5px 12px; font-size: 11px; cursor: pointer; white-space: nowrap; font-weight: 600; flex-shrink: 0; }
+  .filtro-tab.active { background: #0f172a; color: #fff; border-color: #0f172a; }
+
+  .zona-check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .zona-check-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; }
+  .zona-check-item.selected { background: #dbeafe; border-color: #93c5fd; }
+  .zona-check-label { font-size: 12px; font-weight: 600; }
+  .zona-check-dot { width: 8px; height: 8px; border-radius: 50%; background: #e2e8f0; flex-shrink: 0; }
+  .zona-check-item.selected .zona-check-dot { background: #2563eb; }
 
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
@@ -181,65 +203,42 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 8;
+const APP_VERSION = 10;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
+const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
+const ZONA_COLORES = ["#dbeafe","#dcfce7","#fee2e2","#fef3c7","#ede9fe","#cffafe","#fce7f3","#fff7ed"];
 
 function diasEnMes(mes, anio) { return new Date(anio, mes + 1, 0).getDate(); }
 function esFinDeSemana(dia, mes, anio) { const dow = new Date(anio, mes, dia).getDay(); return dow === 0 || dow === 6; }
 
-// ==================== FESTIVOS 2026 (OFICIALES) ====================
+// ==================== FESTIVOS 2026 ====================
 const FESTIVOS_AUTONOMICOS = [
   "2026-01-01", "2026-01-06", "2026-04-02", "2026-04-03",
   "2026-04-23", "2026-05-01", "2026-08-15", "2026-10-12",
   "2026-11-02", "2026-12-07", "2026-12-08", "2026-12-25"
 ];
-
 const FESTIVOS_CONVENIO = ["2026-12-24", "2026-12-31"];
-
-const FESTIVOS_LOCALES = {
-  "Zaragoza": ["2026-01-29", "2026-03-05"],
-  "Huesca":   ["2026-01-22", "2026-08-10"],
-  "Teruel":   ["2026-02-07", "2026-07-21"]
-};
-
-const REGLAS_FESTIVOS = {
-  descansoCompensatorioPorFestivoEnSabado: true,
-  nocturnidadDoble24diciembre: 118.68,
-  nocturnidadDoble31diciembre: 118.68,
-  festivoTrabajadoImporte: 59.34
-};
-
-// Función para comprobar si una fecha es festivo
+const FESTIVOS_LOCALES = { "Zaragoza": ["2026-01-29", "2026-03-05"] };
 function esFestivo(anio, mes, dia) {
   const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
   if (FESTIVOS_AUTONOMICOS.includes(fechaStr)) return true;
   if (FESTIVOS_CONVENIO.includes(fechaStr)) return true;
-  // Comprobar locales (por defecto Zaragoza)
   if (FESTIVOS_LOCALES["Zaragoza"] && FESTIVOS_LOCALES["Zaragoza"].includes(fechaStr)) return true;
   return false;
 }
 
-// Función para comprobar si un festivo en sábado genera descanso compensatorio
-function festivoEnSabadoRequiereDescanso(anio, mes, dia) {
-  if (!esFestivo(anio, mes, dia)) return false;
-  const fecha = new Date(anio, mes, dia);
-  if (fecha.getDay() !== 6) return false; // sábado
-  return REGLAS_FESTIVOS.descansoCompensatorioPorFestivoEnSabado;
-}
-
 // ==================== CÓDIGOS DE TURNO ====================
 const CODIGOS_TURNO = [
-  { cod:"L",   label:"Libre",       horas:0, bg:"#dbeafe", color:"#1d4ed8" },
-  { cod:"D",   label:"Descanso",    horas:0, bg:"#dcfce7", color:"#15803d" },
-  { cod:"F1",  label:"Jornada",     horas:7, bg:"#fee2e2", color:"#b91c1c" },
-  { cod:"N",   label:"Noche",       horas:8, bg:"#fef3c7", color:"#92400e" },
-  { cod:"M",   label:"Mañana",      horas:7, bg:"#f1f5f9", color:"#374151" },
-  { cod:"T",   label:"Tarde",       horas:7, bg:"#f1f5f9", color:"#374151" },
-  { cod:"HE",  label:"H.Extra",     horas:0, bg:"#ede9fe", color:"#6d28d9" },
-  { cod:"LIB", label:"Libranza",    horas:0, bg:"#cffafe", color:"#0e7490" },
-  { cod:"VAC", label:"Vacaciones",  horas:0, bg:"#d1fae5", color:"#065f46" },
-  { cod:"",    label:"Borrar",      horas:0, bg:"#f1f5f9", color:"#94a3b8" },
+  { cod:"L",   label:"Libre",       horas:0 },
+  { cod:"D",   label:"Descanso",    horas:0 },
+  { cod:"F1",  label:"Jornada",     horas:7 },
+  { cod:"N",   label:"Noche",       horas:8 },
+  { cod:"M",   label:"Mañana",      horas:7 },
+  { cod:"T",   label:"Tarde",       horas:7 },
+  { cod:"HE",  label:"H.Extra",     horas:0 },
+  { cod:"LIB", label:"Libranza",    horas:0 },
+  { cod:"VAC", label:"Vacaciones",  horas:0 },
 ];
 function horasCodigo(cod) {
   if (!cod) return 0;
@@ -296,25 +295,17 @@ const NOMBRES_BASE = [
 let state = {
   version: APP_VERSION,
   anio: 2026,
-  mesActual: 5, // Junio
+  mesActual: 5,
   cuadrantePorMes: {},
   trabajadores: [],
   zonas: [],
   tareas: [],
   parametros: {
-    jornadaMaxDiaria: 9,
-    jornadaMinDiaria: 7,
-    jornadaMaxSemanal: 35,
-    maxDiasSeguidos: 6,
-    preavisoDias: 5,
-    jornadaAnualDiurna: 1519,
-    jornadaAnualNocturna: 1350,
-    vacacionesAnuales: 22,
-    convenioVencido: false,
+    jornadaMaxDiaria: 9, jornadaMinDiaria: 7, jornadaMaxSemanal: 35, maxDiasSeguidos: 6, preavisoDias: 5,
+    jornadaAnualDiurna: 1519, jornadaAnualNocturna: 1350, vacacionesAnuales: 22, convenioVencido: false,
     convenioTexto: "Convenio Limpieza Hospitalaria SALUD Aragón · Tablas 2026"
   },
-  historial: [],
-  pinHash: null
+  historial: [], pinHash: null
 };
 
 let currentView = "home";
@@ -322,6 +313,9 @@ let undoStack = [];
 let pinDesbloqueado = false;
 let cuadFiltro = "";
 let personalFiltro = "";
+let personalFiltroZona = "todas";
+let personalFiltroTurno = "todos";
+let homeMes = new Date().getMonth();
 
 // ==================== FUNCIONES CUADRANTE ====================
 function clavesMes(mes, anio) { return `${anio}-${mes}`; }
@@ -458,7 +452,6 @@ function generarPDF() {
   html += `<table><thead><tr><th>Nombre</th>`;
   for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
   html += `<th>H</th></tr></thead><tbody>`;
-
   for (let i = 0; i < state.trabajadores.length; i++) {
     const t = state.trabajadores[i];
     const total = getTotalHorasMes(t.id, mes, anio);
@@ -474,7 +467,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v8";
+const STORAGE_KEY = "cuadrantes_v10";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -490,21 +483,26 @@ function cargarDatos() {
       state = { ...state, ...data };
       if (!state.historial) state.historial = [];
       if (!state.cuadrantePorMes) state.cuadrantePorMes = {};
-      if (!state.zonas) state.zonas = [];
-      state.trabajadores = state.trabajadores.map((t, i) => ({
-        ...t,
-        id: t.id ?? `t_${i}_${Date.now()}`,
-        zona: t.zona ?? "",
-        turnoHabitual: t.turnoHabitual ?? "Sin asignar",
-        vacacionesTotales: t.vacacionesTotales ?? 22
-      }));
-      if (state.zonas.length === 0) {
+      if (!state.zonas || state.zonas.length === 0) {
         state.zonas = [
           { id: "z1", nombre: "UCI", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dbeafe", notas: "" },
           { id: "z2", nombre: "Urgencias", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dcfce7", notas: "" },
-          { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" }
+          { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" },
+          { id: "z4", nombre: "Consultas Externas", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fef3c7", notas: "" },
+          { id: "z5", nombre: "Quirófano", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#ede9fe", notas: "" },
+          { id: "z6", nombre: "General", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#cffafe", notas: "" },
+          { id: "z7", nombre: "Pasillos", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fce7f3", notas: "" },
+          { id: "z8", nombre: "Vestuarios", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fff7ed", notas: "" }
         ];
       }
+      state.trabajadores = state.trabajadores.map((t, i) => ({
+        ...t,
+        id: t.id ?? `t_${i}_${Date.now()}`,
+        zonaPrincipalId: t.zonaPrincipalId ?? (state.zonas[0]?.id || ""),
+        zonasRotacionIds: t.zonasRotacionIds ?? [],
+        turnoHabitual: t.turnoHabitual ?? "Sin asignar",
+        vacacionesTotales: t.vacacionesTotales ?? 22
+      }));
     } catch(e) { inicializarNuevo(); }
   } else { inicializarNuevo(); }
 }
@@ -513,14 +511,20 @@ function inicializarNuevo() {
   state.zonas = [
     { id: "z1", nombre: "UCI", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dbeafe", notas: "" },
     { id: "z2", nombre: "Urgencias", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dcfce7", notas: "" },
-    { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" }
+    { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" },
+    { id: "z4", nombre: "Consultas Externas", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fef3c7", notas: "" },
+    { id: "z5", nombre: "Quirófano", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#ede9fe", notas: "" },
+    { id: "z6", nombre: "General", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#cffafe", notas: "" },
+    { id: "z7", nombre: "Pasillos", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fce7f3", notas: "" },
+    { id: "z8", nombre: "Vestuarios", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fff7ed", notas: "" }
   ];
   state.trabajadores = NOMBRES_BASE.map((nombre, i) => ({
-    id: `t_${i}`,
+    id: `t_${i}_${Date.now()}`,
     nombre,
     estado: "activo",
     embarazo: false,
-    zona: state.zonas[i % state.zonas.length]?.nombre || "",
+    zonaPrincipalId: state.zonas[i % state.zonas.length]?.id || "",
+    zonasRotacionIds: [],
     turnoHabitual: "Sin asignar",
     notas: "",
     vacacionesTotales: 22,
@@ -592,17 +596,29 @@ function mostrarPantallaPIN(modo) {
 }
 
 // ==================== VISTA INICIO ====================
+function cambiarHomeMes(delta) {
+  let nuevoMes = homeMes + delta;
+  if (nuevoMes < 0) nuevoMes = 11;
+  if (nuevoMes > 11) nuevoMes = 0;
+  homeMes = nuevoMes;
+  renderHome();
+}
+
 function renderHome() {
-  const mes = state.mesActual;
+  const mes = homeMes;
   const anio = state.anio;
   const dias = diasEnMes(mes, anio);
   const hoy = new Date();
   const diaHoy = hoy.getDate();
   const esHoyMes = hoy.getMonth() === mes && hoy.getFullYear() === anio;
 
-  let html = "";
-  if (state.parametros.convenioVencido) html += `<div class="banner-vencido">⚠️ ${state.parametros.convenioTexto}</div>`;
-  html += `<div class="card"><div class="card-header">📅 ${MESES_NOMBRES[mes]} ${anio}</div><div class="card-body"><div class="cal-grid">`;
+  let html = `<div class="card"><div class="card-header">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="cambiarHomeMes(-1)">◀</button>
+      <span class="cal-nav-title">${MESES_NOMBRES[mes]} ${anio}</span>
+      <button class="cal-nav-btn" onclick="cambiarHomeMes(1)">▶</button>
+    </div>
+  </div><div class="card-body"><div class="cal-grid">`;
   DIAS_SEMANA.forEach(d => html += `<div class="cal-wd">${d}</div>`);
   const primerDia = new Date(anio, mes, 1).getDay();
   for (let i = 0; i < primerDia; i++) html += `<div></div>`;
@@ -610,8 +626,8 @@ function renderHome() {
     const tareasDia = state.tareas.filter(t => !t.completada && t.dia === d);
     let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : tareasDia.some(t => t.prioridad === "verde") ? "verde" : null;
     const esHoyDia = esHoyMes && diaHoy === d;
-    const esFest = esFestivo(anio, mes, d);
-    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}${esFest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
+    const fest = esFestivo(anio, mes, d);
+    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}${fest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
   }
   html += `</div></div></div>`;
 
@@ -643,13 +659,6 @@ function renderHome() {
   if (!hayAlerta) html += `<p style="color:#94a3b8">✅ Sin alertas de personal</p>`;
   html += `</div></div>`;
 
-  if (esHoyMes) {
-    const cob = coberturaDelDia(diaHoy - 1, mes, anio);
-    html += `<div class="card"><div class="card-header">📊 Cobertura hoy</div><div class="card-body">`;
-    html += `<span style="font-size:13px">🌅 Mañana: <strong>${cob.M}</strong> · ☀️ Tarde: <strong>${cob.T}</strong> · 🌙 Noche: <strong>${cob.N}</strong></span>`;
-    html += `</div></div>`;
-  }
-
   const enBaja = state.trabajadores.filter(t => t.estado === "baja").length;
   const embarazadas = state.trabajadores.filter(t => t.embarazo).length;
   html += `<div class="card"><div class="card-header">📋 Resumen</div><div class="card-body" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
@@ -660,7 +669,7 @@ function renderHome() {
   </div></div>`;
 
   document.getElementById("content").innerHTML = html;
-  document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
+  document.getElementById("header-sub").textContent = `${MESES_NOMBRES[state.mesActual]} ${state.anio}`;
 }
 
 // ==================== VISTA CUADRANTE ====================
@@ -677,16 +686,12 @@ function renderCuadrante() {
   MESES_NOMBRES.forEach((n, i) => {
     html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`;
   });
-  html += `</div>`;
-
-  html += `<div class="cuad-toolbar">
-    <input class="cuad-search" id="cuad-search" type="search" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" oninput="cuadFiltroChange(this.value)">
+  html += `</div><div class="cuad-toolbar">
+    <input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="cuadFiltroChange(this.value)">
     <button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button>
     <button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button>
   </div>`;
-
   html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días</div>`;
-
   html += `<div class="wrap">`;
   html += `<table>`;
   html += `<thead>`;
@@ -707,8 +712,9 @@ function renderCuadrante() {
     const total = getTotalHorasMes(t.id, mes, anio);
     const seg = getMaxDiasSeguidos(t.id, mes, anio);
     const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
+    const zona = state.zonas.find(z => z.id === t.zonaPrincipalId);
     html += `<tr class="${t.estado === "baja" ? "baja-row" : ""}">`;
-    html += `<td class="nombre-col">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ""}${t.embarazo ? "🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? "⚠️" : ""}${bolsa < -40 ? "📉" : ""}${t.zona ? `<span style="color:#94a3b8;font-size:9px;margin-left:4px">${t.zona}</span>` : ""}</td>`;
+    html += `<td class="nombre-col">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ""}${t.embarazo ? "🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? "⚠️" : ""}${bolsa < -40 ? "📉" : ""}${zona ? `<span style="color:#94a3b8;font-size:9px;margin-left:4px">${zona.nombre}</span>` : ""}</td>`;
     for (let d = 0; d < dias; d++) {
       const val = cuad[idx]?.[d] || "";
       let colorClass = "";
@@ -721,7 +727,6 @@ function renderCuadrante() {
       else if (val === "HE") colorClass = "HE";
       else if (val === "LIB") colorClass = "LIB";
       else if (val === "VAC") colorClass = "VAC";
-      
       const fds = esFinDeSemana(d + 1, mes, anio);
       const fest = esFestivo(anio, mes, d + 1);
       const fechaCelda = new Date(anio, mes, d + 1);
@@ -729,38 +734,24 @@ function renderCuadrante() {
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       html += `<td class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}${fest && val && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
     }
-    html += `<td class="total-col">${total}<\/td>`;
-    html += `<\/tr>`;
+    html += `<td class="total-col">${total}</td>`;
+    html += `</tr>`;
   }
-
-  // Fila de cobertura
-  html += `<tr class="cobertura-row">`;
-  html += `<td class="nombre-col">Cobertura M/T/N<\/td>`;
+  html += `<tr class="cobertura-row"><td class="nombre-col">Cobertura M/T/N</td>`;
   for (let d = 0; d < dias; d++) {
     const cob = coberturaDelDia(d, mes, anio);
-    let deficit = false;
-    for (const zona of state.zonas) {
-      if ((zona.coberturaMin?.M > 0 && (cob.M || 0) < zona.coberturaMin.M) ||
-          (zona.coberturaMin?.T > 0 && (cob.T || 0) < zona.coberturaMin.T) ||
-          (zona.coberturaMin?.N > 0 && (cob.N || 0) < zona.coberturaMin.N)) {
-        deficit = true; break;
-      }
-    }
-    html += `<td style="${deficit ? "background:#fee2e2;color:#dc2626" : ""}">${cob.M}/${cob.T}/${cob.N}<\/td>`;
+    html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}</td>`;
   }
-  html += `<td class="total-col"><\/td>`;
-  html += `<\/tr>`;
-
-  html += `<\/tbody>`;
-  html += `<\/table>`;
-  html += `<\/div>`;
-
+  html += `<td class="total-col"></td></tr>`;
+  html += `</tbody>`;
+  html += `</table>`;
+  html += `</div>`;
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
 
 function cuadFiltroChange(val) { cuadFiltro = val; renderCuadrante(); }
-function cambiarMes(mes) { state.mesActual = mes; guardarDatos(); if (currentView === "cuadrante") renderCuadrante(); if (currentView === "home") renderHome(); mostrarToast(`📅 ${MESES_NOMBRES[mes]} ${state.anio}`); }
+function cambiarMes(mes) { state.mesActual = mes; guardarDatos(); renderCuadrante(); renderHome(); mostrarToast(`📅 ${MESES_NOMBRES[mes]} ${state.anio}`); }
 
 function abrirSelectorTurno(trabId, dia) {
   const t = state.trabajadores.find(t => t.id === trabId);
@@ -768,14 +759,11 @@ function abrirSelectorTurno(trabId, dia) {
   const fechaCelda = new Date(state.anio, state.mesActual, dia + 1);
   const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
   if (diff > 0 && diff <= state.parametros.preavisoDias && !confirm(`⚠️ Preaviso legal (${state.parametros.preavisoDias} días). ¿Modificar igualmente?`)) return;
-  
-  // Verificar si es festivo y mostrar advertencia
   const esFest = esFestivo(state.anio, state.mesActual, dia + 1);
   let festivoMsg = "";
   if (esFest && valorActual && valorActual !== "L" && valorActual !== "D") {
-    festivoMsg = `\n⚠️ ATENCIÓN: Este día es FESTIVO. Si se trabaja, genera derecho a descanso compensatorio y paga extra (${REGLAS_FESTIVOS.festivoTrabajadoImporte} €).`;
+    festivoMsg = `\n⚠️ ATENCIÓN: Este día es FESTIVO. Si se trabaja, genera derecho a descanso compensatorio y paga extra (59.34 €).`;
   }
-  
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod || "clear"}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2, G…" style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
@@ -787,7 +775,7 @@ function seleccionarTurno(trabId, dia, valor) {
   if (t?.embarazo && valor === "N") { mostrarToast("❌ Trabajadora embarazada: no puede tener turno de noche", true); return; }
   setCelda(trabId, dia, valor);
   cerrarModal();
-  if (currentView === "cuadrante") renderCuadrante();
+  renderCuadrante();
   mostrarToast(`✓ ${t?.nombre.split(" ")[0]}: día ${dia+1} → ${valor || "vacío"}`);
 }
 
@@ -803,19 +791,31 @@ function undoUltimoCambio() {
   const idx = state.trabajadores.findIndex(t => t.id === trabId);
   if (idx >= 0 && cuad[idx]) cuad[idx][dia] = anterior;
   guardarDatos();
-  if (currentView === "cuadrante") renderCuadrante();
+  renderCuadrante();
   mostrarToast("↩ Cambio deshecho");
 }
 
 // ==================== VISTA PERSONAL ====================
 function renderPersonal() {
   const mes = state.mesActual, anio = state.anio;
-  let html = `<input class="worker-search" type="search" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" oninput="personalFiltroChange(this.value)">`;
-  
-  let filtrados = state.trabajadores.filter(t => !personalFiltro || t.nombre.toLowerCase().includes(personalFiltro.toLowerCase()));
+  let html = `<input class="worker-search" id="worker-search" type="text" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" onkeyup="personalFiltroChange(this.value)">`;
+  html += `<div class="filtro-tabs"><button class="filtro-tab${personalFiltroZona==="todas"?" active":""}" onclick="setFiltroZona('todas')">Todas</button>`;
+  state.zonas.forEach(z => html += `<button class="filtro-tab${personalFiltroZona===z.id?" active":""}" onclick="setFiltroZona('${z.id}')">${z.nombre}</button>`);
+  html += `<button class="filtro-tab${personalFiltroZona==="sin"?" active":""}" onclick="setFiltroZona('sin')">Sin zona</button></div>`;
+  html += `<div class="filtro-tabs"><button class="filtro-tab${personalFiltroTurno==="todos"?" active":""}" onclick="setFiltroTurno('todos')">Todos los turnos</button>`;
+  TURNOS_HABITUALES.forEach(t => html += `<button class="filtro-tab${personalFiltroTurno===t?" active":""}" onclick="setFiltroTurno('${t}')">${t}</button>`);
+  html += `</div>`;
+  let filtrados = state.trabajadores.filter(t => {
+    if (personalFiltro && !t.nombre.toLowerCase().includes(personalFiltro.toLowerCase())) return false;
+    if (personalFiltroZona !== "todas") {
+      if (personalFiltroZona === "sin") { if (t.zonaPrincipalId) return false; }
+      else if (t.zonaPrincipalId !== personalFiltroZona) return false;
+    }
+    if (personalFiltroTurno !== "todos" && t.turnoHabitual !== personalFiltroTurno) return false;
+    return true;
+  });
   const trabajan = filtrados.filter(t => haTrabajado(t.id, mes, anio));
   const noTrabajan = filtrados.filter(t => !haTrabajado(t.id, mes, anio));
-  
   html += `<div style="font-size:12px;color:#64748b;margin-bottom:10px">${filtrados.length} trabajadores · ${trabajan.length} han trabajado · ${noTrabajan.length} no han trabajado</div>`;
   html += `<div class="card"><div class="card-header">✅ Han trabajado este mes (${trabajan.length})</div><div class="card-body">`;
   trabajan.forEach(t => html += cardWorkerHtml(t, mes, anio));
@@ -832,29 +832,40 @@ function cardWorkerHtml(t, mes, anio) {
   const vacDis = getVacacionesDisfrutadas(t.id);
   const vacTot = t.vacacionesTotales || 22;
   const vacPct = Math.min(100, Math.round(vacDis / vacTot * 100));
+  const zona = state.zonas.find(z => z.id === t.zonaPrincipalId);
   return `<div class="worker-item" onclick="modalDetalleWorker('${t.id}')">
     <div class="worker-name">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? '<span class="badge badge-emb">🤰</span>' : ""}</div>
-    <div class="worker-stats"><span>📅 ${horas}h mes</span><span class="${bolsa >= 0 ? "bolsa-pos" : "bolsa-neg"}">${bolsa >= 0 ? "+" : ""}${bolsa}h bolsa</span><span>🔄 ${seg} días</span><span>🏖 ${vacDis}/${vacTot}</span></div>
+    <div class="worker-stats"><span>📅 ${horas}h mes</span><span class="${bolsa >= 0 ? "bolsa-pos" : "bolsa-neg"}">${bolsa >= 0 ? "+" : ""}${bolsa}h bolsa</span><span>🔄 ${seg} días</span><span>🏖 ${vacDis}/${vacTot}</span>${zona ? `<span>🏥 ${zona.nombre}</span>` : ""}</div>
     <div class="vac-bar"><div class="vac-bar-fill" style="width:${vacPct}%"></div></div>
   </div>`;
 }
 
+function setFiltroZona(val) { personalFiltroZona = val; renderPersonal(); }
+function setFiltroTurno(val) { personalFiltroTurno = val; renderPersonal(); }
 function personalFiltroChange(val) { personalFiltro = val; renderPersonal(); }
 
 function modalDetalleWorker(id) {
   const t = state.trabajadores.find(t => t.id === id);
   if (!t) return;
+  const zonasRotHtml = state.zonas.map(z => {
+    const selected = (t.zonasRotacionIds || []).includes(z.id);
+    return `<div class="zona-check-item${selected ? " selected" : ""}" onclick="toggleZonaRot('${z.id}', this)"><div class="zona-check-dot"></div><span class="zona-check-label">${z.nombre}</span></div>`;
+  }).join("");
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">✏️ ${t.nombre}</div>
     <label class="modal-label">Nombre</label><input class="modal-input" id="dw-nombre" value="${t.nombre}">
     <label class="modal-label">Estado</label><select class="modal-input" id="dw-estado"><option value="activo" ${t.estado==="activo"?"selected":""}>Activo</option><option value="baja" ${t.estado==="baja"?"selected":""}>Baja</option></select>
-    <label class="modal-label">Zona</label><select class="modal-input" id="dw-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.nombre}" ${t.zona===z.nombre?"selected":""}>${z.nombre}</option>`).join("")}</select>
+    <label class="modal-label">Zona principal</label><select class="modal-input" id="dw-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.id}" ${t.zonaPrincipalId===z.id?"selected":""}>${z.nombre}</option>`).join("")}</select>
+    <label class="modal-label">Turno habitual</label><select class="modal-input" id="dw-turno">${TURNOS_HABITUALES.map(tur => `<option ${t.turnoHabitual===tur?"selected":""}>${tur}</option>`).join("")}</select>
+    <label class="modal-label">Zonas de rotación (puede cubrir)</label>
+    <div class="zona-check-grid" id="dw-zonas-rot">${zonasRotHtml}</div>
     <div style="margin-top:12px"><label><input type="checkbox" id="dw-emb" ${t.embarazo?"checked":""}> 🤰 Embarazo</label></div>
     <div class="modal-btns"><button class="btn-modal-ok" onclick="guardarWorker('${id}')">Guardar</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
     <button class="btn btn-danger" style="margin-top:8px" onclick="iniciarBajaWorker('${id}')">🩺 Registrar baja</button>
     <button class="btn btn-danger" style="margin-top:4px" onclick="eliminarTrabajador('${id}')">🗑 Eliminar</button></div>`;
   document.body.appendChild(overlay);
+  window.toggleZonaRot = (zonaId, el) => { el.classList.toggle("selected"); };
 }
 
 function guardarWorker(id) {
@@ -862,8 +873,14 @@ function guardarWorker(id) {
   if (!t) return;
   t.nombre = document.getElementById("dw-nombre")?.value?.trim() || t.nombre;
   t.estado = document.getElementById("dw-estado")?.value || t.estado;
-  t.zona = document.getElementById("dw-zona")?.value || "";
+  t.zonaPrincipalId = document.getElementById("dw-zona")?.value || "";
+  t.turnoHabitual = document.getElementById("dw-turno")?.value || "Sin asignar";
   t.embarazo = document.getElementById("dw-emb")?.checked || false;
+  const zonaItems = document.querySelectorAll("#dw-zonas-rot .zona-check-item.selected");
+  t.zonasRotacionIds = [...zonaItems].map(el => {
+    const label = el.querySelector(".zona-check-label")?.textContent;
+    return state.zonas.find(z => z.nombre === label)?.id;
+  }).filter(Boolean);
   guardarDatos(); cerrarModal(); renderPersonal();
   mostrarToast(`✅ ${t.nombre.split(" ")[0]} actualizado`);
 }
@@ -876,7 +893,7 @@ function eliminarTrabajador(id) {
   Object.keys(state.cuadrantePorMes).forEach(key => {
     if (state.cuadrantePorMes[key][idx]) state.cuadrantePorMes[key].splice(idx, 1);
   });
-  guardarDatos(); renderPersonal(); if (currentView === "cuadrante") renderCuadrante();
+  guardarDatos(); renderPersonal(); renderCuadrante();
   mostrarToast("🗑 Trabajador eliminado");
 }
 
@@ -885,7 +902,8 @@ function modalNuevoTrabajador() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box"><div class="modal-title">➕ Nuevo trabajador</div>
     <label class="modal-label">Nombre</label><input class="modal-input" id="nt-nombre">
-    <label class="modal-label">Zona</label><select class="modal-input" id="nt-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.nombre}">${z.nombre}</option>`).join("")}</select>
+    <label class="modal-label">Zona principal</label><select class="modal-input" id="nt-zona"><option value="">Sin zona</option>${state.zonas.map(z => `<option value="${z.id}">${z.nombre}</option>`).join("")}</select>
+    <label class="modal-label">Turno habitual</label><select class="modal-input" id="nt-turno">${TURNOS_HABITUALES.map(t => `<option>${t}</option>`).join("")}</select>
     <div class="modal-btns"><button class="btn-modal-ok" onclick="crearWorker()">Añadir</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
   </div>`;
   document.body.appendChild(overlay);
@@ -895,7 +913,7 @@ function crearWorker() {
   const nombre = document.getElementById("nt-nombre")?.value?.trim();
   if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
   const id = `t_${Date.now()}`;
-  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zona: document.getElementById("nt-zona")?.value || "", turnoHabitual: "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null });
+  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zonaPrincipalId: document.getElementById("nt-zona")?.value || "", zonasRotacionIds: [], turnoHabitual: document.getElementById("nt-turno")?.value || "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null });
   Object.keys(state.cuadrantePorMes).forEach(k => {
     const [anio, mes] = k.split("-").map(Number);
     state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill(""));
@@ -916,23 +934,80 @@ function iniciarBajaWorker(id) {
   const cuad = getCuadranteMes(state.mesActual, state.anio);
   const idx = state.trabajadores.indexOf(t);
   for (let d = dia; d < diasEnMes(state.mesActual, state.anio); d++) { if (cuad[idx]) cuad[idx][d] = "L"; }
-  guardarDatos(); cerrarModal(); renderPersonal(); if (currentView === "cuadrante") renderCuadrante();
+  guardarDatos(); cerrarModal(); renderPersonal(); renderCuadrante();
   mostrarToast(`✅ Baja registrada`);
 }
 
-// ==================== VISTA ZONAS (SIMPLIFICADA) ====================
+// ==================== VISTA ZONAS ====================
 function renderZonas() {
-  let html = `<div class="card"><div class="card-header">🏥 Zonas del hospital</div><div class="card-body">`;
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <span style="font-size:13px;font-weight:700">${state.zonas.length} zonas configuradas</span>
+    <button class="btn btn-primary btn-sm" onclick="modalNuevaZona()">➕ Nueva zona</button>
+  </div>`;
   for (const z of state.zonas) {
-    const trabajadoresZona = state.trabajadores.filter(t => t.zona === z.nombre);
-    html += `<div class="zona-card">
-      <div class="zona-card-header"><div class="zona-nombre">${z.nombre}</div></div>
-      <div style="font-size:12px">Cobertura mínima: M:${z.coberturaMin?.M || 0} T:${z.coberturaMin?.T || 0} N:${z.coberturaMin?.N || 0}</div>
-      <div style="font-size:11px;color:#64748b;margin-top:5px">👥 ${trabajadoresZona.length} trabajadores</div>
+    const trabajadoresZona = state.trabajadores.filter(t => t.zonaPrincipalId === z.id);
+    const rotadores = state.trabajadores.filter(t => (t.zonasRotacionIds||[]).includes(z.id) && t.zonaPrincipalId !== z.id);
+    html += `<div class="zona-card" style="border-left: 4px solid ${z.color || "#e2e8f0"}">
+      <div class="zona-card-header">
+        <div class="zona-nombre">${z.nombre}</div>
+        <div><button class="btn btn-secondary btn-xs" onclick="modalEditarZona('${z.id}')">✏️ Editar</button><button class="btn btn-danger btn-xs" onclick="eliminarZona('${z.id}')">🗑 Eliminar</button></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">COBERTURA MÍNIMA REQUERIDA</div>
+      <div class="zona-turnos">
+        <div class="zona-turno-box"><div class="zona-turno-label">🌅 MAÑANA</div><div class="zona-turno-num">${z.coberturaMin?.M ?? 0}</div><div class="zona-turno-sub">personas</div></div>
+        <div class="zona-turno-box"><div class="zona-turno-label">☀️ TARDE</div><div class="zona-turno-num">${z.coberturaMin?.T ?? 0}</div><div class="zona-turno-sub">personas</div></div>
+        <div class="zona-turno-box"><div class="zona-turno-label">🌙 NOCHE</div><div class="zona-turno-num">${z.coberturaMin?.N ?? 0}</div><div class="zona-turno-sub">personas</div></div>
+      </div>
+      ${z.notas ? `<div class="zona-notas" style="font-size:11px;color:#64748b;margin-bottom:8px">📝 ${z.notas}</div>` : ""}
+      <div style="margin-top:8px"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">PERSONAL ASIGNADO (${trabajadoresZona.length})</div><div class="zona-workers">${trabajadoresZona.length === 0 ? '<span style="font-size:11px;color:#94a3b8">Ninguno asignado</span>' : trabajadoresZona.map(t => `<span class="badge ${t.estado==="baja"?"badge-red":"badge-green"}">${t.nombre.split(" ")[0]}</span>`).join("")}</div></div>
+      ${rotadores.length > 0 ? `<div style="margin-top:6px"><div style="font-size:11px;color:#64748b">🔄 Pueden rotar: ${rotadores.map(t => t.nombre.split(" ")[0]).join(", ")}</div></div>` : ""}
     </div>`;
   }
-  html += `</div></div>`;
   document.getElementById("content").innerHTML = html;
+}
+
+function modalNuevaZona() { modalEditarZona(null); }
+
+function modalEditarZona(id) {
+  const z = id ? state.zonas.find(z => z.id === id) : null;
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">${z ? "✏️ Editar zona" : "➕ Nueva zona"}</div>
+    <label class="modal-label">Nombre</label><input class="modal-input" id="z-nombre" value="${z?.nombre || ""}">
+    <label class="modal-label">Cobertura mínima</label>
+    <div class="num-spinner" style="display:flex;gap:8px;margin:8px 0">
+      <div><div style="font-size:11px;font-weight:700">🌅 MAÑANA</div><input type="number" id="z-cob-M" value="${z?.coberturaMin?.M ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
+      <div><div style="font-size:11px;font-weight:700">☀️ TARDE</div><input type="number" id="z-cob-T" value="${z?.coberturaMin?.T ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
+      <div><div style="font-size:11px;font-weight:700">🌙 NOCHE</div><input type="number" id="z-cob-N" value="${z?.coberturaMin?.N ?? 0}" min="0" max="10" style="width:60px;padding:6px;text-align:center"></div>
+    </div>
+    <label class="modal-label">Notas</label><textarea class="modal-input" id="z-notas" rows="2">${z?.notas || ""}</textarea>
+    <div class="modal-btns"><button class="btn-modal-ok" onclick="guardarZona('${id || ""}')">Guardar</button><button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button></div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+function guardarZona(id) {
+  const nombre = document.getElementById("z-nombre")?.value?.trim();
+  if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
+  const coberturaMin = { M: parseInt(document.getElementById("z-cob-M")?.value) || 0, T: parseInt(document.getElementById("z-cob-T")?.value) || 0, N: parseInt(document.getElementById("z-cob-N")?.value) || 0 };
+  const notas = document.getElementById("z-notas")?.value || "";
+  if (id) {
+    const z = state.zonas.find(z => z.id === id);
+    if (z) { z.nombre = nombre; z.coberturaMin = coberturaMin; z.notas = notas; }
+    mostrarToast(`✅ Zona "${nombre}" actualizada`);
+  } else {
+    state.zonas.push({ id: `z_${Date.now()}`, nombre, coberturaMin, color: ZONA_COLORES[state.zonas.length % ZONA_COLORES.length], notas });
+    mostrarToast(`✅ Zona "${nombre}" creada`);
+  }
+  guardarDatos(); cerrarModal(); renderZonas();
+}
+
+function eliminarZona(id) {
+  if (!confirm("¿Eliminar esta zona?")) return;
+  state.zonas = state.zonas.filter(z => z.id !== id);
+  state.trabajadores.forEach(t => { if (t.zonaPrincipalId === id) t.zonaPrincipalId = ""; t.zonasRotacionIds = (t.zonasRotacionIds || []).filter(zid => zid !== id); });
+  guardarDatos(); renderZonas();
+  mostrarToast("🗑 Zona eliminada");
 }
 
 // ==================== VISTA TAREAS ====================
@@ -942,11 +1017,7 @@ function renderTareas() {
   if (!pendientes.length) html += `<div class="empty">Sin tareas pendientes</div>`;
   pendientes.forEach(t => {
     let badgeClass = t.prioridad === "rojo" ? "badge-red" : (t.prioridad === "amber" ? "badge-amber" : "badge-green");
-    html += `<div class="tarea-item">
-      <div class="tarea-info"><div class="tarea-nombre">${t.nombre}</div><div class="tarea-meta">📅 Día ${t.dia} · <span class="badge ${badgeClass}">${t.prioridad === "rojo" ? "Muy urgente" : t.prioridad === "amber" ? "Urgente" : "Poco urgente"}</span></div></div>
-      <button class="btn btn-success btn-sm" onclick="completarTarea('${t.id}')">✓</button>
-      <button class="btn btn-danger btn-sm" onclick="eliminarTarea('${t.id}')">🗑</button>
-    </div>`;
+    html += `<div class="tarea-item"><div class="tarea-info"><div class="tarea-nombre">${t.nombre}</div><div class="tarea-meta">📅 Día ${t.dia} · <span class="badge ${badgeClass}">${t.prioridad === "rojo" ? "Muy urgente" : t.prioridad === "amber" ? "Urgente" : "Poco urgente"}</span></div></div><div><button class="btn btn-success btn-sm" onclick="completarTarea('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="eliminarTarea('${t.id}')">🗑</button></div></div>`;
   });
   html += `<button class="btn btn-primary" style="margin-top:10px" onclick="modalNuevaTarea()">➕ Nueva tarea</button></div></div>`;
   document.getElementById("content").innerHTML = html;
