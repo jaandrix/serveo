@@ -47,6 +47,8 @@
   .badge-amber { background: #fef3c7; color: #92400e; }
   .badge-green { background: #dcfce7; color: #14532d; }
   .badge-blue { background: #dbeafe; color: #1e40af; }
+  .badge-purple { background: #ede9fe; color: #6d28d9; }
+  .badge-gray { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
 
   .aviso { padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; font-size: 12px; border-left: 4px solid; }
   .aviso-rojo { background: #fee2e2; border-color: #dc2626; }
@@ -65,6 +67,7 @@
   .cal-dot.rojo { background: #dc2626; }
   .cal-dot.amber { background: #d97706; }
   .cal-dot.verde { background: #16a34a; }
+  .festivo-icon { font-size: 10px; margin-left: 2px; }
 
   .mes-selector { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
   .mes-btn { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; padding: 5px 11px; font-size: 11px; cursor: pointer; }
@@ -82,6 +85,7 @@
   th.total-col, td.total-col { min-width: 38px; font-weight: 700; background: #e8f4fd; position: sticky; right: 0; }
   tr:nth-child(even) td { background: #f8fafc; }
   .wkend { background: #eef2ff !important; }
+  .festivo-cell { background: #fff7ed !important; }
   .editable-cell { cursor: pointer; }
   .editable-cell:active { background: #dbeafe !important; }
   .baja-row td { opacity: 0.55; background: #fff5f5 !important; }
@@ -145,7 +149,6 @@
   .zona-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 10px; }
   .zona-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .zona-nombre { font-weight: 800; font-size: 14px; }
-  .num-spinner { display: flex; align-items: center; gap: 6px; justify-content: center; }
 
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
@@ -178,13 +181,54 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 7;
+const APP_VERSION = 8;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 
 function diasEnMes(mes, anio) { return new Date(anio, mes + 1, 0).getDate(); }
 function esFinDeSemana(dia, mes, anio) { const dow = new Date(anio, mes, dia).getDay(); return dow === 0 || dow === 6; }
 
+// ==================== FESTIVOS 2026 (OFICIALES) ====================
+const FESTIVOS_AUTONOMICOS = [
+  "2026-01-01", "2026-01-06", "2026-04-02", "2026-04-03",
+  "2026-04-23", "2026-05-01", "2026-08-15", "2026-10-12",
+  "2026-11-02", "2026-12-07", "2026-12-08", "2026-12-25"
+];
+
+const FESTIVOS_CONVENIO = ["2026-12-24", "2026-12-31"];
+
+const FESTIVOS_LOCALES = {
+  "Zaragoza": ["2026-01-29", "2026-03-05"],
+  "Huesca":   ["2026-01-22", "2026-08-10"],
+  "Teruel":   ["2026-02-07", "2026-07-21"]
+};
+
+const REGLAS_FESTIVOS = {
+  descansoCompensatorioPorFestivoEnSabado: true,
+  nocturnidadDoble24diciembre: 118.68,
+  nocturnidadDoble31diciembre: 118.68,
+  festivoTrabajadoImporte: 59.34
+};
+
+// Función para comprobar si una fecha es festivo
+function esFestivo(anio, mes, dia) {
+  const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
+  if (FESTIVOS_AUTONOMICOS.includes(fechaStr)) return true;
+  if (FESTIVOS_CONVENIO.includes(fechaStr)) return true;
+  // Comprobar locales (por defecto Zaragoza)
+  if (FESTIVOS_LOCALES["Zaragoza"] && FESTIVOS_LOCALES["Zaragoza"].includes(fechaStr)) return true;
+  return false;
+}
+
+// Función para comprobar si un festivo en sábado genera descanso compensatorio
+function festivoEnSabadoRequiereDescanso(anio, mes, dia) {
+  if (!esFestivo(anio, mes, dia)) return false;
+  const fecha = new Date(anio, mes, dia);
+  if (fecha.getDay() !== 6) return false; // sábado
+  return REGLAS_FESTIVOS.descansoCompensatorioPorFestivoEnSabado;
+}
+
+// ==================== CÓDIGOS DE TURNO ====================
 const CODIGOS_TURNO = [
   { cod:"L",   label:"Libre",       horas:0, bg:"#dbeafe", color:"#1d4ed8" },
   { cod:"D",   label:"Descanso",    horas:0, bg:"#dcfce7", color:"#15803d" },
@@ -251,24 +295,23 @@ const NOMBRES_BASE = [
 // ==================== ESTADO GLOBAL ====================
 let state = {
   version: APP_VERSION,
-  anio: new Date().getFullYear(),
-  mesActual: new Date().getMonth(),
+  anio: 2026,
+  mesActual: 5, // Junio
   cuadrantePorMes: {},
   trabajadores: [],
   zonas: [],
   tareas: [],
-  festivos: [],
   parametros: {
     jornadaMaxDiaria: 9,
     jornadaMinDiaria: 7,
-    jornadaMaxSemanal: 40,
+    jornadaMaxSemanal: 35,
     maxDiasSeguidos: 6,
     preavisoDias: 5,
-    jornadaAnualDiurna: 1602,
-    jornadaAnualNocturna: 1430,
-    vacacionesAnuales: 30,
-    convenioVencido: true,
-    convenioTexto: "Convenio Limpieza Hospitalaria · Vencido 31/12/2023"
+    jornadaAnualDiurna: 1519,
+    jornadaAnualNocturna: 1350,
+    vacacionesAnuales: 22,
+    convenioVencido: false,
+    convenioTexto: "Convenio Limpieza Hospitalaria SALUD Aragón · Tablas 2026"
   },
   historial: [],
   pinHash: null
@@ -431,7 +474,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v7";
+const STORAGE_KEY = "cuadrantes_v8";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -446,7 +489,6 @@ function cargarDatos() {
       const data = JSON.parse(raw);
       state = { ...state, ...data };
       if (!state.historial) state.historial = [];
-      if (!state.festivos) state.festivos = [];
       if (!state.cuadrantePorMes) state.cuadrantePorMes = {};
       if (!state.zonas) state.zonas = [];
       state.trabajadores = state.trabajadores.map((t, i) => ({
@@ -454,16 +496,13 @@ function cargarDatos() {
         id: t.id ?? `t_${i}_${Date.now()}`,
         zona: t.zona ?? "",
         turnoHabitual: t.turnoHabitual ?? "Sin asignar",
-        vacacionesTotales: t.vacacionesTotales ?? 30
+        vacacionesTotales: t.vacacionesTotales ?? 22
       }));
       if (state.zonas.length === 0) {
         state.zonas = [
           { id: "z1", nombre: "UCI", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dbeafe", notas: "" },
           { id: "z2", nombre: "Urgencias", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dcfce7", notas: "" },
-          { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" },
-          { id: "z4", nombre: "Consultas", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fef3c7", notas: "" },
-          { id: "z5", nombre: "Quirófano", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#ede9fe", notas: "" },
-          { id: "z6", nombre: "General", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#cffafe", notas: "" }
+          { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" }
         ];
       }
     } catch(e) { inicializarNuevo(); }
@@ -474,10 +513,7 @@ function inicializarNuevo() {
   state.zonas = [
     { id: "z1", nombre: "UCI", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dbeafe", notas: "" },
     { id: "z2", nombre: "Urgencias", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dcfce7", notas: "" },
-    { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" },
-    { id: "z4", nombre: "Consultas", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fef3c7", notas: "" },
-    { id: "z5", nombre: "Quirófano", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#ede9fe", notas: "" },
-    { id: "z6", nombre: "General", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#cffafe", notas: "" }
+    { id: "z3", nombre: "Planta", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fee2e2", notas: "" }
   ];
   state.trabajadores = NOMBRES_BASE.map((nombre, i) => ({
     id: `t_${i}`,
@@ -487,10 +523,9 @@ function inicializarNuevo() {
     zona: state.zonas[i % state.zonas.length]?.nombre || "",
     turnoHabitual: "Sin asignar",
     notas: "",
-    vacacionesTotales: 30,
+    vacacionesTotales: 22,
     fechaBaja: null
   }));
-  state.festivos = [`${state.anio}-12-25`, `${state.anio}-01-01`];
   state.tareas = [
     { id: "t1", nombre: "📄 Firma documentación mensual", dia: 28, prioridad: "rojo", completada: false },
     { id: "t2", nombre: "📊 Enviar informe horas dirección", dia: 30, prioridad: "amber", completada: false }
@@ -575,7 +610,8 @@ function renderHome() {
     const tareasDia = state.tareas.filter(t => !t.completada && t.dia === d);
     let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : tareasDia.some(t => t.prioridad === "verde") ? "verde" : null;
     const esHoyDia = esHoyMes && diaHoy === d;
-    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
+    const esFest = esFestivo(anio, mes, d);
+    html += `<div class="cal-day${esHoyDia ? " hoy" : ""}"><div class="cal-day-num">${d}${esFest ? '<span class="festivo-icon">🌟</span>' : ''}</div>${dotColor ? `<div class="cal-dot ${dotColor}"></div>` : ""}</div>`;
   }
   html += `</div></div></div>`;
 
@@ -658,7 +694,8 @@ function renderCuadrante() {
   html += `<th class="nombre-col">Trabajador</th>`;
   for (let d = 1; d <= dias; d++) {
     const fds = esFinDeSemana(d, mes, anio);
-    html += `<th class="${fds ? "wkend" : ""}">${d}</th>`;
+    const fest = esFestivo(anio, mes, d);
+    html += `<th class="${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}">${d}${fest ? '🌟' : ''}</th>`;
   }
   html += `<th class="total-col">H</th>`;
   html += `</tr>`;
@@ -686,18 +723,19 @@ function renderCuadrante() {
       else if (val === "VAC") colorClass = "VAC";
       
       const fds = esFinDeSemana(d + 1, mes, anio);
+      const fest = esFestivo(anio, mes, d + 1);
       const fechaCelda = new Date(anio, mes, d + 1);
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
-      html += `<td class="editable-cell ${colorClass} ${fds ? "wkend" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}</td>`;
+      html += `<td class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}${fest && val && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
     }
-    html += `<td class="total-col">${total}</td>`;
-    html += `</tr>`;
+    html += `<td class="total-col">${total}<\/td>`;
+    html += `<\/tr>`;
   }
 
   // Fila de cobertura
   html += `<tr class="cobertura-row">`;
-  html += `<td class="nombre-col">Cobertura M/T/N</td>`;
+  html += `<td class="nombre-col">Cobertura M/T/N<\/td>`;
   for (let d = 0; d < dias; d++) {
     const cob = coberturaDelDia(d, mes, anio);
     let deficit = false;
@@ -708,14 +746,14 @@ function renderCuadrante() {
         deficit = true; break;
       }
     }
-    html += `<td style="${deficit ? "background:#fee2e2;color:#dc2626" : ""}">${cob.M}/${cob.T}/${cob.N}</td>`;
+    html += `<td style="${deficit ? "background:#fee2e2;color:#dc2626" : ""}">${cob.M}/${cob.T}/${cob.N}<\/td>`;
   }
-  html += `<td class="total-col"></td>`;
-  html += `</tr>`;
+  html += `<td class="total-col"><\/td>`;
+  html += `<\/tr>`;
 
-  html += `</tbody>`;
-  html += `</table>`;
-  html += `</div>`;
+  html += `<\/tbody>`;
+  html += `<\/table>`;
+  html += `<\/div>`;
 
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
@@ -730,9 +768,17 @@ function abrirSelectorTurno(trabId, dia) {
   const fechaCelda = new Date(state.anio, state.mesActual, dia + 1);
   const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
   if (diff > 0 && diff <= state.parametros.preavisoDias && !confirm(`⚠️ Preaviso legal (${state.parametros.preavisoDias} días). ¿Modificar igualmente?`)) return;
+  
+  // Verificar si es festivo y mostrar advertencia
+  const esFest = esFestivo(state.anio, state.mesActual, dia + 1);
+  let festivoMsg = "";
+  if (esFest && valorActual && valorActual !== "L" && valorActual !== "D") {
+    festivoMsg = `\n⚠️ ATENCIÓN: Este día es FESTIVO. Si se trabaja, genera derecho a descanso compensatorio y paga extra (${REGLAS_FESTIVOS.festivoTrabajadoImporte} €).`;
+  }
+  
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod || "clear"}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2, G…" style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div><button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod || "clear"}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2, G…" style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
   document.body.appendChild(overlay);
 }
 
@@ -784,7 +830,7 @@ function cardWorkerHtml(t, mes, anio) {
   const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
   const seg = getMaxDiasSeguidos(t.id, mes, anio);
   const vacDis = getVacacionesDisfrutadas(t.id);
-  const vacTot = t.vacacionesTotales || 30;
+  const vacTot = t.vacacionesTotales || 22;
   const vacPct = Math.min(100, Math.round(vacDis / vacTot * 100));
   return `<div class="worker-item" onclick="modalDetalleWorker('${t.id}')">
     <div class="worker-name">${t.nombre}${t.estado === "baja" ? '<span class="badge badge-baja">BAJA</span>' : ""}${t.embarazo ? '<span class="badge badge-emb">🤰</span>' : ""}</div>
@@ -849,7 +895,7 @@ function crearWorker() {
   const nombre = document.getElementById("nt-nombre")?.value?.trim();
   if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
   const id = `t_${Date.now()}`;
-  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zona: document.getElementById("nt-zona")?.value || "", turnoHabitual: "Sin asignar", notas: "", vacacionesTotales: 30, fechaBaja: null });
+  state.trabajadores.push({ id, nombre, estado: "activo", embarazo: false, zona: document.getElementById("nt-zona")?.value || "", turnoHabitual: "Sin asignar", notas: "", vacacionesTotales: 22, fechaBaja: null });
   Object.keys(state.cuadrantePorMes).forEach(k => {
     const [anio, mes] = k.split("-").map(Number);
     state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill(""));
@@ -874,184 +920,19 @@ function iniciarBajaWorker(id) {
   mostrarToast(`✅ Baja registrada`);
 }
 
-// ==================== VISTA ZONAS (COMPLETA CON EDICIÓN) ====================
+// ==================== VISTA ZONAS (SIMPLIFICADA) ====================
 function renderZonas() {
-  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <span style="font-size:13px;font-weight:700">${state.zonas.length} zonas configuradas</span>
-    <button class="btn btn-primary btn-sm" onclick="modalNuevaZona()">➕ Nueva zona</button>
-  </div>`;
-
-  if (!state.zonas.length) {
-    html += `<div class="empty">No hay zonas configuradas.<br>Añade zonas del hospital para empezar.</div>`;
-  }
-
+  let html = `<div class="card"><div class="card-header">🏥 Zonas del hospital</div><div class="card-body">`;
   for (const z of state.zonas) {
     const trabajadoresZona = state.trabajadores.filter(t => t.zona === z.nombre);
-    
-    html += `<div class="zona-card" style="border-left: 4px solid ${z.color || "#e2e8f0"}">
-      <div class="zona-card-header">
-        <div class="zona-nombre">${z.nombre}</div>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-secondary btn-xs" onclick="modalEditarZona('${z.id}')">✏️ Editar</button>
-          <button class="btn btn-danger btn-xs" onclick="eliminarZona('${z.id}')">🗑 Eliminar</button>
-        </div>
-      </div>
-
-      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">COBERTURA MÍNIMA REQUERIDA</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:10px;color:#64748b;font-weight:600">🌅 MAÑANA</div>
-          <div style="font-size:20px;font-weight:800;color:#0f172a">${z.coberturaMin?.M ?? 0}</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:10px;color:#64748b;font-weight:600">☀️ TARDE</div>
-          <div style="font-size:20px;font-weight:800;color:#0f172a">${z.coberturaMin?.T ?? 0}</div>
-        </div>
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;text-align:center">
-          <div style="font-size:10px;color:#64748b;font-weight:600">🌙 NOCHE</div>
-          <div style="font-size:20px;font-weight:800;color:#0f172a">${z.coberturaMin?.N ?? 0}</div>
-        </div>
-      </div>
-
-      ${z.notas ? `<div style="font-size:11px;color:#64748b;margin-bottom:8px">📝 ${z.notas}</div>` : ""}
-
-      <div style="margin-top:8px">
-        <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px">PERSONAL ASIGNADO (${trabajadoresZona.length})</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
-          ${trabajadoresZona.length === 0 ? '<span style="font-size:11px;color:#94a3b8">Ninguno asignado</span>' : 
-            trabajadoresZona.map(t => `<span class="badge ${t.estado==="baja"?"badge-red":"badge-green"}">${t.nombre.split(" ")[0]}</span>`).join("")}
-        </div>
-      </div>
+    html += `<div class="zona-card">
+      <div class="zona-card-header"><div class="zona-nombre">${z.nombre}</div></div>
+      <div style="font-size:12px">Cobertura mínima: M:${z.coberturaMin?.M || 0} T:${z.coberturaMin?.T || 0} N:${z.coberturaMin?.N || 0}</div>
+      <div style="font-size:11px;color:#64748b;margin-top:5px">👥 ${trabajadoresZona.length} trabajadores</div>
     </div>`;
   }
-
+  html += `</div></div>`;
   document.getElementById("content").innerHTML = html;
-}
-
-function modalNuevaZona() {
-  modalEditarZona(null);
-}
-
-function modalEditarZona(id) {
-  const z = id ? state.zonas.find(z => z.id === id) : null;
-  const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
-  overlay.innerHTML = `
-    <div class="modal-box">
-      <div class="modal-title">${z ? "✏️ Editar zona" : "➕ Nueva zona"}</div>
-
-      <label class="modal-label">Nombre de la zona</label>
-      <input class="modal-input" id="z-nombre" value="${z?.nombre || ""}" placeholder="Ej: UCI, Urgencias, Planta 2...">
-
-      <label class="modal-label">Cobertura mínima requerida</label>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:8px 0">
-        <div style="text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">🌅 MAÑANA</div>
-          <div class="num-spinner">
-            <button style="width:32px;height:32px;border-radius:8px;border:1px solid #e2e8f0;background:#f1f5f9;font-size:18px;cursor:pointer" onclick="spinnerChange('z-cob-M', -1)">−</button>
-            <input type="number" id="z-cob-M" value="${z?.coberturaMin?.M ?? 0}" min="0" max="20" style="width:50px;text-align:center;padding:6px;border:1px solid #e2e8f0;border-radius:8px;font-size:16px;font-weight:700;outline:none">
-            <button style="width:32px;height:32px;border-radius:8px;border:1px solid #e2e8f0;background:#f1f5f9;font-size:18px;cursor:pointer" onclick="spinnerChange('z-cob-M', 1)">+</button>
-          </div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">☀️ TARDE</div>
-          <div class="num-spinner">
-            <button onclick="spinnerChange('z-cob-T', -1)">−</button>
-            <input type="number" id="z-cob-T" value="${z?.coberturaMin?.T ?? 0}" min="0" max="20">
-            <button onclick="spinnerChange('z-cob-T', 1)">+</button>
-          </div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px">🌙 NOCHE</div>
-          <div class="num-spinner">
-            <button onclick="spinnerChange('z-cob-N', -1)">−</button>
-            <input type="number" id="z-cob-N" value="${z?.coberturaMin?.N ?? 0}" min="0" max="20">
-            <button onclick="spinnerChange('z-cob-N', 1)">+</button>
-          </div>
-        </div>
-      </div>
-
-      <label class="modal-label">Notas e instrucciones</label>
-      <textarea class="modal-input" id="z-notas" rows="2" placeholder="Instrucciones específicas, protocolos...">${z?.notas || ""}</textarea>
-
-      <div style="display:flex;gap:8px;margin:8px 0">
-        <div onclick="selColor('#dbeafe', this)" style="width:32px;height:32px;background:#dbeafe;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#dbeafe' ? '#0f172a' : 'transparent'}"></div>
-        <div onclick="selColor('#dcfce7', this)" style="width:32px;height:32px;background:#dcfce7;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#dcfce7' ? '#0f172a' : 'transparent'}"></div>
-        <div onclick="selColor('#fee2e2', this)" style="width:32px;height:32px;background:#fee2e2;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#fee2e2' ? '#0f172a' : 'transparent'}"></div>
-        <div onclick="selColor('#fef3c7', this)" style="width:32px;height:32px;background:#fef3c7;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#fef3c7' ? '#0f172a' : 'transparent'}"></div>
-        <div onclick="selColor('#ede9fe', this)" style="width:32px;height:32px;background:#ede9fe;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#ede9fe' ? '#0f172a' : 'transparent'}"></div>
-        <div onclick="selColor('#cffafe', this)" style="width:32px;height:32px;background:#cffafe;border-radius:8px;cursor:pointer;border:2px solid ${z?.color === '#cffafe' ? '#0f172a' : 'transparent'}"></div>
-      </div>
-      <input type="hidden" id="z-color" value="${z?.color || '#dbeafe'}">
-
-      <div class="modal-btns">
-        <button class="btn-modal-ok" onclick="guardarZona('${id || ""}')">💾 Guardar</button>
-        <button class="btn-modal-cancel" onclick="cerrarModal()">Cancelar</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-
-  window.spinnerChange = (id, delta) => {
-    const input = document.getElementById(id);
-    if (input) {
-      const val = Math.max(0, Math.min(20, (parseInt(input.value) || 0) + delta));
-      input.value = val;
-    }
-  };
-  window.selColor = (color, el) => {
-    document.getElementById("z-color").value = color;
-    document.querySelectorAll("[onclick^='selColor']").forEach(d => d.style.borderColor = "transparent");
-    el.style.borderColor = "#0f172a";
-  };
-}
-
-function guardarZona(id) {
-  const nombre = document.getElementById("z-nombre")?.value?.trim();
-  if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
-  const coberturaMin = {
-    M: parseInt(document.getElementById("z-cob-M")?.value) || 0,
-    T: parseInt(document.getElementById("z-cob-T")?.value) || 0,
-    N: parseInt(document.getElementById("z-cob-N")?.value) || 0
-  };
-  const notas = document.getElementById("z-notas")?.value || "";
-  const color = document.getElementById("z-color")?.value || "#dbeafe";
-
-  if (id) {
-    const z = state.zonas.find(z => z.id === id);
-    if (z) {
-      z.nombre = nombre;
-      z.coberturaMin = coberturaMin;
-      z.notas = notas;
-      z.color = color;
-    }
-    mostrarToast(`✅ Zona "${nombre}" actualizada`);
-  } else {
-    state.zonas.push({
-      id: `z_${Date.now()}`,
-      nombre,
-      coberturaMin,
-      notas,
-      color
-    });
-    mostrarToast(`✅ Zona "${nombre}" creada`);
-  }
-  guardarDatos();
-  cerrarModal();
-  renderZonas();
-}
-
-function eliminarZona(id) {
-  const z = state.zonas.find(z => z.id === id);
-  const asignados = state.trabajadores.filter(t => t.zona === z?.nombre).length;
-  if (asignados > 0 && !confirm(`⚠️ Hay ${asignados} trabajador${asignados !== 1 ? "es" : ""} asignados a "${z?.nombre}". ¿Eliminar igualmente?`)) return;
-  state.zonas = state.zonas.filter(z => z.id !== id);
-  state.trabajadores.forEach(t => {
-    if (t.zona === z?.nombre) t.zona = "";
-  });
-  guardarDatos();
-  renderZonas();
-  mostrarToast(`🗑 Zona "${z?.nombre}" eliminada`);
 }
 
 // ==================== VISTA TAREAS ====================
