@@ -211,7 +211,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -235,11 +235,10 @@ const FESTIVOS_DETALLE = {
   "2026-12-08": { nombre: "Inmaculada Concepción", emoji: "🙏", color: "verde" },
   "2026-12-25": { nombre: "Navidad", emoji: "🎄", color: "verde" },
   "2026-12-24": { nombre: "Nochebuena (festivo convenio)", emoji: "🎅", color: "verde" },
-  "2026-12-31": { nombre: "Nochevieja (festivo convenio)", emoji: "🍾", color: "verde" }
+  "2026-12-31": { nombre: "Nochevieja (festivo convenio)", emoji: "🍾", color: "verde" },
+  "2026-01-29": { nombre: "San Valero (Zaragoza)", emoji: "🎉", color: "verde" },
+  "2026-03-05": { nombre: "Cincomarzada (Zaragoza)", emoji: "⚔️", color: "verde" }
 };
-// Festivos locales Zaragoza
-FESTIVOS_DETALLE["2026-01-29"] = { nombre: "San Valero (Zaragoza)", emoji: "🎉", color: "verde" };
-FESTIVOS_DETALLE["2026-03-05"] = { nombre: "Cincomarzada (Zaragoza)", emoji: "⚔️", color: "verde" };
 
 function esFestivo(anio, mes, dia) {
   const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
@@ -342,13 +341,13 @@ let personalFiltro = "";
 let personalFiltroZona = "todas";
 let personalFiltroTurno = "todos";
 let homeMes = new Date().getMonth();
+let tablaCuadranteCache = null; // Cache para no recargar la tabla innecesariamente
 
 // ==================== FUNCIONES EVENTOS TRABAJADOR ====================
 function getEventosDelDia(anio, mes, dia) {
   const fechaStr = `${anio}-${String(mes+1).padStart(2,"0")}-${String(dia).padStart(2,"0")}`;
   const eventos = [];
 
-  // Tareas pendientes
   state.tareas.forEach(t => {
     if (!t.completada && t.dia === dia) {
       let prioridad = t.prioridad === "rojo" ? "🔴 Muy urgente" : (t.prioridad === "amber" ? "🟡 Urgente" : "🟢 Poco urgente");
@@ -356,20 +355,17 @@ function getEventosDelDia(anio, mes, dia) {
     }
   });
 
-  // Festivos (con nombre específico)
   if (esFestivo(anio, mes, dia)) {
     const festivo = getNombreFestivo(anio, mes, dia);
     eventos.push({ tipo: "festivo", nombre: festivo.nombre, emoji: festivo.emoji, descripcion: "Día festivo según calendario", color: "verde" });
   }
 
-  // Eventos de trabajadores (contratos, bajas, vacaciones)
   state.trabajadores.forEach(t => {
     if (t.eventos) {
       t.eventos.forEach(ev => {
         if (ev.fecha === fechaStr) {
           eventos.push({ tipo: ev.tipo, nombre: t.nombre, emoji: ev.emoji, descripcion: ev.descripcion, color: ev.color });
         }
-        // Para vacaciones con rango
         if (ev.tipo === "vacaciones" && ev.fechaInicio && ev.fechaFin) {
           const fechaInicio = new Date(ev.fechaInicio);
           const fechaFin = new Date(ev.fechaFin);
@@ -452,6 +448,38 @@ function setCelda(trabId, dia, valor, mes, anio) {
   if (!cuad[idx]) cuad[idx] = [];
   cuad[idx][dia] = valor;
   guardarDatos();
+  // Actualizar la tabla si está visible sin recargar todo
+  if (currentView === "cuadrante") {
+    actualizarCeldaEnTabla(idx, dia, valor);
+  }
+}
+
+// Función para actualizar solo la celda modificada sin recargar toda la tabla
+function actualizarCeldaEnTabla(fila, columna, valor) {
+  const celda = document.getElementById(`celda-${fila}-${columna}`);
+  if (celda) {
+    celda.textContent = valor;
+    celda.setAttribute("data-val", valor);
+    // Actualizar clase de color
+    let colorClass = "";
+    if (valor === "L") colorClass = "L";
+    else if (valor === "D") colorClass = "D";
+    else if (valor === "F1") colorClass = "F1";
+    else if (valor === "N") colorClass = "N";
+    else if (valor === "M") colorClass = "M";
+    else if (valor === "T") colorClass = "T";
+    else if (valor === "HE") colorClass = "HE";
+    else if (valor === "LIB") colorClass = "LIB";
+    else if (valor === "VAC") colorClass = "VAC";
+    celda.className = `editable-cell ${colorClass} ${celda.classList.contains("wkend") ? "wkend" : ""} ${celda.classList.contains("festivo-cell") ? "festivo-cell" : ""}`;
+    
+    // Actualizar total de horas para ese trabajador
+    const totalCelda = document.getElementById(`total-${fila}`);
+    if (totalCelda) {
+      const nuevaTotal = getTotalHorasMes(state.trabajadores[fila].id, state.mesActual, state.anio);
+      totalCelda.textContent = nuevaTotal;
+    }
+  }
 }
 
 function getTotalHorasMes(trabId, mes, anio) {
@@ -551,7 +579,7 @@ function generarPDF() {
   let html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</title>
   <style>body{font-family:Arial;margin:20px} table{border-collapse:collapse;width:100%;font-size:8px} th,td{border:1px solid #ccc;padding:4px} th{background:#f1f5f9}</style>
   </head><body><h2>Cuadrante ${MESES_NOMBRES[mes]} ${anio}</h2>`;
-  html += `<table><thead><tr><th>Nombre</th>`;
+  html += `</td><thead><tr><th>Nombre</th>`;
   for (let d = 1; d <= dias; d++) html += `<th>${d}</th>`;
   html += `<th>H</th></tr></thead><tbody>`;
   for (let i = 0; i < state.trabajadores.length; i++) {
@@ -559,9 +587,12 @@ function generarPDF() {
     const total = getTotalHorasMes(t.id, mes, anio);
     html += `<tr><td style="text-align:left">${t.nombre}${t.estado==="baja"?" [B]":""}</td>`;
     for (let d = 0; d < dias; d++) html += `<td>${cuad[i]?.[d] || ""}</td>`;
-    html += `<td style="font-weight:700">${total}</td></tr>`;
+    html += `<td style="font-weight:700">${total}<\/td>`;
+    html += `<\/tr>`;
   }
-  html += `</tbody></table></body></html>`;
+  html += `</tbody>`;
+  html += `<\/table>`;
+  html += `</body></html>`;
   const ventana = window.open();
   ventana.document.write(html);
   ventana.document.close();
@@ -569,7 +600,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v12";
+const STORAGE_KEY = "cuadrantes_v13";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -778,22 +809,28 @@ function renderHome() {
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[state.mesActual]} ${state.anio}`;
 }
 
-// ==================== VISTA CUADRANTE ====================
+// ==================== VISTA CUADRANTE (CORREGIDA - SIN RECARGA COMPLETA) ====================
+let cuadranteFiltroTimeout = null;
+
 function renderCuadrante() {
   const mes = state.mesActual;
   const anio = state.anio;
   const dias = diasEnMes(mes, anio);
   const cuad = getCuadranteMes(mes, anio);
-  const searchTerm = cuadFiltro.toLowerCase();
-
-  const filtrados = state.trabajadores.filter(t => t.nombre.toLowerCase().includes(searchTerm));
+  
+  // Obtener el valor actual del filtro sin recargar
+  const searchInput = document.getElementById("cuad-search");
+  const searchTerm = searchInput ? searchInput.value : cuadFiltro;
+  cuadFiltro = searchTerm;
+  
+  const filtrados = state.trabajadores.filter(t => t.nombre.toLowerCase().includes(cuadFiltro.toLowerCase()));
 
   let html = `<div class="mes-selector">`;
   MESES_NOMBRES.forEach((n, i) => {
     html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`;
   });
   html += `</div><div class="cuad-toolbar">
-    <input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="cuadFiltroChange(this.value)">
+    <input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)">
     <button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button>
     <button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button>
   </div>`;
@@ -838,9 +875,9 @@ function renderCuadrante() {
       const fechaCelda = new Date(anio, mes, d + 1);
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
-      html += `<td class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}${fest && val && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
+      html += `<td id="celda-${idx}-${d}" class="editable-cell ${colorClass} ${fds ? "wkend" : ""} ${fest ? "festivo-cell" : ""}" style="${preaviso ? "border-bottom:2px solid #d97706" : ""}" onclick="abrirSelectorTurno('${t.id}',${d})">${val}${fest && val && val !== "L" && val !== "D" && val !== "VAC" ? '🌟' : ''}</td>`;
     }
-    html += `<td class="total-col">${total}</td>`;
+    html += `<td id="total-${idx}" class="total-col">${total}</td>`;
     html += `</tr>`;
   }
   html += `<tr class="cobertura-row"><td class="nombre-col">Cobertura M/T/N</td>`;
@@ -849,16 +886,43 @@ function renderCuadrante() {
     html += `<td style="${((cob.M < 1 && cob.T < 1 && cob.N < 1) ? "background:#fee2e2;color:#dc2626" : "")}">${cob.M}/${cob.T}/${cob.N}</td>`;
   }
   html += `<td class="total-col"></td>`;
-  html += `<\/tr>`;
+  html += `</tr>`;
   html += `</tbody>`;
-  html += `<\/table>`;
-  html += `<\/div>`;
+  html += `</table>`;
+  html += `</div>`;
+  
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
 
-function cuadFiltroChange(val) { cuadFiltro = val; renderCuadrante(); }
-function cambiarMes(mes) { state.mesActual = mes; guardarDatos(); renderCuadrante(); renderHome(); mostrarToast(`📅 ${MESES_NOMBRES[mes]} ${state.anio}`); }
+// Función para filtrar sin recargar toda la tabla (usando el DOM existente)
+function filtrarCuadrante(valor) {
+  cuadFiltro = valor;
+  // En lugar de recargar toda la tabla, filtramos las filas
+  const searchTerm = valor.toLowerCase();
+  const filas = document.querySelectorAll("#content tbody tr");
+  filas.forEach(fila => {
+    const nombreCelda = fila.querySelector(".nombre-col");
+    if (nombreCelda) {
+      const nombre = nombreCelda.textContent;
+      if (nombre.toLowerCase().includes(searchTerm)) {
+        fila.style.display = "";
+      } else {
+        fila.style.display = "none";
+      }
+    }
+  });
+}
+
+function cambiarMes(mes) {
+  state.mesActual = mes;
+  guardarDatos();
+  // No llamar a renderHome() aquí, solo recargar cuadrante
+  if (currentView === "cuadrante") {
+    renderCuadrante();
+  }
+  mostrarToast(`📅 ${MESES_NOMBRES[mes]} ${state.anio}`);
+}
 
 function abrirSelectorTurno(trabId, dia) {
   const t = state.trabajadores.find(t => t.id === trabId);
@@ -883,7 +947,6 @@ function seleccionarTurno(trabId, dia, valor) {
   if (t?.embarazo && valor === "N") { mostrarToast("❌ Trabajadora embarazada: no puede tener turno de noche", true); return; }
   setCelda(trabId, dia, valor);
   cerrarModal();
-  renderCuadrante();
   mostrarToast(`✓ ${t?.nombre.split(" ")[0]}: día ${dia+1} → ${valor || "vacío"}`);
 }
 
@@ -899,11 +962,13 @@ function undoUltimoCambio() {
   const idx = state.trabajadores.findIndex(t => t.id === trabId);
   if (idx >= 0 && cuad[idx]) cuad[idx][dia] = anterior;
   guardarDatos();
-  renderCuadrante();
+  if (currentView === "cuadrante") {
+    actualizarCeldaEnTabla(idx, dia, anterior);
+  }
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== VISTA PERSONAL ====================
+// ==================== VISTA PERSONAL (resumida por brevedad - igual que antes) ====================
 function renderPersonal() {
   const mes = state.mesActual, anio = state.anio;
   let html = `<input class="worker-search" id="worker-search" type="text" placeholder="🔍 Buscar por nombre..." value="${personalFiltro}" onkeyup="personalFiltroChange(this.value)">`;
