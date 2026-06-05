@@ -15,10 +15,13 @@
 
   #header { background: #0f172a; color: #fff; padding: 14px 16px; padding-top: max(14px, env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; }
   #header-left h1 { font-size: 18px; font-weight: 800; }
+  #header-left h1 small { font-size: 11px; background: #334155; padding: 2px 8px; border-radius: 20px; margin-left: 8px; font-weight: normal; }
   #header-left p { font-size: 11px; color: #94a3b8; margin-top: 1px; }
   #save-indicator { font-size: 11px; color: #22c55e; opacity: 0; transition: opacity .4s; white-space: nowrap; }
   #save-indicator.show { opacity: 1; }
   #pin-lock-btn { background: none; border: none; color: #94a3b8; font-size: 20px; cursor: pointer; padding: 4px; }
+
+  #banner-convenio { background: #dc2626; color: white; padding: 8px 14px; font-size: 12px; text-align: center; font-weight: 600; flex-shrink: 0; }
 
   #content { flex: 1; overflow-y: auto; padding: 14px; -webkit-overflow-scrolling: touch; }
   #nav { display: flex; background: #fff; border-top: 1.5px solid #e2e8f0; flex-shrink: 0; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
@@ -39,6 +42,7 @@
   .btn-success { background: #dcfce7; color: #14532d; border: 1px solid #86efac; }
   .btn-sm { padding: 6px 12px; border-radius: 20px; font-size: 11px; margin-bottom: 0; width: auto; display: inline-block; }
   .btn-xs { padding: 4px 8px; border-radius: 8px; font-size: 10px; margin-bottom: 0; width: auto; display: inline-block; }
+  .btn-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
 
   .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
   .badge-baja { background: #dc2626; color: #fff; }
@@ -95,6 +99,7 @@
   .sustituto-row td { color: #dc2626; font-weight: 500; }
   .L { color: #1d4ed8; font-weight: 700; }
   .D { color: #15803d; font-weight: 700; }
+  .E { color: #9333ea; font-weight: 700; background: #f3e8ff !important; }
   .F1, .F2, .F3, .F4, .F5, .F6, .F7, .F8, .F9, .F10, .F11, .F12, .F13, .F14, .F15, .F16, .F17, .F18, .F19, .F20, .F21, .F22, .F23, .F24, .F25, .F26, .F27, .F28, .F29, .F30, .F31 { color: #ea580c; font-weight: 700; }
   .N { color: #92400e; font-weight: 700; }
   .M, .T { color: #374151; font-weight: 600; }
@@ -139,6 +144,7 @@
   .turno-btn.sel { border-color: #0f172a !important; }
   .tb-L { background: #dbeafe; color: #1d4ed8; }
   .tb-D { background: #dcfce7; color: #15803d; }
+  .tb-E { background: #f3e8ff; color: #9333ea; }
   .tb-F1 { background: #ffedd5; color: #ea580c; }
   .tb-N { background: #fef3c7; color: #92400e; }
   .tb-M, .tb-T { background: #f1f5f9; color: #374151; }
@@ -192,6 +198,9 @@
   .text-area-import { width: 100%; height: 200px; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 12px; resize: vertical; }
   .text-area-import:focus { outline: none; border-color: #0f172a; }
 
+  .param-list { font-size: 12px; }
+  .param-list li { margin-bottom: 6px; padding: 4px; background: #f8fafc; border-radius: 6px; }
+
   #toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 20px; border-radius: 30px; font-size: 13px; font-weight: 600; z-index: 500; opacity: 0; transition: opacity .25s; pointer-events: none; }
   #toast.show { opacity: 1; }
   .empty { text-align: center; padding: 28px; color: #94a3b8; font-size: 13px; }
@@ -201,12 +210,16 @@
 <body>
 <div id="app">
   <div id="header">
-    <div id="header-left"><h1>🧹 Gestión Cuadrantes</h1><p id="header-sub">Cargando...</p></div>
+    <div id="header-left">
+      <h1>🧹 Gestión Cuadrantes <small>v<span id="version-number">20</span></small></h1>
+      <p id="header-sub">Cargando...</p>
+    </div>
     <div style="display:flex;align-items:center;gap:10px">
       <span id="save-indicator">✓ Guardado</span>
       <button id="pin-lock-btn" onclick="mostrarPantallaPIN('lock')">🔒</button>
     </div>
   </div>
+  <div id="banner-convenio" style="background:#dc2626;color:white;padding:8px 14px;font-size:12px;text-align:center;font-weight:600;flex-shrink:0;">⚠️ Convenio vencido. Trabajando en ultraactividad. ⚠️</div>
   <div id="content"></div>
   <nav id="nav">
     <button class="active" onclick="showView('home')"      id="nav-home">     <span class="ni">🏠</span><span class="nl">Inicio</span></button>
@@ -223,7 +236,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -267,6 +280,7 @@ function getNombreFestivo(anio, mes, dia) {
 const CODIGOS_TURNO = [
   { cod:"L",   label:"Libre",       horas:0 },
   { cod:"D",   label:"Descanso",    horas:0 },
+  { cod:"E",   label:"Exceso",      horas:0 },
   { cod:"M",   label:"Mañana",      horas:7 },
   { cod:"T",   label:"Tarde",       horas:7 },
   { cod:"N",   label:"Noche",       horas:10 },
@@ -323,7 +337,7 @@ const TRABAJADORES_FIJOS = [
 
 const SUSTITUTOS = [
   { id: 26, nombre: "Rosario Polo", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 27, nombre: "Carmela Aramburu", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 27, nombre: "Carmela Aramburo", tipo: "sustituto", turnoBase: "M", activo: false },
   { id: 28, nombre: "Victoria Remacha", tipo: "sustituto", turnoBase: "M", activo: false },
   { id: 29, nombre: "Susagny Mendoza", tipo: "sustituto", turnoBase: "M", activo: false },
   { id: 30, nombre: "Angel Monteagudo", tipo: "sustituto", turnoBase: "M", activo: false },
@@ -343,8 +357,8 @@ let state = {
   tareas: [],
   parametros: {
     jornadaMaxDiaria: 9, jornadaMinDiaria: 7, jornadaMaxSemanal: 35, maxDiasSeguidos: 6, preavisoDias: 5,
-    jornadaAnualDiurna: 1519, jornadaAnualNocturna: 1350, vacacionesAnuales: 22, convenioVencido: false,
-    convenioTexto: "Convenio Limpieza Hospitalaria SALUD Aragón · Tablas 2026"
+    jornadaAnualDiurna: 1519, jornadaAnualNocturna: 1350, vacacionesAnuales: 22, convenioVencido: true,
+    convenioTexto: "Convenio Limpieza Hospitalaria SALUD Aragón · Tablas 2026 (ultraactividad)"
   },
   historial: [], pinHash: null
 };
@@ -453,6 +467,7 @@ function actualizarCeldaEnTabla(fila, columna, valor) {
     let colorClass = "";
     if (valor === "L") colorClass = "L";
     else if (valor === "D") colorClass = "D";
+    else if (valor === "E") colorClass = "E";
     else if (valor === "M") colorClass = "M";
     else if (valor === "T") colorClass = "T";
     else if (valor === "N") colorClass = "N";
@@ -602,6 +617,7 @@ function generarPDF() {
       let estilo = "border:0.5px solid #000;padding:4px;text-align:center;";
       if (val === "L") estilo += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") estilo += " color:#15803d;font-weight:700;";
+      else if (val === "E") estilo += " color:#9333ea;font-weight:700;background:#f3e8ff;";
       else if (val === "M" || val === "T") estilo += " color:#374151;font-weight:600;";
       else if (val === "N") estilo += " color:#92400e;font-weight:700;";
       else if (val === "V" || val === "VAC" || val === "VA") estilo += " color:#065f46;font-weight:700;background:#d1fae5;";
@@ -625,7 +641,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v20";
+const STORAGE_KEY = "cuadrantes_v21";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -808,6 +824,50 @@ function renderHome() {
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[state.mesActual]} ${state.anio}`;
 }
 
+// ==================== FUNCIONES VACIAR CUADRANTE ====================
+function vaciarCuadranteActual() {
+  if (!confirm(`⚠️ ¿Estás seguro de que quieres VACIAR completamente el cuadrante de ${MESES_NOMBRES[state.mesActual]} ${state.anio}?\n\nEsta acción no se puede deshacer fácilmente.`)) return;
+  
+  const mes = state.mesActual;
+  const anio = state.anio;
+  const dias = diasEnMes(mes, anio);
+  const key = clavesMes(mes, anio);
+  
+  // Crear matriz vacía para todos los trabajadores
+  const cuadranteVacio = state.trabajadores.map(() => Array(dias).fill(""));
+  state.cuadrantePorMes[key] = cuadranteVacio;
+  
+  guardarDatos();
+  if (currentView === "cuadrante") renderCuadrante();
+  mostrarToast(`🗑 Cuadrante de ${MESES_NOMBRES[mes]} vaciado`);
+}
+
+function mostrarParametros() {
+  const params = state.parametros;
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-title">⚙️ Parámetros del cuadrante</div>
+      <ul class="param-list" style="list-style:none; padding:0;">
+        <li>📅 Jornada máxima diaria: <strong>${params.jornadaMaxDiaria}h</strong></li>
+        <li>📅 Jornada mínima diaria: <strong>${params.jornadaMinDiaria}h</strong></li>
+        <li>📊 Jornada máxima semanal: <strong>${params.jornadaMaxSemanal}h</strong></li>
+        <li>🔄 Máx días seguidos: <strong>${params.maxDiasSeguidos} días</strong></li>
+        <li>⚠️ Preaviso legal: <strong>${params.preavisoDias} días</strong></li>
+        <li>📈 Jornada anual diurna: <strong>${params.jornadaAnualDiurna}h</strong></li>
+        <li>🌙 Jornada anual nocturna: <strong>${params.jornadaAnualNocturna}h</strong></li>
+        <li>🏖️ Vacaciones anuales: <strong>${params.vacacionesAnuales} días</strong></li>
+        <li>⚖️ Convenio: <strong>${params.convenioTexto || "No especificado"}</strong></li>
+      </ul>
+      <div class="modal-btns">
+        <button class="btn-modal-ok" onclick="cerrarModal()">Cerrar</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+}
+
 // ==================== VISTA CUADRANTE ====================
 function renderCuadrante() {
   const mes = state.mesActual;
@@ -822,8 +882,8 @@ function renderCuadrante() {
   let html = `<div class="mes-selector">`;
   MESES_NOMBRES.forEach((n, i) => { html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`; });
   html += `</div>`;
-  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-primary btn-sm" onclick="document.getElementById('file-import-cuadrante').click()" style="background:#0f172a;">📂 Importar JSON</button><button class="btn btn-primary btn-sm" onclick="mostrarModalImportarPorNombre()" style="background:#1e40af;">🧠 Importar por nombre (inteligente)</button></div>`;
-  html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días · Usa las flechas ↑↓ para reordenar</div>`;
+  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-secondary btn-sm" onclick="mostrarParametros()">⚙️ Parámetros</button><button class="btn btn-primary btn-sm" onclick="mostrarModalImportarPorNombre()" style="background:#1e40af;">🧠 Importar por nombre</button><button class="btn btn-warning btn-sm" onclick="vaciarCuadranteActual()" style="background:#fef3c7;color:#92400e;">🗑 Vaciar mes</button></div>`;
+  html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días · Usa las flechas ↑↓ para reordenar · Nuevo turno: E (Exceso)</div>`;
   html += `<div class="wrap"><table style="border-collapse:collapse;width:100%;min-width:850px;"><thead><tr><th style="border:0.5px solid #cbd5e1;padding:6px 4px;text-align:left;position:sticky;left:0;background:#f1f5f9;min-width:180px;">Trabajador</th>`;
   for (let d = 1; d <= dias; d++) {
     const fds = esFinDeSemana(d, mes, anio);
@@ -850,6 +910,7 @@ function renderCuadrante() {
       let cellStyle = "border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;";
       if (val === "L") cellStyle += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") cellStyle += " color:#15803d;font-weight:700;";
+      else if (val === "E") cellStyle += " color:#9333ea;font-weight:700;background:#f3e8ff;";
       else if (val === "M") cellStyle += " color:#374151;font-weight:600;";
       else if (val === "T") cellStyle += " color:#374151;font-weight:600;";
       else if (val === "N") cellStyle += " color:#92400e;font-weight:700;";
@@ -870,7 +931,6 @@ function renderCuadrante() {
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
-      // ✅ CELDA CORREGIDA
       html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
@@ -927,7 +987,7 @@ function abrirSelectorTurno(trabId, dia) {
   }
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod === "F1" ? "F1" : (c.cod === "V" ? "V" : c.cod === "VA" ? "VA" : c.cod === "PR" ? "PR" : c.cod === "CF" ? "CF" : c.cod === "IT" ? "IT" : c.cod === "LD" ? "LD" : c.cod === "LDA" ? "LDA" : c.cod === "LIB" ? "LIB" : c.cod === "HE" ? "HE" : (c.cod || "clear"))}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2-F31, LD25, LD26, V25..." style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
+  overlay.innerHTML = `<div class="modal-box"><div class="modal-title">Turno — ${t.nombre.split(" ")[0]} · día ${dia+1}${esFest ? ' 🌟 FESTIVO' : ''}</div><div class="turno-grid">${CODIGOS_TURNO.map(c => `<div><button class="turno-btn tb-${c.cod === "F1" ? "F1" : (c.cod === "V" ? "V" : c.cod === "VA" ? "VA" : c.cod === "PR" ? "PR" : c.cod === "CF" ? "CF" : c.cod === "IT" ? "IT" : c.cod === "LD" ? "LD" : c.cod === "LDA" ? "LDA" : c.cod === "LIB" ? "LIB" : c.cod === "HE" ? "HE" : (c.cod === "E" ? "E" : (c.cod || "clear")))}${valorActual === c.cod ? " sel" : ""}" onclick="seleccionarTurno('${trabId}',${dia},'${c.cod}')">${c.cod || "✕"}</button><div class="turno-label">${c.label}</div></div>`).join("")}</div><div style="display:flex;gap:8px;margin-top:8px"><input id="turno-manual" class="modal-input" placeholder="O escribe: 2-9, F2-F31, LD25, LD26, V25..." style="flex:1"><button class="btn btn-primary btn-sm" onclick="seleccionarTurnoManual('${trabId}',${dia})">OK</button></div>${festivoMsg ? `<p style="font-size:11px;color:#d97706;margin-top:8px">${festivoMsg}</p>` : ""}<button onclick="cerrarModal()" class="btn btn-secondary" style="margin-top:10px">Cancelar</button></div>`;
   document.body.appendChild(overlay);
 }
 
@@ -955,167 +1015,58 @@ function undoUltimoCambio() {
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== CORREGIR NOMBRES DE SUSTITUTOS ====================
-function corregirNombresSustitutos() {
-  const correccionesNombres = {
-    "Rosario Polo":              "ROSARIO POLO",
-    "Carmela Aramburu":          "CARMELA ARAMBURU",
-    "Victoria Remacha":          "VICTORIA REMACHA",
-    "Susagny Mendoza":           "SUSAGNY MENDOZA",
-    "Angel Monteagudo":          "ANGEL MONTEAGUDO",
-    "M Carmen Joven Trasovares": "M CARMEN JOVEN TRASOVARES",
-    "M Carmen Lopez Langa":      "M CARMEN LOPEZ LANGA",
-    "Esther Blas":               "ESTHER BLAS"
-  };
-  
-  let modificados = 0;
-  state.trabajadores.forEach(t => {
-    if (correccionesNombres[t.nombre]) {
-      console.log('Renombrando: ' + t.nombre + ' → ' + correccionesNombres[t.nombre]);
-      t.nombre = correccionesNombres[t.nombre];
-      modificados++;
-    }
-  });
-  
-  if (modificados > 0) {
-    guardarDatos();
-    console.log(`✅ ${modificados} nombres de sustitutos corregidos`);
-  }
-}
-
-// ==================== IMPORTADOR V2 (MATCHING INTELIGENTE) ====================
-window.importarPorNombreV2 = function(textoExcel, mes, anio) {
+// ==================== IMPORTADOR POR NOMBRE ====================
+function importarPorNombre(textoExcel, mes, anio) {
   mes = mes ?? state.mesActual;
   anio = anio ?? state.anio;
   const dias = diasEnMes(mes, anio);
-  const key = anio + '-' + mes;
-
-  const CODIGOS = new Set(['M','T','N','L','D','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10',
-    'F11','F12','F13','F14','F15','F16','F17','F18','F19','F20','F21','F22','F23','F24','F25',
-    'F26','F27','F28','F29','F30','F31','IT','PR','V','VA','CF','LD','LDA','LIB','HE','VAC',
-    'LD25','LD26','L24','D25','L25','D26','']);
-
-  const esCodTurno = v => {
-    if (!v || CODIGOS.has(v)) return true;
-    if (/^F\d+$/.test(v)) return true;
-    if (/^[A-Z]{1,4}\d{0,2}$/.test(v) && v.length <= 5) return true;
-    if (/^\d$/.test(v)) return true;
-    return false;
-  };
-
-  const normalizar = s => s.normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^A-Z0-9 ]/g,'')
-    .replace(/\s+/g,' ').trim().toUpperCase();
-
-  const score = (a, b) => {
-    const an = normalizar(a);
-    const bn = normalizar(b);
-    if (an === bn) return 100;
-    
-    if (an.replace(/\s/g,'') === bn.replace(/\s/g,'')) return 95;
-    
-    const pa = an.split(' ').filter(p => p.length >= 3);
-    const pb = bn.split(' ').filter(p => p.length >= 3);
-    if (!pa.length || !pb.length) return 0;
-    
-    let coinciden = 0;
-    for (const p of pa) {
-      if (pb.includes(p)) coinciden++;
-    }
-    
-    const apellidoA = pa[pa.length - 1] || '';
-    const apellidoB = pb[pb.length - 1] || '';
-    const bonusApellido = (apellidoA === apellidoB && apellidoA.length > 3) ? 20 : 0;
-    
-    return Math.round((coinciden / Math.max(pa.length, pb.length) * 100) + bonusApellido);
-  };
-
   const lineas = textoExcel.trim().split(/\r?\n/).filter(l => l.trim());
-  const filas = [];
+  const resultado = {};
+  const errores = [];
 
-  console.log(`📊 Procesando ${lineas.length} filas...`);
+  const normalizar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
 
-  lineas.forEach((linea, idx) => {
-    const cols = linea.split(/\t/).map(c => c.trim());
-
-    let nombreIdx = -1, nombre = '';
+  lineas.forEach((linea, i) => {
+    const cols = linea.split(/\t/);
+    let nombre = null, turnos = [];
     for (let c = 0; c < cols.length; c++) {
-      const v = cols[c];
-      if (v.length >= 3 && isNaN(v) && /[A-Za-záéíóúñÁÉÍÓÚÑ]{3,}/i.test(v) && !esCodTurno(v)) {
-        nombreIdx = c;
-        nombre = v.toUpperCase().trim();
-        break;
+      const val = cols[c].trim();
+      if (val.length > 3 && /[A-ZÁÉÍÓÚÑ]{3,}/i.test(val) && 
+          !['M','T','N','L','D','E','F1','PR','V','VA','CF','IT','LD','LDA','LIB','HE','VAC'].includes(val.toUpperCase())) {
+        nombre = val.toUpperCase().trim();
+        const resto = cols.slice(c + 1).map(v => v.trim());
+        if (resto.length >= dias) { turnos = resto.slice(0, dias); break; }
       }
     }
-    if (nombreIdx === -1) return;
-
-    const resto = cols.slice(nombreIdx + 1);
-    const turnos = [];
-    for (let r = 0; r < resto.length && turnos.length < dias; r++) {
-      const v = resto[r];
-      if (v.length > 6 && !esCodTurno(v)) continue;
-      turnos.push(v);
+    if (!nombre) return;
+    const nombreNorm = normalizar(nombre);
+    let match = state.trabajadores.find(t => normalizar(t.nombre) === nombreNorm);
+    if (!match) {
+      const partes = nombreNorm.split(' ');
+      match = state.trabajadores.find(t => {
+        const tn = normalizar(t.nombre);
+        return partes.some(p => p.length > 3 && tn.includes(p));
+      });
     }
-
-    if (turnos.length >= dias) {
-      filas.push({ nombre, turnos: turnos.slice(0, dias) });
-      console.log(`  Fila ${idx+1}: "${nombre}" (${turnos.length} turnos)`);
-    } else {
-      console.warn(`  ⚠️ Fila ${idx+1}: "${nombre}" - turnos insuficientes (${turnos.length}/${dias})`);
+    if (match && turnos.length >= dias) {
+      resultado[match.id] = turnos.slice(0, dias);
+    } else if (!match) {
+      errores.push('No encontrado: ' + nombre);
     }
   });
 
-  console.log(`\n📌 Filas válidas para importar: ${filas.length}`);
-
-  if (!state.cuadrantePorMes[key])
-    state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
+  const key = clavesMes(mes, anio);
+  if (!state.cuadrantePorMes[key]) state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
   const cuad = state.cuadrantePorMes[key];
-
   let aplicados = 0;
-  const sinMatch = [];
-
-  filas.forEach(fila => {
-    let mejor = null, mejorScore = 0;
-    state.trabajadores.forEach(t => {
-      const s = score(fila.nombre, t.nombre);
-      if (s > mejorScore) { mejorScore = s; mejor = t; }
-    });
-
-    if (mejor && mejorScore >= 40) {
-      const idx = state.trabajadores.indexOf(mejor);
-      const turnosNorm = Array(dias).fill('');
-      for (let d = 0; d < Math.min(fila.turnos.length, dias); d++)
-        turnosNorm[d] = fila.turnos[d];
-      cuad[idx] = turnosNorm;
-      aplicados++;
-      console.log(`  ✓ (${mejorScore}%) ${fila.nombre} → ${mejor.nombre}`);
-    } else {
-      sinMatch.push(`${fila.nombre} | mejor: ${mejor?.nombre || '?'} (${mejorScore}%)`);
-      console.warn(`  ✗ SIN MATCH: ${fila.nombre} (score: ${mejorScore}%)`);
-    }
+  state.trabajadores.forEach((t, idx) => {
+    if (resultado[t.id]) { cuad[idx] = resultado[t.id]; aplicados++; }
   });
-
   guardarDatos();
-  if (currentView === "cuadrante") renderCuadrante();
-  
-  console.log(`\n✅ Importados: ${aplicados}/${filas.length}`);
-  if (sinMatch.length) console.warn('Sin match:\n' + sinMatch.join('\n'));
-  
-  let mensaje = `✅ ${aplicados} trabajadores importados`;
-  if (sinMatch.length > 0) {
-    mensaje += `\n⚠️ ${sinMatch.length} sin coincidencia`;
-    mostrarToast(`${aplicados} asignados, ${sinMatch.length} sin coincidencia`, true);
-  } else {
-    mostrarToast(mensaje);
-  }
-  
-  return { aplicados, sinMatch };
-};
-
-// ==================== IMPORTADOR POR NOMBRE ORIGINAL (MANTENIDO) ====================
-function importarPorNombre(textoExcel, mes, anio) {
-  return window.importarPorNombreV2(textoExcel, mes, anio);
+  if (currentView === 'cuadrante') renderCuadrante();
+  mostrarToast(`✅ Importados ${aplicados} trabajadores` + (errores.length ? ` (${errores.length} sin match)` : ''));
+  if (errores.length) console.warn('Sin match:\n' + errores.join('\n'));
+  return { aplicados, errores };
 }
 
 function mostrarModalImportarPorNombre() {
@@ -1123,8 +1074,8 @@ function mostrarModalImportarPorNombre() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal-box">
-      <div class="modal-title">🧠 Importar por nombre (inteligente V2)</div>
-      <p style="font-size:12px; color:#64748b; margin-bottom:8px;">📌 Este método NO depende del orden de las filas. Busca automáticamente por nombre con matching inteligente.</p>
+      <div class="modal-title">🧠 Importar por nombre (inteligente)</div>
+      <p style="font-size:12px; color:#64748b; margin-bottom:8px;">📌 Este método NO depende del orden de las filas. Busca automáticamente por nombre.</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:8px;">1. En Excel, selecciona las filas con nombres y turnos (columna nombre + días).</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:12px;">2. Copia (Ctrl+C) y pega abajo:</p>
       <textarea id="excel-data-nombre" class="text-area-import" placeholder="Pega aquí los datos...&#10;&#10;Ejemplo:&#10;MARIA JOSE GARCIA LATORRE\tLD25\tLD25\tL\tD..."></textarea>
@@ -1397,7 +1348,8 @@ document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.ke
 document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) cerrarModal(); });
 
 cargarDatos();
-corregirNombresSustitutos(); // Corregir nombres de sustitutos al inicio
+// Actualizar versión en UI
+document.getElementById("version-number").textContent = APP_VERSION;
 if (state.pinHash) { pinDesbloqueado = false; renderHome(); mostrarPantallaPIN("unlock"); }
 else { pinDesbloqueado = true; renderHome(); }
 </script>
