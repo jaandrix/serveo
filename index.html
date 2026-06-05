@@ -870,7 +870,7 @@ function renderCuadrante() {
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
-      // ✅ CELDA CORREGIDA: El final ahora dice `</td>` en lugar de `</td>`
+      // ✅ CELDA CORREGIDA
       html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
@@ -955,57 +955,167 @@ function undoUltimoCambio() {
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== IMPORTADOR POR NOMBRE (INTELIGENTE) ====================
-function importarPorNombre(textoExcel, mes, anio) {
+// ==================== CORREGIR NOMBRES DE SUSTITUTOS ====================
+function corregirNombresSustitutos() {
+  const correccionesNombres = {
+    "Rosario Polo":              "ROSARIO POLO",
+    "Carmela Aramburu":          "CARMELA ARAMBURU",
+    "Victoria Remacha":          "VICTORIA REMACHA",
+    "Susagny Mendoza":           "SUSAGNY MENDOZA",
+    "Angel Monteagudo":          "ANGEL MONTEAGUDO",
+    "M Carmen Joven Trasovares": "M CARMEN JOVEN TRASOVARES",
+    "M Carmen Lopez Langa":      "M CARMEN LOPEZ LANGA",
+    "Esther Blas":               "ESTHER BLAS"
+  };
+  
+  let modificados = 0;
+  state.trabajadores.forEach(t => {
+    if (correccionesNombres[t.nombre]) {
+      console.log('Renombrando: ' + t.nombre + ' → ' + correccionesNombres[t.nombre]);
+      t.nombre = correccionesNombres[t.nombre];
+      modificados++;
+    }
+  });
+  
+  if (modificados > 0) {
+    guardarDatos();
+    console.log(`✅ ${modificados} nombres de sustitutos corregidos`);
+  }
+}
+
+// ==================== IMPORTADOR V2 (MATCHING INTELIGENTE) ====================
+window.importarPorNombreV2 = function(textoExcel, mes, anio) {
   mes = mes ?? state.mesActual;
   anio = anio ?? state.anio;
   const dias = diasEnMes(mes, anio);
+  const key = anio + '-' + mes;
+
+  const CODIGOS = new Set(['M','T','N','L','D','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10',
+    'F11','F12','F13','F14','F15','F16','F17','F18','F19','F20','F21','F22','F23','F24','F25',
+    'F26','F27','F28','F29','F30','F31','IT','PR','V','VA','CF','LD','LDA','LIB','HE','VAC',
+    'LD25','LD26','L24','D25','L25','D26','']);
+
+  const esCodTurno = v => {
+    if (!v || CODIGOS.has(v)) return true;
+    if (/^F\d+$/.test(v)) return true;
+    if (/^[A-Z]{1,4}\d{0,2}$/.test(v) && v.length <= 5) return true;
+    if (/^\d$/.test(v)) return true;
+    return false;
+  };
+
+  const normalizar = s => s.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^A-Z0-9 ]/g,'')
+    .replace(/\s+/g,' ').trim().toUpperCase();
+
+  const score = (a, b) => {
+    const an = normalizar(a);
+    const bn = normalizar(b);
+    if (an === bn) return 100;
+    
+    if (an.replace(/\s/g,'') === bn.replace(/\s/g,'')) return 95;
+    
+    const pa = an.split(' ').filter(p => p.length >= 3);
+    const pb = bn.split(' ').filter(p => p.length >= 3);
+    if (!pa.length || !pb.length) return 0;
+    
+    let coinciden = 0;
+    for (const p of pa) {
+      if (pb.includes(p)) coinciden++;
+    }
+    
+    const apellidoA = pa[pa.length - 1] || '';
+    const apellidoB = pb[pb.length - 1] || '';
+    const bonusApellido = (apellidoA === apellidoB && apellidoA.length > 3) ? 20 : 0;
+    
+    return Math.round((coinciden / Math.max(pa.length, pb.length) * 100) + bonusApellido);
+  };
+
   const lineas = textoExcel.trim().split(/\r?\n/).filter(l => l.trim());
-  const resultado = {};
-  const errores = [];
+  const filas = [];
 
-  const normalizar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim();
+  console.log(`📊 Procesando ${lineas.length} filas...`);
 
-  lineas.forEach((linea, i) => {
-    const cols = linea.split(/\t/);
-    let nombre = null, turnos = [];
+  lineas.forEach((linea, idx) => {
+    const cols = linea.split(/\t/).map(c => c.trim());
+
+    let nombreIdx = -1, nombre = '';
     for (let c = 0; c < cols.length; c++) {
-      const val = cols[c].trim();
-      if (val.length > 5 && isNaN(val) && /[a-záéíóúñA-Z]{3,}/.test(val)) {
-        nombre = val.toUpperCase().trim();
-        const resto = cols.slice(c + 1).map(v => v.trim());
-        if (resto.length >= dias) { turnos = resto.slice(0, dias); break; }
+      const v = cols[c];
+      if (v.length >= 3 && isNaN(v) && /[A-Za-záéíóúñÁÉÍÓÚÑ]{3,}/i.test(v) && !esCodTurno(v)) {
+        nombreIdx = c;
+        nombre = v.toUpperCase().trim();
+        break;
       }
     }
-    if (!nombre) return;
-    const nombreNorm = normalizar(nombre);
-    let match = state.trabajadores.find(t => normalizar(t.nombre) === nombreNorm);
-    if (!match) {
-      const partes = nombreNorm.split(' ');
-      match = state.trabajadores.find(t => {
-        const tn = normalizar(t.nombre);
-        return partes.some(p => p.length > 3 && tn.includes(p));
-      });
+    if (nombreIdx === -1) return;
+
+    const resto = cols.slice(nombreIdx + 1);
+    const turnos = [];
+    for (let r = 0; r < resto.length && turnos.length < dias; r++) {
+      const v = resto[r];
+      if (v.length > 6 && !esCodTurno(v)) continue;
+      turnos.push(v);
     }
-    if (match && turnos.length >= dias) {
-      resultado[match.id] = turnos.slice(0, dias);
-    } else if (!match) {
-      errores.push('No encontrado: ' + nombre);
+
+    if (turnos.length >= dias) {
+      filas.push({ nombre, turnos: turnos.slice(0, dias) });
+      console.log(`  Fila ${idx+1}: "${nombre}" (${turnos.length} turnos)`);
+    } else {
+      console.warn(`  ⚠️ Fila ${idx+1}: "${nombre}" - turnos insuficientes (${turnos.length}/${dias})`);
     }
   });
 
-  const key = clavesMes(mes, anio);
-  if (!state.cuadrantePorMes[key]) state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
+  console.log(`\n📌 Filas válidas para importar: ${filas.length}`);
+
+  if (!state.cuadrantePorMes[key])
+    state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
   const cuad = state.cuadrantePorMes[key];
+
   let aplicados = 0;
-  state.trabajadores.forEach((t, idx) => {
-    if (resultado[t.id]) { cuad[idx] = resultado[t.id]; aplicados++; }
+  const sinMatch = [];
+
+  filas.forEach(fila => {
+    let mejor = null, mejorScore = 0;
+    state.trabajadores.forEach(t => {
+      const s = score(fila.nombre, t.nombre);
+      if (s > mejorScore) { mejorScore = s; mejor = t; }
+    });
+
+    if (mejor && mejorScore >= 40) {
+      const idx = state.trabajadores.indexOf(mejor);
+      const turnosNorm = Array(dias).fill('');
+      for (let d = 0; d < Math.min(fila.turnos.length, dias); d++)
+        turnosNorm[d] = fila.turnos[d];
+      cuad[idx] = turnosNorm;
+      aplicados++;
+      console.log(`  ✓ (${mejorScore}%) ${fila.nombre} → ${mejor.nombre}`);
+    } else {
+      sinMatch.push(`${fila.nombre} | mejor: ${mejor?.nombre || '?'} (${mejorScore}%)`);
+      console.warn(`  ✗ SIN MATCH: ${fila.nombre} (score: ${mejorScore}%)`);
+    }
   });
+
   guardarDatos();
-  if (currentView === 'cuadrante') renderCuadrante();
-  mostrarToast(`✅ Importados ${aplicados} trabajadores` + (errores.length ? ` (${errores.length} sin match)` : ''));
-  if (errores.length) console.warn('Sin match:\n' + errores.join('\n'));
-  return { aplicados, errores };
+  if (currentView === "cuadrante") renderCuadrante();
+  
+  console.log(`\n✅ Importados: ${aplicados}/${filas.length}`);
+  if (sinMatch.length) console.warn('Sin match:\n' + sinMatch.join('\n'));
+  
+  let mensaje = `✅ ${aplicados} trabajadores importados`;
+  if (sinMatch.length > 0) {
+    mensaje += `\n⚠️ ${sinMatch.length} sin coincidencia`;
+    mostrarToast(`${aplicados} asignados, ${sinMatch.length} sin coincidencia`, true);
+  } else {
+    mostrarToast(mensaje);
+  }
+  
+  return { aplicados, sinMatch };
+};
+
+// ==================== IMPORTADOR POR NOMBRE ORIGINAL (MANTENIDO) ====================
+function importarPorNombre(textoExcel, mes, anio) {
+  return window.importarPorNombreV2(textoExcel, mes, anio);
 }
 
 function mostrarModalImportarPorNombre() {
@@ -1013,8 +1123,8 @@ function mostrarModalImportarPorNombre() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal-box">
-      <div class="modal-title">🧠 Importar por nombre (inteligente)</div>
-      <p style="font-size:12px; color:#64748b; margin-bottom:8px;">📌 Este método NO depende del orden de las filas. Busca automáticamente por nombre.</p>
+      <div class="modal-title">🧠 Importar por nombre (inteligente V2)</div>
+      <p style="font-size:12px; color:#64748b; margin-bottom:8px;">📌 Este método NO depende del orden de las filas. Busca automáticamente por nombre con matching inteligente.</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:8px;">1. En Excel, selecciona las filas con nombres y turnos (columna nombre + días).</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:12px;">2. Copia (Ctrl+C) y pega abajo:</p>
       <textarea id="excel-data-nombre" class="text-area-import" placeholder="Pega aquí los datos...&#10;&#10;Ejemplo:&#10;MARIA JOSE GARCIA LATORRE\tLD25\tLD25\tL\tD..."></textarea>
@@ -1287,6 +1397,7 @@ document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.ke
 document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) cerrarModal(); });
 
 cargarDatos();
+corregirNombresSustitutos(); // Corregir nombres de sustitutos al inicio
 if (state.pinHash) { pinDesbloqueado = false; renderHome(); mostrarPantallaPIN("unlock"); }
 else { pinDesbloqueado = true; renderHome(); }
 </script>
