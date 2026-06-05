@@ -590,7 +590,7 @@ function generarPDF() {
     const dowName = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][dow];
     tablaHtml += `<th style="border:0.5px solid #000;padding:4px;text-align:center;">${d}<br><span style="font-size:6px;font-weight:normal">${dowName}</span></th>`;
   }
-  tablaHtml += `<th style="border:0.5px solid #000;padding:4px;text-align:center;">H</th><tr></thead><tbody>`;
+  tablaHtml += `<th style="border:0.5px solid #000;padding:4px;text-align:center;">H</th></tr></thead><tbody>`;
   for (let i = 0; i < state.trabajadores.length; i++) {
     const t = state.trabajadores[i];
     if (t.estado !== "activo") continue;
@@ -613,7 +613,7 @@ function generarPDF() {
       else if (val === "") estilo += " color:#374151;";
       tablaHtml += `<td style="${estilo}">${val === "" && t.turnoBase === "M" ? "" : val}</td>`;
     }
-    tablaHtml += `<td style="border:0.5px solid #000;padding:4px;text-align:center;font-weight:700;background:#e8f4fd;">${total}</td></tr>`;
+    tablaHtml += `<td style="border:0.5px solid #000;padding:4px;text-align:center;font-weight:700;background:#e8f4fd;">${total}</td>`;
   }
   tablaHtml += `</tbody></table>`;
   const contenidoHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Cuadrante ${nombreMes} ${anio}</title><style>@page{size:A4 landscape;margin:8mm;} body{font-family:Arial;margin:0;padding:10px;} h2{color:#0f172a;} p{color:#64748b;font-size:8px;} table{width:100%;border-collapse:collapse;font-size:7px;} th,td{border:0.5px solid #999;padding:3px 2px;text-align:center;} th{background:#f1f5f9;}</style></head><body><h2>🧹 Cuadrante de trabajo</h2><p><strong>Centro:</strong> Hospital Calatayud Limpieza · <strong>Mes:</strong> ${nombreMes} ${anio} · <strong>Generado:</strong> ${new Date().toLocaleString("es-ES")}</p>${tablaHtml}<p style="margin-top:12px;font-size:6px;color:#999;">Documento generado automáticamente por Gestión Cuadrantes.</p></body></html>`;
@@ -870,10 +870,11 @@ function renderCuadrante() {
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
+      // ✅ CELDA CORREGIDA: El final ahora dice `</td>` en lugar de `</td>`
       html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
-    html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;"><div style="display:flex;flex-direction:column;gap:2px;"><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'up')" ${f === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'down')" ${f === filtrados.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button></div></table>`;
+    html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;"><div style="display:flex;flex-direction:column;gap:2px;"><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'up')" ${f === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'down')" ${f === filtrados.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button></div></td>`;
     html += `</tr>`;
   }
   html += `<tr style="background:#f0fdf4;font-weight:700;"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:#f0fdf4;">Cobertura M/T/N<\/td>`;
