@@ -111,7 +111,6 @@
   .IT { color: #991b1b; font-weight: 700; background: #fee2e2 !important; }
   .LD, .LDA, .LD25, .LD26 { color: #b45309; font-weight: 700; background: #fffbeb !important; }
   .cobertura-row td { background: #f0fdf4; font-weight: 700; color: #15803d; border-top: 2px solid #86efac; }
-  .warning-cell { background: #fee2e2 !important; border-left: 3px solid #dc2626 !important; }
 
   .worker-search { width: 100%; padding: 9px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; margin-bottom: 12px; outline: none; }
   .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; cursor: pointer; margin-bottom: 8px; }
@@ -443,11 +442,10 @@ function getHorasPorSemana(trabId, mes, anio) {
   
   for (let d = 0; d < dias; d++) {
     const fecha = new Date(anio, mes, d + 1);
-    const diaSemana = fecha.getDay(); // 0 = domingo, 6 = sábado
+    const diaSemana = fecha.getDay();
     
     semanaActual.push(horasCodigo(cuad[idx][d] || ""));
     
-    // Si es sábado o último día, cerrar semana
     if (diaSemana === 6 || d === dias - 1) {
       const totalSemana = semanaActual.reduce((a, b) => a + b, 0);
       semanas.push({ semana: semanas.length + 1, total: totalSemana, ok: totalSemana <= state.parametros.jornadaMaxSemanal });
@@ -469,7 +467,6 @@ function validarDescansoNoche(trabId, mes, anio) {
     const hoy = cuad[idx][d] || "";
     const manana = cuad[idx][d + 1] || "";
     
-    // Si hoy es N (noche), mañana debe ser L (libranza) o estar en blanco
     if (hoy === "N" && manana !== "L" && manana !== "" && manana !== "D") {
       errores.push(`Día ${d + 1}: Noche (N) sin libranza (L) al día siguiente (tiene ${manana || "vacío"})`);
     }
@@ -491,22 +488,18 @@ function validarReglasNegocio(trabId, mes, anio) {
   for (let d = 0; d < dias; d++) {
     const valor = cuad[idx][d] || "";
     
-    // Regla 1: Trabajadores de mañana (grupo "manana") no deben tener M explícito (el blanco ya es mañana)
     if (t.grupo === "manana" && valor === "M") {
       errores.push(`Día ${d + 1}: No debe poner "M" (el blanco ya significa mañana)`);
     }
     
-    // Regla 2: Trabajadores de tarde (grupo "tarde") no deben tener T explícito
     if (t.grupo === "tarde" && valor === "T") {
       errores.push(`Día ${d + 1}: No debe poner "T" (el blanco ya significa tarde)`);
     }
     
-    // Regla 3: Peones no deben tener celda vacía (deben poner M o T explícitamente)
     if (t.grupo === "peon" && valor === "") {
       errores.push(`Día ${d + 1}: Celda vacía - debe poner "M" o "T" explícitamente`);
     }
     
-    // Regla 4: Trabajadores de noche: validar que no tengan dos N seguidas
     if (t.grupo === "noche" && valor === "N" && d < dias - 1) {
       const manana = cuad[idx][d + 1] || "";
       if (manana === "N") {
@@ -522,26 +515,22 @@ function validarCuadranteCompleto() {
   const incidencias = [];
   const mes = state.mesActual;
   const anio = state.anio;
-  const dias = diasEnMes(mes, anio);
   
   for (const t of state.trabajadores) {
     if (t.estado !== "activo") continue;
     
     const nombre = t.nombre;
     
-    // 1. Días seguidos trabajando
     const seg = getMaxDiasSeguidos(t.id);
     if (seg > state.parametros.maxDiasSeguidos) {
       incidencias.push(`⚠️ ${nombre}: ${seg} días seguidos trabajando (máx ${state.parametros.maxDiasSeguidos})`);
     }
     
-    // 2. Bolsa de horas negativa
     const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
     if (bolsa < -40) {
       incidencias.push(`📊 ${nombre}: bolsa ${bolsa}h (déficit > 40h)`);
     }
     
-    // 3. Embarazo + turno noche
     if (t.embarazo) {
       const cuad = getCuadranteMes(mes, anio);
       const idx = state.trabajadores.indexOf(t);
@@ -550,7 +539,6 @@ function validarCuadranteCompleto() {
       }
     }
     
-    // 4. Horas por semana
     const semanas = getHorasPorSemana(t.id, mes, anio);
     for (const sem of semanas) {
       if (!sem.ok) {
@@ -558,13 +546,11 @@ function validarCuadranteCompleto() {
       }
     }
     
-    // 5. Descanso entre noches
     const nocheErrores = validarDescansoNoche(t.id, mes, anio);
     for (const err of nocheErrores) {
       incidencias.push(`🌙 ${nombre}: ${err}`);
     }
     
-    // 6. Reglas de negocio específicas
     const negocioErrores = validarReglasNegocio(t.id, mes, anio);
     for (const err of negocioErrores) {
       incidencias.push(`📋 ${nombre}: ${err}`);
@@ -713,7 +699,6 @@ function coberturaDelDia(dia, mes, anio) {
   state.trabajadores.forEach((t, idx) => {
     if (t.estado === "baja") return;
     const v = cuad[idx]?.[dia] || "";
-    // Para mañanas y tardes: el blanco cuenta como jornada completa
     if (t.grupo === "manana" && v === "") result.M++;
     else if (t.grupo === "tarde" && v === "") result.T++;
     else if (v === "M") result.M++;
@@ -744,7 +729,7 @@ function generarPDF() {
     tablaHtml += `<tr><td style="border:0.5px solid #000;padding:4px;text-align:left;">${t.nombre}${t.tipo === "sustituto" ? " [S]" : ""}${t.estado === "baja" ? " [B]" : ""}</td>`;
     for (let d = 0; d < dias; d++) {
       let val = cuad[i]?.[d] || "";
-      if (val === "" && t.grupo === "manana" && t.estado === "activo") val = "";
+      if (val === "" && t.turnoBase === "M") val = "";
       let estilo = "border:0.5px solid #000;padding:4px;text-align:center;";
       if (val === "L") estilo += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") estilo += " color:#15803d;font-weight:700;";
@@ -758,7 +743,7 @@ function generarPDF() {
       else if (val === "LD" || val === "LDA") estilo += " color:#b45309;font-weight:700;background:#fffbeb;";
       else if (val && val.startsWith("F")) estilo += " color:#ea580c;font-weight:700;";
       else if (val === "") estilo += " color:#374151;";
-      tablaHtml += `<td style="${estilo}">${val === "" && t.grupo === "manana" ? "" : val}</td>`;
+      tablaHtml += `<td style="${estilo}">${val === "" && t.turnoBase === "M" ? "" : val}</td>`;
     }
     tablaHtml += `<td style="border:0.5px solid #000;padding:4px;text-align:center;font-weight:700;background:#e8f4fd;">${total}</td>`;
   }
@@ -785,7 +770,6 @@ function cargarDatos() {
   if (raw) {
     try {
       const data = JSON.parse(raw);
-      // Si la versión es anterior a 23, forzar reinicio (nombres corregidos)
       if (data.version < 23) {
         console.log("Versión antigua detectada. Reiniciando con datos corregidos...");
         inicializarNuevo();
@@ -809,6 +793,7 @@ function cargarDatos() {
       state.trabajadores = state.trabajadores.map((t, i) => ({
         ...t,
         id: t.id ?? `t_${i}_${Date.now()}`,
+        grupo: t.grupo ?? (t.turnoBase === "T" ? "tarde" : t.turnoBase === "N" ? "noche" : t.turnoBase === "Rotativo" ? "peon" : "manana"),
         zonaPrincipalId: t.zonaPrincipalId ?? (state.zonas[0]?.id || ""),
         zonasRotacionIds: t.zonasRotacionIds ?? [],
         turnoHabitual: t.turnoHabitual ?? "Sin asignar",
@@ -928,7 +913,7 @@ function renderHome() {
   for (let i = 0; i < primerDia; i++) html += `<div></div>`;
   for (let d = 1; d <= dias; d++) {
     const tareasDia = state.tareas.filter(t => !t.completada && t.dia === d);
-    let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : tareasDia.some(t => t.prioridad === "verde") ? "verde" : null;
+    let dotColor = tareasDia.some(t => t.prioridad === "rojo") ? "rojo" : tareasDia.some(t => t.prioridad === "amber") ? "amber" : null;
     const esHoyDia = esHoyMes && diaHoy === d;
     const fest = esFestivo(anio, mes, d);
     const eventosDia = getEventosDelDia(anio, mes, d);
@@ -942,7 +927,6 @@ function renderHome() {
   tareasHoy.forEach(t => html += `<div class="aviso aviso-rojo"><strong>${t.nombre}</strong></div>`);
   html += `</div></div>`;
   
-  // Mostrar alertas del cuadrante actual
   const incidencias = validarCuadranteCompleto();
   if (incidencias.length > 0) {
     html += `<div class="card"><div class="card-header">⚠️ Alertas del cuadrante (${incidencias.length})</div><div class="card-body">`;
@@ -1006,7 +990,7 @@ function mostrarParametros() {
   document.body.appendChild(overlay);
 }
 
-// ==================== VISTA CUADRANTE ====================
+// ==================== VISTA CUADRANTE (CORREGIDA - CIERRE DE FILA CORRECTO) ====================
 function renderCuadrante() {
   const mes = state.mesActual;
   const anio = state.anio;
@@ -1029,6 +1013,8 @@ function renderCuadrante() {
     html += `<th style="border:0.5px solid #cbd5e1;padding:6px 2px;text-align:center;${fds ? 'background:#eef2ff;' : ''}${fest ? 'background:#fff7ed;' : ''}">${d}</th>`;
   }
   html += `<th style="border:0.5px solid #cbd5e1;padding:6px 4px;text-align:center;background:#e8f4fd;position:sticky;right:0;">H</th><th style="border:0.5px solid #cbd5e1;padding:6px 4px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;">Mover</th></thead><tbody>`;
+  
+  // ===== FILAS DE TRABAJADORES =====
   for (let f = 0; f < filtrados.length; f++) {
     const t = filtrados[f];
     const idxOriginal = indicesFiltrados[f];
@@ -1037,14 +1023,19 @@ function renderCuadrante() {
     const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
     const esSustituto = t.tipo === "sustituto";
     const esInactivo = t.estado === "inactivo";
+    
     let rowStyle = "";
     if (t.estado === "baja") rowStyle = "opacity:0.55; background:#fff5f5;";
     if (esSustituto) rowStyle = "color:#dc2626;";
     if (esInactivo) rowStyle = "opacity:0.55; background:#fff5f5;";
+    
     html += `<tr style="${rowStyle}"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:white;font-weight:600;">${t.nombre}${t.estado === "baja" ? ' <span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ''}${t.tipo === "sustituto" ? ' <span class="badge badge-sustituto" style="margin-left:4px">SUSTITUTO</span>' : ''}${t.embarazo ? " 🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? " ⚠️" : ""}${bolsa < -40 ? " 📉" : ""}</td>`;
+    
+    // Bucle de días (todas las celdas del trabajador)
     for (let d = 0; d < dias; d++) {
       let val = cuad[idxOriginal]?.[d] || "";
-      if (val === "" && t.grupo === "manana" && t.estado === "activo") val = "";
+      if (val === "" && t.turnoBase === "M" && t.estado === "activo") val = "";
+      
       let cellStyle = "border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;";
       if (val === "L") cellStyle += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") cellStyle += " color:#15803d;font-weight:700;";
@@ -1061,33 +1052,46 @@ function renderCuadrante() {
       else if (val === "IT") cellStyle += " color:#991b1b;font-weight:700;background:#fee2e2;";
       else if (val === "LD" || val === "LDA") cellStyle += " color:#b45309;font-weight:700;background:#fffbeb;";
       else if (val && val.startsWith("F")) cellStyle += " color:#ea580c;font-weight:700;";
+      
       const fds = esFinDeSemana(d + 1, mes, anio);
       const fest = esFestivo(anio, mes, d + 1);
       if (fds) cellStyle += " background:#eef2ff;";
       if (fest && val && val !== "L" && val !== "D") cellStyle += " background:#fff7ed;";
+      
       const fechaCelda = new Date(anio, mes, d + 1);
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
       
-      // Verificar si hay error de regla de negocio para esta celda
-      const tWorker = t;
+      // VALIDACIONES ESPECÍFICAS (resaltar celdas con error)
       let tieneError = false;
-      if (tWorker.grupo === "peon" && val === "") tieneError = true;
-      if (tWorker.grupo === "manana" && val === "M") tieneError = true;
-      if (tWorker.grupo === "tarde" && val === "T") tieneError = true;
-      if (tWorker.grupo === "noche" && val === "N" && d < dias-1) {
-        const manana = cuad[idxOriginal]?.[d+1] || "";
-        if (manana === "N") tieneError = true;
+      // Regla 1: Trabajadores de mañana no deben tener M explícito
+      if (t.grupo === "manana" && val === "M") tieneError = true;
+      // Regla 2: Trabajadores de tarde no deben tener T explícito
+      if (t.grupo === "tarde" && val === "T") tieneError = true;
+      // Regla 3: Peones no deben tener celda vacía
+      if (t.grupo === "peon" && val === "") tieneError = true;
+      // Regla 4: Noche sin libranza al día siguiente
+      if (t.grupo === "noche" && val === "N" && d < dias - 1) {
+        const manana = cuad[idxOriginal]?.[d + 1] || "";
+        if (manana !== "L" && manana !== "" && manana !== "D") tieneError = true;
       }
+      
       if (tieneError) cellStyle += " background:#fee2e2 !important; border-left:3px solid #dc2626 !important;";
       
-      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.grupo === "manana" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
+      // CELDA CORRECTA - CIERRE CON `</td>`
+      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
+    
+    // Total y botones de mover (después del bucle de días)
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;"><div style="display:flex;flex-direction:column;gap:2px;"><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'up')" ${f === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'down')" ${f === filtrados.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button></div></td>`;
-    html += `</table>`;
+    
+    // ✅ CIERRE DE FILA CORRECTO (después de todas las celdas del trabajador)
+    html += `</tr>`;
   }
+  
+  // Fila de cobertura
   html += `<tr style="background:#f0fdf4;font-weight:700;"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:#f0fdf4;">Cobertura M/T/N<\/td>`;
   for (let d = 0; d < dias; d++) {
     const cob = coberturaDelDia(d, mes, anio);
@@ -1102,6 +1106,7 @@ function renderCuadrante() {
   html += `</tbody>`;
   html += `<\/table>`;
   html += `</div>`;
+  
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
 }
@@ -1376,6 +1381,7 @@ function guardarWorker(id) {
   t.nombre = document.getElementById("dw-nombre")?.value?.trim() || t.nombre;
   t.estado = document.getElementById("dw-estado")?.value || t.estado;
   t.turnoBase = document.getElementById("dw-turnoBase")?.value || t.turnoBase;
+  t.grupo = t.turnoBase === "T" ? "tarde" : t.turnoBase === "N" ? "noche" : t.turnoBase === "Rotativo" ? "peon" : "manana";
   t.embarazo = document.getElementById("dw-emb")?.checked || false;
   guardarDatos(); cerrarModal(); renderPersonal();
   if (currentView === "cuadrante") renderCuadrante();
