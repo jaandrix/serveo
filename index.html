@@ -59,7 +59,6 @@
   .aviso-verde { background: #dcfce7; border-color: #16a34a; }
   .aviso-azul { background: #dbeafe; border-color: #2563eb; }
   .aviso-gris { background: #f1f5f9; border-color: #94a3b8; }
-  .banner-vencido { background: #dc2626; color: #fff; padding: 10px 14px; border-radius: 12px; margin-bottom: 12px; font-size: 12px; font-weight: 600; text-align: center; }
 
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
   .cal-wd { font-size: 10px; font-weight: 700; color: #64748b; padding: 4px 0; }
@@ -211,7 +210,7 @@
 <div id="app">
   <div id="header">
     <div id="header-left">
-      <h1>🧹 Gestión Cuadrantes <small>v<span id="version-number">20</span></small></h1>
+      <h1>🧹 Gestión Cuadrantes <small>v<span id="version-number">21</span></small></h1>
       <p id="header-sub">Cargando...</p>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
@@ -305,45 +304,45 @@ function horasCodigo(cod) {
   return 0;
 }
 
-// ==================== LISTA REAL DE TRABAJADORES ====================
+// ==================== LISTA REAL DE TRABAJADORES (TODOS EN MAYÚSCULAS) ====================
 const TRABAJADORES_FIJOS = [
   { id: 0, nombre: "MARIA JOSE GARCIA LATORRE", tipo: "fijo", turnoBase: "M", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
   { id: 1, nombre: "ANA BELEN SERRANO MOTA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
   { id: 2, nombre: "VICTORIA CHAVES ARIAS", tipo: "fijo", turnoBase: "M", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 3, nombre: "Mª JESUS SALO LONGARES", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 3, nombre: "MARIA JESUS SALO LONGARES", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
   { id: 4, nombre: "CONCEPCION GARCIA GUERRERO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 8, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 5, nombre: "CONCEPCION TARBUENCA SILVESTRE", tipo: "fijo", turnoBase: "M", antiguedadAnios: 20, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
   { id: 6, nombre: "ASUNCION IBARRA ARAMBURO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 7, nombre: "LUCIA MORENO APARICIO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 37, moscososAntiguedad: 7, vacacionesAntiguedad: 4 },
-  { id: 8, nombre: "Mª JESUS BETRIAN MORA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 8, nombre: "MARIA JESUS BETRIAN MORA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
   { id: 9, nombre: "BELINDA MARUGAN RIBAS", tipo: "fijo", turnoBase: "M", antiguedadAnios: 32, moscososAntiguedad: 6, vacacionesAntiguedad: 4 },
-  { id: 10, nombre: "MARI CARMEN CHUECA GRACIA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 10, nombre: "M CARMEN CHUECA GRACIA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 11, nombre: "JOSE LUIS GARCIA SANCHO", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
   { id: 12, nombre: "JORGE GARCIA OLIVAR", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 9, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 13, nombre: "LUIS MIGUEL SERRANO GONZALEZ", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
   { id: 14, nombre: "ANTONIO GARCIA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
-  { id: 15, nombre: "MISABEL OLIVAR PEREZ", tipo: "fijo", turnoBase: "T", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 15, nombre: "MARIA ISABEL OLIVAR PEREZ", tipo: "fijo", turnoBase: "T", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
   { id: 16, nombre: "AURELIA MIR SERRANO", tipo: "fijo", turnoBase: "T", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
   { id: 17, nombre: "MANUELA MARIN MUNUERA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 24, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
   { id: 18, nombre: "INMACULADA LORENTE BENITO", tipo: "fijo", turnoBase: "T", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
   { id: 19, nombre: "YOLANDA GRIMAL BLAS", tipo: "fijo", turnoBase: "T", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 20, nombre: "SUSANA NAVARRO MARQUINA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 21, nombre: "PEÑA DURAN PEREZ", tipo: "fijo", turnoBase: "N", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
-  { id: 22, nombre: "M JESUS BOILLOS CASADO", tipo: "fijo", turnoBase: "N", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 22, nombre: "MARIA JESUS BOILLOS CASADO", tipo: "fijo", turnoBase: "N", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 23, nombre: "VANESSA BETRIAN MORA", tipo: "fijo", turnoBase: "N", antiguedadAnios: 26, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 24, nombre: "MISABEL IBARRA", tipo: "fijo", turnoBase: "N", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 24, nombre: "MARIA ISABEL IBARRA", tipo: "fijo", turnoBase: "N", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
   { id: 25, nombre: "JOSE RAMON RUIZ CHAVES", tipo: "fijo", turnoBase: "M", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0, nota: "Limpia el 061 - Sustituye peones" },
 ];
 
 const SUSTITUTOS = [
-  { id: 26, nombre: "Rosario Polo", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 27, nombre: "Carmela Aramburo", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 28, nombre: "Victoria Remacha", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 29, nombre: "Susagny Mendoza", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 30, nombre: "Angel Monteagudo", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 31, nombre: "M Carmen Joven Trasovares", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 32, nombre: "M Carmen Lopez Langa", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 33, nombre: "Esther Blas", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 26, nombre: "ROSARIO POLO", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 27, nombre: "CARMELA ARAMBURO", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 28, nombre: "VICTORIA REMACHA", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 29, nombre: "SUSAGNY MENDOZA", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 30, nombre: "ANGEL MONTEAGUDO", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 31, nombre: "M CARMEN JOVEN TRASOVARES", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 32, nombre: "M CARMEN LOPEZ LANGA", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 33, nombre: "ESTHER BLAS", tipo: "sustituto", turnoBase: "M", activo: false },
 ];
 
 // ==================== ESTADO GLOBAL ====================
@@ -833,7 +832,6 @@ function vaciarCuadranteActual() {
   const dias = diasEnMes(mes, anio);
   const key = clavesMes(mes, anio);
   
-  // Crear matriz vacía para todos los trabajadores
   const cuadranteVacio = state.trabajadores.map(() => Array(dias).fill(""));
   state.cuadrantePorMes[key] = cuadranteVacio;
   
@@ -1130,6 +1128,12 @@ function renderPersonal() {
   noTrabajan.forEach(t => html += cardWorkerHtml(t, mes, anio));
   html += `</div></div><button class="btn btn-primary" onclick="modalNuevoTrabajador()">➕ Añadir trabajador</button>`;
   document.getElementById("content").innerHTML = html;
+  
+  // Restaurar el valor del input después de renderizar
+  const searchInput = document.getElementById("worker-search");
+  if (searchInput && personalFiltro) {
+    searchInput.value = personalFiltro;
+  }
 }
 
 function cardWorkerHtml(t, mes, anio) {
@@ -1348,7 +1352,6 @@ document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.ke
 document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) cerrarModal(); });
 
 cargarDatos();
-// Actualizar versión en UI
 document.getElementById("version-number").textContent = APP_VERSION;
 if (state.pinHash) { pinDesbloqueado = false; renderHome(); mostrarPantallaPIN("unlock"); }
 else { pinDesbloqueado = true; renderHome(); }
