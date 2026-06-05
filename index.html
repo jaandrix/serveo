@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestión Cuadrantes">
 <meta name="theme-color" content="#0f172a">
-<title>Gestión Cuadrantes 🧹</title>
+<title>Gestión Cuadrantes 🧹 v23</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { background: #f0f4f8; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; color: #0f172a; overflow: hidden; height: 100dvh; }
@@ -111,6 +111,7 @@
   .IT { color: #991b1b; font-weight: 700; background: #fee2e2 !important; }
   .LD, .LDA, .LD25, .LD26 { color: #b45309; font-weight: 700; background: #fffbeb !important; }
   .cobertura-row td { background: #f0fdf4; font-weight: 700; color: #15803d; border-top: 2px solid #86efac; }
+  .warning-cell { background: #fee2e2 !important; border-left: 3px solid #dc2626 !important; }
 
   .worker-search { width: 100%; padding: 9px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 14px; margin-bottom: 12px; outline: none; }
   .worker-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; cursor: pointer; margin-bottom: 8px; }
@@ -210,7 +211,7 @@
 <div id="app">
   <div id="header">
     <div id="header-left">
-      <h1>🧹 Gestión Cuadrantes <small>v<span id="version-number">21</span></small></h1>
+      <h1>🧹 Gestión Cuadrantes <small>v<span id="version-number">23</span></small></h1>
       <p id="header-sub">Cargando...</p>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
@@ -235,7 +236,7 @@
 
 <script>
 // ==================== VERSIÓN Y CONSTANTES ====================
-const APP_VERSION = 21;
+const APP_VERSION = 23;
 const MESES_NOMBRES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 const DIAS_SEMANA = ["D","L","M","X","J","V","S"];
 const TURNOS_HABITUALES = ["M","T","N","F1","Rotativo","Sin asignar"];
@@ -304,45 +305,45 @@ function horasCodigo(cod) {
   return 0;
 }
 
-// ==================== LISTA REAL DE TRABAJADORES (TODOS EN MAYÚSCULAS) ====================
+// ==================== LISTA REAL DE TRABAJADORES (REORDENADA SEGÚN LISTA OFICIAL) ====================
 const TRABAJADORES_FIJOS = [
-  { id: 0, nombre: "MARIA JOSE GARCIA LATORRE", tipo: "fijo", turnoBase: "M", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
-  { id: 1, nombre: "ANA BELEN SERRANO MOTA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
-  { id: 2, nombre: "VICTORIA CHAVES ARIAS", tipo: "fijo", turnoBase: "M", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 3, nombre: "MARIA JESUS SALO LONGARES", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
-  { id: 4, nombre: "CONCEPCION GARCIA GUERRERO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 8, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 5, nombre: "CONCEPCION TARBUENCA SILVESTRE", tipo: "fijo", turnoBase: "M", antiguedadAnios: 20, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
-  { id: 6, nombre: "ASUNCION IBARRA ARAMBURO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 7, nombre: "LUCIA MORENO APARICIO", tipo: "fijo", turnoBase: "M", antiguedadAnios: 37, moscososAntiguedad: 7, vacacionesAntiguedad: 4 },
-  { id: 8, nombre: "MARIA JESUS BETRIAN MORA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
-  { id: 9, nombre: "BELINDA MARUGAN RIBAS", tipo: "fijo", turnoBase: "M", antiguedadAnios: 32, moscososAntiguedad: 6, vacacionesAntiguedad: 4 },
-  { id: 10, nombre: "M CARMEN CHUECA GRACIA", tipo: "fijo", turnoBase: "M", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 11, nombre: "JOSE LUIS GARCIA SANCHO", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
-  { id: 12, nombre: "JORGE GARCIA OLIVAR", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 9, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 13, nombre: "LUIS MIGUEL SERRANO GONZALEZ", tipo: "peon", turnoBase: "Rotativo", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
-  { id: 14, nombre: "ANTONIO GARCIA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
-  { id: 15, nombre: "MARIA ISABEL OLIVAR PEREZ", tipo: "fijo", turnoBase: "T", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
-  { id: 16, nombre: "AURELIA MIR SERRANO", tipo: "fijo", turnoBase: "T", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 17, nombre: "MANUELA MARIN MUNUERA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 24, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 18, nombre: "INMACULADA LORENTE BENITO", tipo: "fijo", turnoBase: "T", antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
-  { id: 19, nombre: "YOLANDA GRIMAL BLAS", tipo: "fijo", turnoBase: "T", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 20, nombre: "SUSANA NAVARRO MARQUINA", tipo: "fijo", turnoBase: "T", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 21, nombre: "PEÑA DURAN PEREZ", tipo: "fijo", turnoBase: "N", antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
-  { id: 22, nombre: "MARIA JESUS BOILLOS CASADO", tipo: "fijo", turnoBase: "N", antiguedadAnios: 4, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 23, nombre: "VANESSA BETRIAN MORA", tipo: "fijo", turnoBase: "N", antiguedadAnios: 26, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
-  { id: 24, nombre: "MARIA ISABEL IBARRA", tipo: "fijo", turnoBase: "N", antiguedadAnios: 5, moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
-  { id: 25, nombre: "JOSE RAMON RUIZ CHAVES", tipo: "fijo", turnoBase: "M", antiguedadAnios: 3, moscososAntiguedad: 0, vacacionesAntiguedad: 0, nota: "Limpia el 061 - Sustituye peones" },
+  { id: 0,  nombre: "MARIA JOSE GARCIA LATORRE",      tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 1,  nombre: "ANA BELEN SERRANO MOTA",         tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 2,  nombre: "VICTORIA CHAVES ARIAS",           tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 3,  nombre: "MARIA JESUS SALO LONGARES",       tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 4,  nombre: "CONCEPCION TARBUENCA SILVESTRE",  tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 20, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 5,  nombre: "CONCEPCION GARCIA GUERRERO",      tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 8,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 6,  nombre: "ASUNCION IBARRA ARAMBURO",        tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 5,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 7,  nombre: "LUCIA MORENO APARICIO",           tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 37, moscososAntiguedad: 7, vacacionesAntiguedad: 4 },
+  { id: 8,  nombre: "MARIA JESUS BETRIAN MORA",        tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 30, moscososAntiguedad: 5, vacacionesAntiguedad: 4 },
+  { id: 9,  nombre: "BELINDA MARUGAN RIBAS",           tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 32, moscososAntiguedad: 6, vacacionesAntiguedad: 4 },
+  { id: 10, nombre: "M CARMEN CHUECA GRACIA",          tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 4,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 11, nombre: "JOSE LUIS GARCIA SANCHO",         tipo: "peon",  turnoBase: "Rotativo", grupo: "peon",   antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 12, nombre: "JORGE GARCIA OLIVAR",             tipo: "peon",  turnoBase: "Rotativo", grupo: "peon",   antiguedadAnios: 9,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 13, nombre: "LUIS MIGUEL SERRANO GONZALEZ",    tipo: "peon",  turnoBase: "Rotativo", grupo: "peon",   antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
+  { id: 14, nombre: "ANTONIO GARCIA",                  tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 40, moscososAntiguedad: 8, vacacionesAntiguedad: 4 },
+  { id: 15, nombre: "MARIA ISABEL OLIVAR PEREZ",       tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 16, nombre: "AURELIA MIR SERRANO",             tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 25, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 17, nombre: "MANUELA MARIN MUNUERA",           tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 24, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 18, nombre: "INMACULADA LORENTE BENITO",       tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 16, moscososAntiguedad: 1, vacacionesAntiguedad: 1 },
+  { id: 19, nombre: "YOLANDA GRIMAL BLAS",             tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 3,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 20, nombre: "SUSANA NAVARRO MARQUINA",         tipo: "fijo",  turnoBase: "T",        grupo: "tarde",  antiguedadAnios: 3,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 21, nombre: "PEÑA DURAN PEREZ",                tipo: "fijo",  turnoBase: "N",        grupo: "noche",  antiguedadAnios: 22, moscososAntiguedad: 2, vacacionesAntiguedad: 2 },
+  { id: 22, nombre: "MARIA JESUS BOILLOS CASADO",      tipo: "fijo",  turnoBase: "N",        grupo: "noche",  antiguedadAnios: 4,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 23, nombre: "VANESSA BETRIAN MORA",            tipo: "fijo",  turnoBase: "N",        grupo: "noche",  antiguedadAnios: 26, moscososAntiguedad: 3, vacacionesAntiguedad: 3 },
+  { id: 24, nombre: "MARIA ISABEL IBARRA",             tipo: "fijo",  turnoBase: "N",        grupo: "noche",  antiguedadAnios: 5,  moscososAntiguedad: 0, vacacionesAntiguedad: 0 },
+  { id: 25, nombre: "JOSE RAMON RUIZ CHAVES",          tipo: "fijo",  turnoBase: "M",        grupo: "manana", antiguedadAnios: 3,  moscososAntiguedad: 0, vacacionesAntiguedad: 0, nota: "Limpia el 061 - Sustituye peones" },
 ];
 
 const SUSTITUTOS = [
-  { id: 26, nombre: "ROSARIO POLO", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 27, nombre: "CARMELA ARAMBURO", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 28, nombre: "VICTORIA REMACHA", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 29, nombre: "SUSAGNY MENDOZA", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 30, nombre: "ANGEL MONTEAGUDO", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 31, nombre: "M CARMEN JOVEN TRASOVARES", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 32, nombre: "M CARMEN LOPEZ LANGA", tipo: "sustituto", turnoBase: "M", activo: false },
-  { id: 33, nombre: "ESTHER BLAS", tipo: "sustituto", turnoBase: "M", activo: false },
+  { id: 26, nombre: "ROSARIO POLO",             tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 27, nombre: "CARMELA ARAMBURO",         tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 28, nombre: "VICTORIA REMACHA",         tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 29, nombre: "SUSAGNY MENDOZA",          tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 30, nombre: "ANGEL MONTEAGUDO",         tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 31, nombre: "M CARMEN JOVEN TRASOVARES",tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 32, nombre: "M CARMEN LOPEZ LANGA",     tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
+  { id: 33, nombre: "ESTHER BLAS",              tipo: "sustituto", turnoBase: "M", grupo: "sustituto", activo: false },
 ];
 
 // ==================== ESTADO GLOBAL ====================
@@ -428,6 +429,149 @@ function mostrarEventosDia(anio, mes, dia) {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `<div class="modal-box centered"><div class="modal-title">📅 ${fechaStr}</div>${eventosHtml}<div class="modal-btns"><button class="btn-modal-cancel" onclick="cerrarModal()">Cerrar</button></div></div>`;
   document.body.appendChild(overlay);
+}
+
+// ==================== VALIDACIONES AVANZADAS ====================
+function getHorasPorSemana(trabId, mes, anio) {
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx < 0 || !cuad[idx]) return [];
+  
+  const dias = diasEnMes(mes, anio);
+  const semanas = [];
+  let semanaActual = [];
+  
+  for (let d = 0; d < dias; d++) {
+    const fecha = new Date(anio, mes, d + 1);
+    const diaSemana = fecha.getDay(); // 0 = domingo, 6 = sábado
+    
+    semanaActual.push(horasCodigo(cuad[idx][d] || ""));
+    
+    // Si es sábado o último día, cerrar semana
+    if (diaSemana === 6 || d === dias - 1) {
+      const totalSemana = semanaActual.reduce((a, b) => a + b, 0);
+      semanas.push({ semana: semanas.length + 1, total: totalSemana, ok: totalSemana <= state.parametros.jornadaMaxSemanal });
+      semanaActual = [];
+    }
+  }
+  return semanas;
+}
+
+function validarDescansoNoche(trabId, mes, anio) {
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx < 0 || !cuad[idx]) return [];
+  
+  const dias = diasEnMes(mes, anio);
+  const errores = [];
+  
+  for (let d = 0; d < dias - 1; d++) {
+    const hoy = cuad[idx][d] || "";
+    const manana = cuad[idx][d + 1] || "";
+    
+    // Si hoy es N (noche), mañana debe ser L (libranza) o estar en blanco
+    if (hoy === "N" && manana !== "L" && manana !== "" && manana !== "D") {
+      errores.push(`Día ${d + 1}: Noche (N) sin libranza (L) al día siguiente (tiene ${manana || "vacío"})`);
+    }
+  }
+  return errores;
+}
+
+function validarReglasNegocio(trabId, mes, anio) {
+  const t = state.trabajadores.find(t => t.id === trabId);
+  if (!t || t.estado !== "activo") return [];
+  
+  const cuad = getCuadranteMes(mes, anio);
+  const idx = state.trabajadores.findIndex(t => t.id === trabId);
+  if (idx < 0 || !cuad[idx]) return [];
+  
+  const dias = diasEnMes(mes, anio);
+  const errores = [];
+  
+  for (let d = 0; d < dias; d++) {
+    const valor = cuad[idx][d] || "";
+    
+    // Regla 1: Trabajadores de mañana (grupo "manana") no deben tener M explícito (el blanco ya es mañana)
+    if (t.grupo === "manana" && valor === "M") {
+      errores.push(`Día ${d + 1}: No debe poner "M" (el blanco ya significa mañana)`);
+    }
+    
+    // Regla 2: Trabajadores de tarde (grupo "tarde") no deben tener T explícito
+    if (t.grupo === "tarde" && valor === "T") {
+      errores.push(`Día ${d + 1}: No debe poner "T" (el blanco ya significa tarde)`);
+    }
+    
+    // Regla 3: Peones no deben tener celda vacía (deben poner M o T explícitamente)
+    if (t.grupo === "peon" && valor === "") {
+      errores.push(`Día ${d + 1}: Celda vacía - debe poner "M" o "T" explícitamente`);
+    }
+    
+    // Regla 4: Trabajadores de noche: validar que no tengan dos N seguidas
+    if (t.grupo === "noche" && valor === "N" && d < dias - 1) {
+      const manana = cuad[idx][d + 1] || "";
+      if (manana === "N") {
+        errores.push(`Día ${d + 1}: Dos noches seguidas (N y N)`);
+      }
+    }
+  }
+  
+  return errores;
+}
+
+function validarCuadranteCompleto() {
+  const incidencias = [];
+  const mes = state.mesActual;
+  const anio = state.anio;
+  const dias = diasEnMes(mes, anio);
+  
+  for (const t of state.trabajadores) {
+    if (t.estado !== "activo") continue;
+    
+    const nombre = t.nombre;
+    
+    // 1. Días seguidos trabajando
+    const seg = getMaxDiasSeguidos(t.id);
+    if (seg > state.parametros.maxDiasSeguidos) {
+      incidencias.push(`⚠️ ${nombre}: ${seg} días seguidos trabajando (máx ${state.parametros.maxDiasSeguidos})`);
+    }
+    
+    // 2. Bolsa de horas negativa
+    const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
+    if (bolsa < -40) {
+      incidencias.push(`📊 ${nombre}: bolsa ${bolsa}h (déficit > 40h)`);
+    }
+    
+    // 3. Embarazo + turno noche
+    if (t.embarazo) {
+      const cuad = getCuadranteMes(mes, anio);
+      const idx = state.trabajadores.indexOf(t);
+      if (cuad[idx] && cuad[idx].includes("N")) {
+        incidencias.push(`🤰 ${nombre}: turno de noche durante embarazo (LPRL)`);
+      }
+    }
+    
+    // 4. Horas por semana
+    const semanas = getHorasPorSemana(t.id, mes, anio);
+    for (const sem of semanas) {
+      if (!sem.ok) {
+        incidencias.push(`📅 ${nombre}: semana ${sem.semana} excede ${state.parametros.jornadaMaxSemanal}h (${sem.total}h)`);
+      }
+    }
+    
+    // 5. Descanso entre noches
+    const nocheErrores = validarDescansoNoche(t.id, mes, anio);
+    for (const err of nocheErrores) {
+      incidencias.push(`🌙 ${nombre}: ${err}`);
+    }
+    
+    // 6. Reglas de negocio específicas
+    const negocioErrores = validarReglasNegocio(t.id, mes, anio);
+    for (const err of negocioErrores) {
+      incidencias.push(`📋 ${nombre}: ${err}`);
+    }
+  }
+  
+  return incidencias;
 }
 
 // ==================== FUNCIONES CUADRANTE ====================
@@ -569,26 +713,14 @@ function coberturaDelDia(dia, mes, anio) {
   state.trabajadores.forEach((t, idx) => {
     if (t.estado === "baja") return;
     const v = cuad[idx]?.[dia] || "";
-    if (v === "M" || v === "") result.M++;
+    // Para mañanas y tardes: el blanco cuenta como jornada completa
+    if (t.grupo === "manana" && v === "") result.M++;
+    else if (t.grupo === "tarde" && v === "") result.T++;
+    else if (v === "M") result.M++;
     else if (v === "T") result.T++;
     else if (v === "N") result.N++;
   });
   return result;
-}
-
-function validarCuadrante() {
-  const inc = [];
-  for (const t of state.trabajadores) {
-    if (t.estado !== "activo") continue;
-    const seg = getMaxDiasSeguidos(t.id);
-    if (seg > state.parametros.maxDiasSeguidos) inc.push(`⚠️ ${t.nombre}: ${seg} días seguidos`);
-    const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
-    if (bolsa < -40) inc.push(`📊 ${t.nombre}: bolsa ${bolsa}h (déficit)`);
-    if (t.embarazo && getCuadranteMes(state.mesActual, state.anio)[state.trabajadores.indexOf(t)]?.includes("N")) {
-      inc.push(`🤰 ${t.nombre}: turno de noche (LPRL)`);
-    }
-  }
-  return inc;
 }
 
 // ==================== GENERACIÓN PDF ====================
@@ -612,7 +744,7 @@ function generarPDF() {
     tablaHtml += `<tr><td style="border:0.5px solid #000;padding:4px;text-align:left;">${t.nombre}${t.tipo === "sustituto" ? " [S]" : ""}${t.estado === "baja" ? " [B]" : ""}</td>`;
     for (let d = 0; d < dias; d++) {
       let val = cuad[i]?.[d] || "";
-      if (val === "" && t.turnoBase === "M") val = "";
+      if (val === "" && t.grupo === "manana" && t.estado === "activo") val = "";
       let estilo = "border:0.5px solid #000;padding:4px;text-align:center;";
       if (val === "L") estilo += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") estilo += " color:#15803d;font-weight:700;";
@@ -626,7 +758,7 @@ function generarPDF() {
       else if (val === "LD" || val === "LDA") estilo += " color:#b45309;font-weight:700;background:#fffbeb;";
       else if (val && val.startsWith("F")) estilo += " color:#ea580c;font-weight:700;";
       else if (val === "") estilo += " color:#374151;";
-      tablaHtml += `<td style="${estilo}">${val === "" && t.turnoBase === "M" ? "" : val}</td>`;
+      tablaHtml += `<td style="${estilo}">${val === "" && t.grupo === "manana" ? "" : val}</td>`;
     }
     tablaHtml += `<td style="border:0.5px solid #000;padding:4px;text-align:center;font-weight:700;background:#e8f4fd;">${total}</td>`;
   }
@@ -640,7 +772,7 @@ function generarPDF() {
 }
 
 // ==================== PERSISTENCIA ====================
-const STORAGE_KEY = "cuadrantes_v21";
+const STORAGE_KEY = "cuadrantes_v23";
 
 function guardarDatos() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -653,6 +785,12 @@ function cargarDatos() {
   if (raw) {
     try {
       const data = JSON.parse(raw);
+      // Si la versión es anterior a 23, forzar reinicio (nombres corregidos)
+      if (data.version < 23) {
+        console.log("Versión antigua detectada. Reiniciando con datos corregidos...");
+        inicializarNuevo();
+        return;
+      }
       state = { ...state, ...data };
       if (!state.historial) state.historial = [];
       if (!state.cuadrantePorMes) state.cuadrantePorMes = {};
@@ -682,6 +820,7 @@ function cargarDatos() {
 }
 
 function inicializarNuevo() {
+  console.log("🔄 Inicializando datos nuevos con nombres corregidos...");
   state.zonas = [
     { id: "z1", nombre: "UCI", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dbeafe", notas: "" },
     { id: "z2", nombre: "Urgencias", coberturaMin: { M: 1, T: 1, N: 0 }, color: "#dcfce7", notas: "" },
@@ -693,7 +832,7 @@ function inicializarNuevo() {
     { id: "z8", nombre: "Vestuarios", coberturaMin: { M: 0, T: 0, N: 0 }, color: "#fff7ed", notas: "" }
   ];
   state.trabajadores = TRABAJADORES_FIJOS.map((t, idx) => ({
-    id: `t_${idx}_${Date.now()}`, nombre: t.nombre, tipo: t.tipo, turnoBase: t.turnoBase,
+    id: `t_${idx}_${Date.now()}`, nombre: t.nombre, tipo: t.tipo, turnoBase: t.turnoBase, grupo: t.grupo,
     estado: "activo", embarazo: false, zonaPrincipalId: "", zonasRotacionIds: [],
     turnoHabitual: t.turnoBase === "Rotativo" ? "Rotativo" : (t.turnoBase === "M" ? "M" : (t.turnoBase === "T" ? "T" : "N")),
     notas: t.nota || "", vacacionesTotales: 22, fechaBaja: null, eventos: [],
@@ -701,7 +840,7 @@ function inicializarNuevo() {
   }));
   SUSTITUTOS.forEach((s, idx) => {
     state.trabajadores.push({
-      id: `s_${idx}_${Date.now()}`, nombre: s.nombre, tipo: "sustituto", turnoBase: "M",
+      id: `s_${idx}_${Date.now()}`, nombre: s.nombre, tipo: "sustituto", turnoBase: "M", grupo: "sustituto",
       estado: "inactivo", embarazo: false, zonaPrincipalId: "", zonasRotacionIds: [],
       turnoHabitual: "M", notas: "Sustituto de la bolsa", vacacionesTotales: 22, fechaBaja: null, eventos: [],
       antiguedadAnios: 0, moscososAntiguedad: 0, vacacionesAntiguedad: 0
@@ -802,20 +941,21 @@ function renderHome() {
   if (!tareasHoy.length) html += `<p style="color:#94a3b8">Sin tareas pendientes hoy</p>`;
   tareasHoy.forEach(t => html += `<div class="aviso aviso-rojo"><strong>${t.nombre}</strong></div>`);
   html += `</div></div>`;
-  html += `<div class="card"><div class="card-header">👥 Alertas de personal</div><div class="card-body">`;
-  let hayAlerta = false;
-  for (const t of state.trabajadores) {
-    if (t.estado !== "activo") continue;
-    const seg = getMaxDiasSeguidos(t.id);
-    if (seg > state.parametros.maxDiasSeguidos) { html += `<div class="aviso aviso-rojo">⚠️ ${t.nombre}: ${seg} días seguidos</div>`; hayAlerta = true; }
-    const bolsa = getTotalHorasAnio(t.id) - state.parametros.jornadaAnualDiurna;
-    if (bolsa < -40) { html += `<div class="aviso aviso-amber">📊 ${t.nombre}: bolsa ${bolsa}h (déficit)</div>`; hayAlerta = true; }
-    if (t.embarazo && getCuadranteMes(state.mesActual, state.anio)[state.trabajadores.indexOf(t)]?.includes("N")) {
-      html += `<div class="aviso aviso-azul">🤰 ${t.nombre}: turno de noche (LPRL)</div>`; hayAlerta = true;
-    }
+  
+  // Mostrar alertas del cuadrante actual
+  const incidencias = validarCuadranteCompleto();
+  if (incidencias.length > 0) {
+    html += `<div class="card"><div class="card-header">⚠️ Alertas del cuadrante (${incidencias.length})</div><div class="card-body">`;
+    incidencias.slice(0, 10).forEach(inc => {
+      let clase = "aviso-amber";
+      if (inc.includes("⚠️") || inc.includes("🌙") || inc.includes("📋")) clase = "aviso-rojo";
+      if (inc.includes("📊")) clase = "aviso-azul";
+      html += `<div class="aviso ${clase}" style="font-size:11px;padding:6px 10px;">${inc}</div>`;
+    });
+    if (incidencias.length > 10) html += `<div class="aviso aviso-gris">... y ${incidencias.length - 10} más</div>`;
+    html += `</div></div>`;
   }
-  if (!hayAlerta) html += `<p style="color:#94a3b8">✅ Sin alertas de personal</p>`;
-  html += `</div></div>`;
+  
   const enBaja = state.trabajadores.filter(t => t.estado === "baja").length;
   const embarazadas = state.trabajadores.filter(t => t.embarazo).length;
   html += `<div class="card"><div class="card-header">📋 Resumen</div><div class="card-body" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px"><div style="text-align:center;padding:10px;background:#f8fafc;border-radius:10px"><div style="font-size:20px;font-weight:800">${state.trabajadores.length}</div><div style="font-size:10px">Trabajadores</div></div><div style="text-align:center;padding:10px;background:#fff5f5;border-radius:10px"><div style="font-size:20px;font-weight:800;color:#dc2626">${enBaja}</div><div style="font-size:10px">En baja</div></div><div style="text-align:center;padding:10px;background:#fce7f3;border-radius:10px"><div style="font-size:20px;font-weight:800;color:#db2777">${embarazadas}</div><div style="font-size:10px">Embarazos</div></div><div style="text-align:center;padding:10px;background:#f0fdf4;border-radius:10px"><div style="font-size:20px;font-weight:800;color:#16a34a">${state.zonas.length}</div><div style="font-size:10px">Zonas</div></div></div></div>`;
@@ -880,7 +1020,7 @@ function renderCuadrante() {
   let html = `<div class="mes-selector">`;
   MESES_NOMBRES.forEach((n, i) => { html += `<button class="mes-btn${i === mes ? " active" : ""}" onclick="cambiarMes(${i})">${n.slice(0,3)}</button>`; });
   html += `</div>`;
-  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-secondary btn-sm" onclick="mostrarParametros()">⚙️ Parámetros</button><button class="btn btn-primary btn-sm" onclick="mostrarModalImportarPorNombre()" style="background:#1e40af;">🧠 Importar por nombre</button><button class="btn btn-warning btn-sm" onclick="vaciarCuadranteActual()" style="background:#fef3c7;color:#92400e;">🗑 Vaciar mes</button></div>`;
+  html += `<div class="cuad-toolbar"><input class="cuad-search" id="cuad-search" type="text" placeholder="🔍 Buscar trabajador..." value="${cuadFiltro}" onkeyup="filtrarCuadrante(this.value)"><button class="btn btn-secondary btn-sm" onclick="undoUltimoCambio()">↩ Deshacer</button><button class="btn btn-primary btn-sm" onclick="generarPDF()">📄 PDF</button><button class="btn btn-secondary btn-sm" onclick="mostrarParametros()">⚙️ Parámetros</button><button class="btn btn-primary btn-sm" onclick="mostrarModalImportarPorNombre()" style="background:#1e40af;">🧠 Importar por nombre</button><button class="btn btn-warning btn-sm" onclick="vaciarCuadranteActual()" style="background:#fef3c7;color:#92400e;">🗑 Vaciar mes</button><button class="btn btn-danger btn-sm" onclick="mostrarAlertasCuadrante()" style="background:#fee2e2;color:#991b1b;">⚠️ Validar</button></div>`;
   html += `<div class="aviso aviso-gris" style="margin-bottom:8px;font-size:11px">Pulsa una celda para cambiar el turno · Preaviso legal: ${state.parametros.preavisoDias} días · Usa las flechas ↑↓ para reordenar · Nuevo turno: E (Exceso)</div>`;
   html += `<div class="wrap"><table style="border-collapse:collapse;width:100%;min-width:850px;"><thead><tr><th style="border:0.5px solid #cbd5e1;padding:6px 4px;text-align:left;position:sticky;left:0;background:#f1f5f9;min-width:180px;">Trabajador</th>`;
   for (let d = 1; d <= dias; d++) {
@@ -904,7 +1044,7 @@ function renderCuadrante() {
     html += `<tr style="${rowStyle}"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:white;font-weight:600;">${t.nombre}${t.estado === "baja" ? ' <span class="badge badge-baja" style="margin-left:4px">BAJA</span>' : ''}${t.tipo === "sustituto" ? ' <span class="badge badge-sustituto" style="margin-left:4px">SUSTITUTO</span>' : ''}${t.embarazo ? " 🤰" : ""}${seg > state.parametros.maxDiasSeguidos ? " ⚠️" : ""}${bolsa < -40 ? " 📉" : ""}</td>`;
     for (let d = 0; d < dias; d++) {
       let val = cuad[idxOriginal]?.[d] || "";
-      if (val === "" && t.turnoBase === "M" && t.estado === "activo") val = "";
+      if (val === "" && t.grupo === "manana" && t.estado === "activo") val = "";
       let cellStyle = "border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;";
       if (val === "L") cellStyle += " color:#1d4ed8;font-weight:700;";
       else if (val === "D") cellStyle += " color:#15803d;font-weight:700;";
@@ -929,11 +1069,24 @@ function renderCuadrante() {
       const diff = Math.ceil((fechaCelda - new Date()) / 86400000);
       const preaviso = diff > 0 && diff <= state.parametros.preavisoDias;
       if (preaviso) cellStyle += " border-bottom:2px solid #d97706;";
-      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.turnoBase === "M" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
+      
+      // Verificar si hay error de regla de negocio para esta celda
+      const tWorker = t;
+      let tieneError = false;
+      if (tWorker.grupo === "peon" && val === "") tieneError = true;
+      if (tWorker.grupo === "manana" && val === "M") tieneError = true;
+      if (tWorker.grupo === "tarde" && val === "T") tieneError = true;
+      if (tWorker.grupo === "noche" && val === "N" && d < dias-1) {
+        const manana = cuad[idxOriginal]?.[d+1] || "";
+        if (manana === "N") tieneError = true;
+      }
+      if (tieneError) cellStyle += " background:#fee2e2 !important; border-left:3px solid #dc2626 !important;";
+      
+      html += `<td style="${cellStyle}" onclick="abrirSelectorTurno('${t.id}',${d})">${val === "" && t.grupo === "manana" ? "" : val}${fest && val && val !== "L" && val !== "D" && val !== "V" && val !== "VAC" && val !== "VA" ? '🌟' : ''}</td>`;
     }
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;font-weight:700;background:#e8f4fd;position:sticky;right:0;">${total}</td>`;
     html += `<td style="border:0.5px solid #cbd5e1;padding:4px 2px;text-align:center;background:#f1f5f9;position:sticky;right:0;min-width:50px;"><div style="display:flex;flex-direction:column;gap:2px;"><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'up')" ${f === 0 ? 'disabled style="opacity:0.3;"' : ''}>↑</button><button class="btn-xs" style="padding:2px 6px;font-size:12px;background:#0f172a;color:white;border:none;border-radius:4px;cursor:pointer;" onclick="moverTrabajador(${idxOriginal}, 'down')" ${f === filtrados.length - 1 ? 'disabled style="opacity:0.3;"' : ''}>↓</button></div></td>`;
-    html += `</tr>`;
+    html += `</table>`;
   }
   html += `<tr style="background:#f0fdf4;font-weight:700;"><td style="border:0.5px solid #cbd5e1;padding:4px 6px;text-align:left;position:sticky;left:0;background:#f0fdf4;">Cobertura M/T/N<\/td>`;
   for (let d = 0; d < dias; d++) {
@@ -951,6 +1104,15 @@ function renderCuadrante() {
   html += `</div>`;
   document.getElementById("content").innerHTML = html;
   document.getElementById("header-sub").textContent = `${MESES_NOMBRES[mes]} ${anio}`;
+}
+
+function mostrarAlertasCuadrante() {
+  const incidencias = validarCuadranteCompleto();
+  if (incidencias.length === 0) {
+    alert("✅ No se encontraron incidencias en el cuadrante");
+    return;
+  }
+  alert("⚠️ INCIDENCIAS DETECTADAS:\n\n" + incidencias.join("\n"));
 }
 
 function filtrarCuadrante(valor) {
@@ -1013,58 +1175,108 @@ function undoUltimoCambio() {
   mostrarToast("↩ Cambio deshecho");
 }
 
-// ==================== IMPORTADOR POR NOMBRE ====================
+// ==================== IMPORTADOR POR NOMBRE (MEJORADO) ====================
 function importarPorNombre(textoExcel, mes, anio) {
   mes = mes ?? state.mesActual;
   anio = anio ?? state.anio;
   const dias = diasEnMes(mes, anio);
+
+  const CODIGOS_VALIDOS = new Set([
+    'M','T','N','L','D','E','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10',
+    'F11','F12','F13','F14','F15','F16','F17','F18','F19','F20','F21','F22','F23',
+    'F24','F25','F26','F27','F28','F29','F30','F31',
+    'PR','V','VA','CF','IT','LD','LDA','LIB','HE','VAC',
+    'LD25','LD26','L24','D25','L25','D26',''
+  ]);
+
+  const esCodigo = v => {
+    if (CODIGOS_VALIDOS.has(v)) return true;
+    if (/^F\d+$/.test(v)) return true;
+    if (/^[A-Z]{1,4}\d{0,2}$/.test(v) && v.length <= 5) return true;
+    if (/^\d$/.test(v)) return true;
+    return false;
+  };
+
+  const normalizar = s => s.normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9 ]/g, '')
+    .replace(/\s+/g, ' ').trim().toUpperCase();
+
+  const scoreNombre = (a, b) => {
+    const an = normalizar(a), bn = normalizar(b);
+    if (an === bn) return 100;
+    const pa = an.split(' ').filter(p => p.length >= 3);
+    const pb = bn.split(' ').filter(p => p.length >= 3);
+    if (!pa.length || !pb.length) return 0;
+    const coinciden = pa.filter(p => pb.includes(p)).length;
+    const bonusApellido = pa[pa.length-1] === pb[pb.length-1] ? 15 : 0;
+    return Math.round(coinciden / Math.max(pa.length, pb.length) * 100) + bonusApellido;
+  };
+
   const lineas = textoExcel.trim().split(/\r?\n/).filter(l => l.trim());
   const resultado = {};
-  const errores = [];
-
-  const normalizar = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Z0-9 ]/g,'').replace(/\s+/g,' ').trim().toUpperCase();
+  const log = [];
 
   lineas.forEach((linea, i) => {
-    const cols = linea.split(/\t/);
-    let nombre = null, turnos = [];
+    const cols = linea.split(/\t/).map(c => c.trim());
+
+    let nombreIdx = -1, nombre = '';
     for (let c = 0; c < cols.length; c++) {
-      const val = cols[c].trim();
-      if (val.length > 3 && /[A-ZÁÉÍÓÚÑ]{3,}/i.test(val) && 
-          !['M','T','N','L','D','E','F1','PR','V','VA','CF','IT','LD','LDA','LIB','HE','VAC'].includes(val.toUpperCase())) {
-        nombre = val.toUpperCase().trim();
-        const resto = cols.slice(c + 1).map(v => v.trim());
-        if (resto.length >= dias) { turnos = resto.slice(0, dias); break; }
+      const v = cols[c];
+      if (
+        v.length >= 3 &&
+        !esCodigo(v.toUpperCase()) &&
+        !/^\d+$/.test(v) &&
+        /[A-Za-záéíóúñÁÉÍÓÚÑ]{3,}/.test(v)
+      ) {
+        nombreIdx = c;
+        nombre = v.toUpperCase().trim();
+        break;
       }
     }
-    if (!nombre) return;
-    const nombreNorm = normalizar(nombre);
-    let match = state.trabajadores.find(t => normalizar(t.nombre) === nombreNorm);
-    if (!match) {
-      const partes = nombreNorm.split(' ');
-      match = state.trabajadores.find(t => {
-        const tn = normalizar(t.nombre);
-        return partes.some(p => p.length > 3 && tn.includes(p));
-      });
+    if (nombreIdx === -1) return;
+
+    const resto = cols.slice(nombreIdx + 1);
+    const turnos = [];
+    for (let r = 0; r < resto.length; r++) {
+      const v = resto[r].toUpperCase();
+      if (v.length > 6 && !esCodigo(v) && !/^\d+$/.test(v)) break;
+      turnos.push(resto[r].trim());
+      if (turnos.length === dias) break;
     }
-    if (match && turnos.length >= dias) {
-      resultado[match.id] = turnos.slice(0, dias);
-    } else if (!match) {
-      errores.push('No encontrado: ' + nombre);
+
+    while (turnos.length < dias) turnos.push('');
+
+    let mejor = null, mejorScore = 0;
+    state.trabajadores.forEach(t => {
+      const s = scoreNombre(nombre, t.nombre);
+      if (s > mejorScore) { mejorScore = s; mejor = t; }
+    });
+
+    if (mejor && mejorScore >= 40) {
+      resultado[mejor.id] = turnos.slice(0, dias);
+      log.push(`✓ (${mejorScore}%) ${nombre} → ${mejor.nombre}`);
+    } else {
+      log.push(`✗ SIN MATCH: ${nombre} (mejor: ${mejor?.nombre || '?'} ${mejorScore}%)`);
     }
   });
 
   const key = clavesMes(mes, anio);
-  if (!state.cuadrantePorMes[key]) state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
+  if (!state.cuadrantePorMes[key])
+    state.cuadrantePorMes[key] = state.trabajadores.map(() => Array(dias).fill(''));
   const cuad = state.cuadrantePorMes[key];
+
   let aplicados = 0;
   state.trabajadores.forEach((t, idx) => {
     if (resultado[t.id]) { cuad[idx] = resultado[t.id]; aplicados++; }
   });
+
+  console.log(log.join('\n'));
   guardarDatos();
   if (currentView === 'cuadrante') renderCuadrante();
-  mostrarToast(`✅ Importados ${aplicados} trabajadores` + (errores.length ? ` (${errores.length} sin match)` : ''));
-  if (errores.length) console.warn('Sin match:\n' + errores.join('\n'));
-  return { aplicados, errores };
+  const sinMatch = log.filter(l => l.startsWith('✗')).length;
+  mostrarToast(`✅ Importados ${aplicados} trabajadores` + (sinMatch ? ` · ${sinMatch} sin match (ver consola)` : ''));
+  return { aplicados, log };
 }
 
 function mostrarModalImportarPorNombre() {
@@ -1072,7 +1284,7 @@ function mostrarModalImportarPorNombre() {
   overlay.className = "modal-overlay";
   overlay.innerHTML = `
     <div class="modal-box">
-      <div class="modal-title">🧠 Importar por nombre (inteligente)</div>
+      <div class="modal-title">🧠 Importar por nombre (inteligente v23)</div>
       <p style="font-size:12px; color:#64748b; margin-bottom:8px;">📌 Este método NO depende del orden de las filas. Busca automáticamente por nombre.</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:8px;">1. En Excel, selecciona las filas con nombres y turnos (columna nombre + días).</p>
       <p style="font-size:12px; color:#64748b; margin-bottom:12px;">2. Copia (Ctrl+C) y pega abajo:</p>
@@ -1129,7 +1341,6 @@ function renderPersonal() {
   html += `</div></div><button class="btn btn-primary" onclick="modalNuevoTrabajador()">➕ Añadir trabajador</button>`;
   document.getElementById("content").innerHTML = html;
   
-  // Restaurar el valor del input después de renderizar
   const searchInput = document.getElementById("worker-search");
   if (searchInput && personalFiltro) {
     searchInput.value = personalFiltro;
@@ -1194,7 +1405,11 @@ function crearWorker() {
   const turnoBase = document.getElementById("nt-turnoBase")?.value || "M";
   if (!nombre) { mostrarToast("❌ Nombre requerido", true); return; }
   const id = `t_${Date.now()}`;
-  state.trabajadores.push({ id, nombre, tipo, turnoBase, estado: tipo === "sustituto" ? "inactivo" : "activo", embarazo: false, zonaPrincipalId: "", zonasRotacionIds: [], turnoHabitual: turnoBase === "Rotativo" ? "Rotativo" : turnoBase, notas: "", vacacionesTotales: 22, fechaBaja: null, eventos: [], antiguedadAnios: 0, moscososAntiguedad: 0, vacacionesAntiguedad: 0 });
+  let grupo = "manana";
+  if (turnoBase === "T") grupo = "tarde";
+  else if (turnoBase === "N") grupo = "noche";
+  else if (turnoBase === "Rotativo") grupo = "peon";
+  state.trabajadores.push({ id, nombre, tipo, turnoBase, grupo, estado: tipo === "sustituto" ? "inactivo" : "activo", embarazo: false, zonaPrincipalId: "", zonasRotacionIds: [], turnoHabitual: turnoBase === "Rotativo" ? "Rotativo" : turnoBase, notas: "", vacacionesTotales: 22, fechaBaja: null, eventos: [], antiguedadAnios: 0, moscososAntiguedad: 0, vacacionesAntiguedad: 0 });
   Object.keys(state.cuadrantePorMes).forEach(k => { const [anio, mes] = k.split("-").map(Number); state.cuadrantePorMes[k].push(Array(diasEnMes(mes, anio)).fill("")); });
   guardarDatos(); cerrarModal(); renderPersonal();
   mostrarToast(`✅ ${nombre.split(" ")[0]} añadido`);
@@ -1324,11 +1539,16 @@ function renderSeguro() {
   document.getElementById("content").innerHTML = `<div class="card"><div class="card-header">💾 Copia de seguridad</div><div class="card-body"><button class="btn btn-primary" onclick="exportarBackup()">⬇ Exportar backup</button><button class="btn btn-secondary" onclick="document.getElementById('file-import').click()">⬆ Importar backup</button><button class="btn btn-legal" onclick="generarPDF()">📄 Cuadrante PDF</button></div></div><div class="card"><div class="card-header">⚖️ Parámetros legales</div><div class="card-body"><button class="btn btn-legal" onclick="document.getElementById('file-import-legal').click()">📄 Importar convenio</button><div style="font-size:12px;margin-top:8px"><strong>Activos:</strong> Jornada máx ${state.parametros.jornadaMaxDiaria}h · Mín ${state.parametros.jornadaMinDiaria}h · Máx semanal ${state.parametros.jornadaMaxSemanal}h · Máx seguidos ${state.parametros.maxDiasSeguidos} · Preaviso ${state.parametros.preavisoDias} días</div><button class="btn btn-secondary" style="margin-top:10px" onclick="validarYMostrar()">🔍 Validar cuadrante</button></div></div><div class="card"><div class="card-header">🔒 Seguridad</div><div class="card-body"><button class="btn btn-secondary" onclick="mostrarPantallaPIN('setup')">${state.pinHash ? "🔑 Cambiar PIN" : "🔑 Configurar PIN"}</button>${state.pinHash ? `<button class="btn btn-danger" style="margin-top:8px" onclick="quitarPIN()">🗑 Eliminar PIN</button>` : ""}</div></div><div class="card"><div class="card-header">📋 Historial de cambios</div><div class="card-body nop">${state.historial.slice(0,20).map(h => { const t = state.trabajadores.find(w => w.id === h.trabId); return `<div class="hist-item"><strong>${t?.nombre?.split(" ")[0] || "?"}</strong> · día ${h.dia+1}/${h.mes+1}: <span style="color:#dc2626">${h.anterior||"—"}</span> → <span style="color:#16a34a">${h.nuevo||"—"}</span></div>`; }).join("") || '<div class="empty">Sin cambios registrados</div>'}</div></div>`;
 }
 
+function validarYMostrar() {
+  const incidencias = validarCuadranteCompleto();
+  if (!incidencias.length) { alert("✅ Sin incidencias en el cuadrante"); return; }
+  alert("⚠️ INCIDENCIAS DETECTADAS:\n\n" + incidencias.join("\n"));
+}
+
 function quitarPIN() { if (confirm("¿Eliminar PIN?")) { state.pinHash = null; guardarDatos(); mostrarToast("PIN eliminado"); renderSeguro(); } }
 function exportarBackup() { const a = document.createElement("a"); a.download = `cuadrante_backup_${new Date().toISOString().slice(0,10)}.json`; a.href = URL.createObjectURL(new Blob([JSON.stringify(state, null, 2)], { type: "application/json" })); a.click(); URL.revokeObjectURL(a.href); mostrarToast("✅ Backup exportado"); }
 function importarBackup(event) { const file = event.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = e => { try { const data = JSON.parse(e.target.result); state = { ...state, ...data }; guardarDatos(); mostrarToast("✅ Backup importado"); render(); } catch { mostrarToast("❌ Archivo inválido", true); } }; r.readAsText(file); event.target.value = ""; }
 function importarLegal(event) { const file = event.target.files[0]; if (!file) return; const r = new FileReader(); r.onload = e => { try { const p = JSON.parse(e.target.result); state.parametros = { ...state.parametros, ...p }; guardarDatos(); mostrarToast("✅ Convenio importado"); renderSeguro(); } catch { mostrarToast("❌ Archivo inválido", true); } }; r.readAsText(file); event.target.value = ""; }
-function validarYMostrar() { const inc = validarCuadrante(); if (!inc.length) { alert("✅ Sin incidencias"); return; } alert("⚠️ Incidencias:\n\n" + inc.join("\n")); }
 
 // ==================== UTILIDADES ====================
 function mostrarToast(msg, isError = false) { const t = document.getElementById("toast"); t.textContent = msg; t.style.background = isError ? "#dc2626" : "#0f172a"; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2200); }
@@ -1351,6 +1571,7 @@ function render() { showView(currentView); }
 document.addEventListener("keydown", e => { if ((e.ctrlKey || e.metaKey) && e.key === "z") { e.preventDefault(); undoUltimoCambio(); } });
 document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) cerrarModal(); });
 
+// Inicializar
 cargarDatos();
 document.getElementById("version-number").textContent = APP_VERSION;
 if (state.pinHash) { pinDesbloqueado = false; renderHome(); mostrarPantallaPIN("unlock"); }
